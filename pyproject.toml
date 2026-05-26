@@ -1,7 +1,7 @@
 [project]
 name = "republic-ner-matching"
 version = "0.1.0"
-description = "Add your description here"
+description = "Match NER PER-layer spans from Republic resolutions to known delegates"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

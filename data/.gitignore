@@ -1,0 +1,9 @@
+# Large data files – not tracked
+*.parquet
+*.tsv
+*.tsv.gz
+*.csv
+*.gz
+
+# But do track the inventory metadata (small JSON, ~200 KB)
+!inventory_metadata.json
