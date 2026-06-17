@@ -1,0 +1,22 @@
+[
+  {
+    "split": "validate",
+    "source_path": "/Users/rikhoekstra/develop/republicgit/ground_truth/tag_de_besluiten/flair_training/flair_training_PER/validate.txt",
+    "rows": 388,
+    "sentences": 148,
+    "labels": {
+      "PER": 388
+    },
+    "output_path": "/Users/rikhoekstra/develop/republic_ner_matching/data/eval/per_span_gold_validate.parquet"
+  },
+  {
+    "split": "test",
+    "source_path": "/Users/rikhoekstra/develop/republicgit/ground_truth/tag_de_besluiten/flair_training/flair_training_PER/test.txt",
+    "rows": 405,
+    "sentences": 148,
+    "labels": {
+      "PER": 405
+    },
+    "output_path": "/Users/rikhoekstra/develop/republic_ner_matching/data/eval/per_span_gold_test.parquet"
+  }
+]

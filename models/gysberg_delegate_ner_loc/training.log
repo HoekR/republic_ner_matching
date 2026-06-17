@@ -1,0 +1,79 @@
+2026-06-09 12:17:50,180 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Model: "SequenceTagger(
+  (embeddings): TransformerWordEmbeddings(
+    (model): BertModel(
+      (embeddings): BertEmbeddings(
+        (word_embeddings): Embedding(30523, 768, padding_idx=0)
+        (position_embeddings): Embedding(512, 768)
+        (token_type_embeddings): Embedding(2, 768)
+        (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (encoder): BertEncoder(
+        (layer): ModuleList(
+          (0-11): 12 x BertLayer(
+            (attention): BertAttention(
+              (self): BertSdpaSelfAttention(
+                (query): Linear(in_features=768, out_features=768, bias=True)
+                (key): Linear(in_features=768, out_features=768, bias=True)
+                (value): Linear(in_features=768, out_features=768, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+              )
+              (output): BertSelfOutput(
+                (dense): Linear(in_features=768, out_features=768, bias=True)
+                (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+              )
+            )
+            (intermediate): BertIntermediate(
+              (dense): Linear(in_features=768, out_features=3072, bias=True)
+              (intermediate_act_fn): GELUActivation()
+            )
+            (output): BertOutput(
+              (dense): Linear(in_features=3072, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+      )
+      (pooler): BertPooler(
+        (dense): Linear(in_features=768, out_features=768, bias=True)
+        (activation): Tanh()
+      )
+    )
+  )
+  (word_dropout): WordDropout(p=0.05)
+  (locked_dropout): LockedDropout(p=0.5)
+  (embedding2nn): Linear(in_features=768, out_features=768, bias=True)
+  (rnn): LSTM(768, 256, batch_first=True, bidirectional=True)
+  (linear): Linear(in_features=512, out_features=4, bias=True)
+  (loss_function): ViterbiLoss()
+  (crf): CRF()
+)"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Corpus: 6293 train + 1168 dev + 951 test sentences
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Train:  6293 sentences
+2026-06-09 12:17:50,181         (train_with_dev=False, train_with_test=False)
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Training Params:
+2026-06-09 12:17:50,181  - learning_rate: "0.1" 
+2026-06-09 12:17:50,181  - mini_batch_size: "16"
+2026-06-09 12:17:50,181  - max_epochs: "10"
+2026-06-09 12:17:50,181  - shuffle: "True"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Plugins:
+2026-06-09 12:17:50,181  - AnnealOnPlateau | patience: '3', anneal_factor: '0.5', min_learning_rate: '0.0001'
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Final evaluation on model from best epoch (best-model.pt)
+2026-06-09 12:17:50,181  - metric: "('micro avg', 'f1-score')"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Computation:
+2026-06-09 12:17:50,181  - compute on device: mps
+2026-06-09 12:17:50,181  - embedding storage: cpu
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Model training base path: "models/gysberg_delegate_ner_loc"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:18:28,902 epoch 1 - iter 39/394 - loss 0.10827372 - time (sec): 38.72 - samples/sec: 1492.91 - lr: 0.100000 - momentum: 0.000000

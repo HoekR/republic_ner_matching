@@ -1,0 +1,126 @@
+✓ Metal Performance Shaders (MPS) enabled for GPU acceleration
+======================================================================
+GysBERT Fine-tuning on 1626-1630 Delegate Mention Data
+Started: 2026-06-09 12:08:28
+======================================================================
+
+Loading training pairs...
+  Loaded 198900 pairs
+  Columns: ['htr_span', 'canonical_entity', 'entity_type', 'span_confidence', 'date_confidence', 'combined_confidence', 'date_match', 'method', 'date', 'resolution_id']
+  Entity types: <ArrowStringArray>
+['place', 'name']
+Length: 2, dtype: str
+
+Loading resolutions...
+  Filtering to 12433 resolutions from training pairs...
+  Loaded 12433 resolutions (98.2% reduction)
+
+Creating corpus...
+  Train: 150662 pairs (868 dates)
+  Val: 21142 pairs (186 dates)
+  Test: 27096 pairs (186 dates)
+Formatting sentences...
+Formatting:   0%|          | 0/9847 [00:00<?, ?it/s]Formatting:   1%|          | 69/9847 [00:00<00:14, 686.30it/s]Formatting:   1%|▏         | 138/9847 [00:00<00:17, 540.96it/s]Formatting:   2%|▏         | 218/9847 [00:00<00:15, 641.92it/s]Formatting:   3%|▎         | 301/9847 [00:00<00:13, 705.96it/s]Formatting:   4%|▍         | 374/9847 [00:00<00:15, 604.15it/s]Formatting:   5%|▍         | 444/9847 [00:00<00:14, 631.66it/s]Formatting:   5%|▌         | 524/9847 [00:00<00:13, 680.67it/s]Formatting:   6%|▌         | 600/9847 [00:00<00:13, 702.40it/s]Formatting:   7%|▋         | 681/9847 [00:01<00:12, 732.62it/s]Formatting:   8%|▊         | 756/9847 [00:01<00:15, 587.21it/s]Formatting:   8%|▊         | 833/9847 [00:01<00:14, 632.30it/s]Formatting:   9%|▉         | 910/9847 [00:01<00:13, 667.14it/s]Formatting:  10%|█         | 986/9847 [00:01<00:12, 690.99it/s]Formatting:  11%|█         | 1065/9847 [00:01<00:12, 717.29it/s]Formatting:  12%|█▏        | 1139/9847 [00:01<00:14, 591.69it/s]Formatting:  12%|█▏        | 1218/9847 [00:01<00:13, 640.03it/s]Formatting:  13%|█▎        | 1293/9847 [00:01<00:12, 668.90it/s]Formatting:  14%|█▍        | 1370/9847 [00:02<00:12, 694.81it/s]Formatting:  15%|█▍        | 1449/9847 [00:02<00:11, 719.61it/s]Formatting:  15%|█▌        | 1524/9847 [00:02<00:11, 718.05it/s]Formatting:  16%|█▋        | 1603/9847 [00:02<00:11, 736.92it/s]Formatting:  17%|█▋        | 1678/9847 [00:02<00:14, 573.48it/s]Formatting:  18%|█▊        | 1747/9847 [00:02<00:13, 599.69it/s]Formatting:  18%|█▊        | 1812/9847 [00:02<00:13, 608.51it/s]Formatting:  19%|█▉        | 1883/9847 [00:02<00:12, 633.48it/s]Formatting:  20%|█▉        | 1950/9847 [00:02<00:12, 635.56it/s]Formatting:  21%|██        | 2028/9847 [00:03<00:11, 673.84it/s]Formatting:  21%|██▏       | 2107/9847 [00:03<00:10, 706.56it/s]Formatting:  22%|██▏       | 2182/9847 [00:03<00:10, 717.41it/s]Formatting:  23%|██▎       | 2260/9847 [00:03<00:10, 734.09it/s]Formatting:  24%|██▎       | 2335/9847 [00:03<00:13, 548.61it/s]Formatting:  25%|██▍       | 2415/9847 [00:03<00:12, 607.76it/s]Formatting:  25%|██▌       | 2492/9847 [00:03<00:11, 647.95it/s]Formatting:  26%|██▌       | 2567/9847 [00:03<00:10, 674.66it/s]Formatting:  27%|██▋       | 2645/9847 [00:04<00:10, 703.32it/s]Formatting:  28%|██▊       | 2724/9847 [00:04<00:09, 727.11it/s]Formatting:  28%|██▊       | 2802/9847 [00:04<00:09, 740.22it/s]Formatting:  29%|██▉       | 2879/9847 [00:04<00:09, 746.55it/s]Formatting:  30%|███       | 2961/9847 [00:04<00:08, 766.65it/s]Formatting:  31%|███       | 3042/9847 [00:04<00:08, 777.54it/s]Formatting:  32%|███▏      | 3121/9847 [00:04<00:11, 564.23it/s]Formatting:  32%|███▏      | 3198/9847 [00:04<00:10, 610.42it/s]Formatting:  33%|███▎      | 3282/9847 [00:04<00:09, 666.97it/s]Formatting:  34%|███▍      | 3363/9847 [00:05<00:09, 703.34it/s]Formatting:  35%|███▍      | 3444/9847 [00:05<00:08, 729.37it/s]Formatting:  36%|███▌      | 3521/9847 [00:05<00:08, 735.54it/s]Formatting:  37%|███▋      | 3605/9847 [00:05<00:08, 763.05it/s]Formatting:  37%|███▋      | 3684/9847 [00:05<00:08, 769.64it/s]Formatting:  38%|███▊      | 3764/9847 [00:05<00:07, 775.98it/s]Formatting:  39%|███▉      | 3843/9847 [00:05<00:07, 771.09it/s]Formatting:  40%|███▉      | 3921/9847 [00:05<00:07, 771.68it/s]Formatting:  41%|████      | 3999/9847 [00:05<00:07, 772.48it/s]Formatting:  41%|████▏     | 4077/9847 [00:05<00:07, 766.66it/s]Formatting:  42%|████▏     | 4154/9847 [00:06<00:10, 520.70it/s]Formatting:  43%|████▎     | 4230/9847 [00:06<00:09, 573.22it/s]Formatting:  44%|████▎     | 4304/9847 [00:06<00:09, 612.00it/s]Formatting:  44%|████▍     | 4379/9847 [00:06<00:08, 646.39it/s]Formatting:  45%|████▌     | 4452/9847 [00:06<00:08, 665.71it/s]Formatting:  46%|████▌     | 4530/9847 [00:06<00:07, 696.00it/s]Formatting:  47%|████▋     | 4607/9847 [00:06<00:07, 714.40it/s]Formatting:  48%|████▊     | 4681/9847 [00:06<00:07, 716.13it/s]Formatting:  48%|████▊     | 4755/9847 [00:07<00:07, 700.80it/s]Formatting:  49%|████▉     | 4831/9847 [00:07<00:07, 716.13it/s]Formatting:  50%|████▉     | 4904/9847 [00:07<00:06, 713.30it/s]Formatting:  51%|█████     | 4976/9847 [00:07<00:06, 706.80it/s]Formatting:  51%|█████▏    | 5048/9847 [00:07<00:06, 705.38it/s]Formatting:  52%|█████▏    | 5119/9847 [00:07<00:06, 706.32it/s]Formatting:  53%|█████▎    | 5194/9847 [00:07<00:06, 718.44it/s]Formatting:  53%|█████▎    | 5267/9847 [00:07<00:06, 700.50it/s]Formatting:  54%|█████▍    | 5338/9847 [00:07<00:06, 684.58it/s]Formatting:  55%|█████▍    | 5407/9847 [00:08<00:10, 431.30it/s]Formatting:  56%|█████▌    | 5477/9847 [00:08<00:09, 485.26it/s]Formatting:  56%|█████▋    | 5546/9847 [00:08<00:08, 531.59it/s]Formatting:  57%|█████▋    | 5617/9847 [00:08<00:07, 573.94it/s]Formatting:  58%|█████▊    | 5684/9847 [00:08<00:06, 596.62it/s]Formatting:  58%|█████▊    | 5750/9847 [00:08<00:06, 612.43it/s]Formatting:  59%|█████▉    | 5818/9847 [00:08<00:06, 629.14it/s]Formatting:  60%|█████▉    | 5890/9847 [00:08<00:06, 651.76it/s]Formatting:  61%|██████    | 5958/9847 [00:08<00:06, 647.48it/s]Formatting:  61%|██████    | 6026/9847 [00:09<00:05, 653.92it/s]Formatting:  62%|██████▏   | 6093/9847 [00:09<00:05, 658.55it/s]Formatting:  63%|██████▎   | 6161/9847 [00:09<00:05, 663.17it/s]Formatting:  63%|██████▎   | 6230/9847 [00:09<00:05, 669.83it/s]Formatting:  64%|██████▍   | 6302/9847 [00:09<00:05, 684.60it/s]Formatting:  65%|██████▍   | 6371/9847 [00:09<00:05, 683.70it/s]Formatting:  65%|██████▌   | 6442/9847 [00:09<00:04, 690.83it/s]Formatting:  66%|██████▌   | 6512/9847 [00:09<00:04, 679.04it/s]Formatting:  67%|██████▋   | 6583/9847 [00:09<00:04, 687.19it/s]Formatting:  68%|██████▊   | 6654/9847 [00:10<00:04, 691.83it/s]Formatting:  68%|██████▊   | 6724/9847 [00:10<00:07, 421.28it/s]Formatting:  69%|██████▉   | 6795/9847 [00:10<00:06, 479.29it/s]Formatting:  70%|██████▉   | 6868/9847 [00:10<00:05, 535.29it/s]Formatting:  70%|███████   | 6938/9847 [00:10<00:05, 574.56it/s]Formatting:  71%|███████   | 7011/9847 [00:10<00:04, 612.24it/s]Formatting:  72%|███████▏  | 7089/9847 [00:10<00:04, 656.97it/s]Formatting:  73%|███████▎  | 7166/9847 [00:10<00:03, 686.62it/s]Formatting:  74%|███████▎  | 7239/9847 [00:11<00:03, 696.49it/s]Formatting:  74%|███████▍  | 7312/9847 [00:11<00:03, 699.11it/s]Formatting:  75%|███████▌  | 7389/9847 [00:11<00:03, 719.51it/s]Formatting:  76%|███████▌  | 7463/9847 [00:11<00:03, 686.37it/s]Formatting:  77%|███████▋  | 7533/9847 [00:11<00:03, 687.77it/s]Formatting:  77%|███████▋  | 7603/9847 [00:11<00:03, 687.55it/s]Formatting:  78%|███████▊  | 7673/9847 [00:11<00:03, 687.89it/s]Formatting:  79%|███████▊  | 7746/9847 [00:11<00:03, 698.85it/s]Formatting:  79%|███████▉  | 7818/9847 [00:11<00:02, 703.84it/s]Formatting:  80%|████████  | 7889/9847 [00:11<00:02, 701.32it/s]Formatting:  81%|████████  | 7960/9847 [00:12<00:02, 699.89it/s]Formatting:  82%|████████▏ | 8033/9847 [00:12<00:02, 707.02it/s]Formatting:  82%|████████▏ | 8106/9847 [00:12<00:02, 713.49it/s]Formatting:  83%|████████▎ | 8181/9847 [00:12<00:02, 724.14it/s]Formatting:  84%|████████▍ | 8254/9847 [00:12<00:02, 722.72it/s]Formatting:  85%|████████▍ | 8327/9847 [00:12<00:02, 718.80it/s]Formatting:  85%|████████▌ | 8399/9847 [00:12<00:02, 713.24it/s]Formatting:  86%|████████▌ | 8471/9847 [00:13<00:03, 394.73it/s]Formatting:  87%|████████▋ | 8544/9847 [00:13<00:02, 457.58it/s]Formatting:  87%|████████▋ | 8612/9847 [00:13<00:02, 503.36it/s]Formatting:  88%|████████▊ | 8683/9847 [00:13<00:02, 550.77it/s]Formatting:  89%|████████▉ | 8755/9847 [00:13<00:01, 592.82it/s]Formatting:  90%|████████▉ | 8831/9847 [00:13<00:01, 636.11it/s]Formatting:  90%|█████████ | 8902/9847 [00:13<00:01, 654.85it/s]Formatting:  91%|█████████ | 8972/9847 [00:13<00:01, 665.33it/s]Formatting:  92%|█████████▏| 9042/9847 [00:13<00:01, 659.16it/s]Formatting:  93%|█████████▎| 9111/9847 [00:13<00:01, 657.60it/s]Formatting:  93%|█████████▎| 9179/9847 [00:14<00:01, 662.65it/s]Formatting:  94%|█████████▍| 9247/9847 [00:14<00:00, 650.03it/s]Formatting:  95%|█████████▍| 9313/9847 [00:14<00:00, 650.68it/s]Formatting:  95%|█████████▌| 9383/9847 [00:14<00:00, 663.91it/s]Formatting:  96%|█████████▌| 9450/9847 [00:14<00:00, 664.39it/s]Formatting:  97%|█████████▋| 9518/9847 [00:14<00:00, 665.94it/s]Formatting:  97%|█████████▋| 9592/9847 [00:14<00:00, 687.28it/s]Formatting:  98%|█████████▊| 9667/9847 [00:14<00:00, 704.05it/s]Formatting:  99%|█████████▉| 9738/9847 [00:14<00:00, 704.56it/s]Formatting: 100%|█████████▉| 9809/9847 [00:15<00:00, 657.71it/s]                                                                Formatting:   0%|          | 0/1178 [00:00<?, ?it/s]Formatting:   7%|▋         | 78/1178 [00:00<00:01, 774.92it/s]Formatting:  13%|█▎        | 156/1178 [00:00<00:01, 767.78it/s]Formatting:  20%|██        | 237/1178 [00:00<00:01, 784.86it/s]Formatting:  27%|██▋       | 316/1178 [00:00<00:01, 743.14it/s]Formatting:  33%|███▎      | 391/1178 [00:00<00:01, 732.94it/s]Formatting:  40%|███▉      | 466/1178 [00:00<00:00, 735.63it/s]Formatting:  46%|████▌     | 542/1178 [00:00<00:00, 740.95it/s]Formatting:  52%|█████▏    | 617/1178 [00:00<00:00, 729.01it/s]Formatting:  59%|█████▊    | 690/1178 [00:00<00:00, 720.83it/s]Formatting:  65%|██████▍   | 763/1178 [00:01<00:01, 358.87it/s]Formatting:  71%|███████   | 833/1178 [00:01<00:00, 418.54it/s]Formatting:  77%|███████▋  | 902/1178 [00:01<00:00, 471.24it/s]Formatting:  83%|████████▎ | 978/1178 [00:01<00:00, 533.61it/s]Formatting:  89%|████████▉ | 1053/1178 [00:01<00:00, 584.69it/s]Formatting:  95%|█████████▌| 1124/1178 [00:01<00:00, 615.83it/s]                                                                Formatting:   0%|          | 0/1408 [00:00<?, ?it/s]Formatting:   5%|▍         | 70/1408 [00:00<00:01, 696.05it/s]Formatting:  10%|▉         | 140/1408 [00:00<00:01, 691.82it/s]Formatting:  15%|█▍        | 210/1408 [00:00<00:01, 691.12it/s]Formatting:  20%|█▉        | 280/1408 [00:00<00:01, 691.41it/s]Formatting:  25%|██▌       | 352/1408 [00:00<00:01, 701.53it/s]Formatting:  30%|███       | 423/1408 [00:00<00:01, 702.65it/s]Formatting:  35%|███▌      | 494/1408 [00:00<00:01, 701.01it/s]Formatting:  40%|████      | 569/1408 [00:00<00:01, 713.97it/s]Formatting:  46%|████▌     | 643/1408 [00:00<00:01, 720.07it/s]Formatting:  51%|█████     | 716/1408 [00:01<00:00, 708.67it/s]Formatting:  56%|█████▌    | 788/1408 [00:01<00:00, 711.60it/s]Formatting:  61%|██████    | 860/1408 [00:01<00:00, 711.74it/s]Formatting:  66%|██████▋   | 934/1408 [00:01<00:00, 718.65it/s]Formatting:  71%|███████▏  | 1006/1408 [00:01<00:00, 708.73it/s]Formatting:  76%|███████▋  | 1077/1408 [00:01<00:00, 705.64it/s]Formatting:  82%|████████▏ | 1150/1408 [00:01<00:00, 709.34it/s]Formatting:  87%|████████▋ | 1221/1408 [00:01<00:00, 709.40it/s]Formatting:  92%|█████████▏| 1293/1408 [00:01<00:00, 712.49it/s]Formatting:  97%|█████████▋| 1365/1408 [00:01<00:00, 711.77it/s]                                                                /Users/rikhoekstra/develop/republic_ner_matching/finetune_gysberg.py:205: DeprecationWarning: Call to deprecated method __init__. (The 'SentenceDataset' class was renamed to 'FlairDatapointDataset') -- Deprecated since version 0.11.
+  train=SentenceDataset(train_sentences),
+/Users/rikhoekstra/develop/republic_ner_matching/finetune_gysberg.py:206: DeprecationWarning: Call to deprecated method __init__. (The 'SentenceDataset' class was renamed to 'FlairDatapointDataset') -- Deprecated since version 0.11.
+  dev=SentenceDataset(val_sentences),
+/Users/rikhoekstra/develop/republic_ner_matching/finetune_gysberg.py:207: DeprecationWarning: Call to deprecated method __init__. (The 'SentenceDataset' class was renamed to 'FlairDatapointDataset') -- Deprecated since version 0.11.
+  test=SentenceDataset(test_sentences),
+  Train sentences: 9847
+  Val sentences: 1178
+  Test sentences: 1408
+
+
+Fine-tuning GysBERT...
+  Loading emanjavacas/GysBERT...
+  Creating sequence tagger...
+2026-06-09 12:08:50,089 Computing label dictionary. Progress:
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+0it [00:00, ?it/s]6026it [00:00, 60252.73it/s]9847it [00:00, 54501.17it/s]
+2026-06-09 12:08:50,271 Dictionary created for label 'ner' with 2 values: O (seen 767646 times), PLACE (seen 62113 times)
+2026-06-09 12:08:50,271 SequenceTagger predicts: Dictionary with 2 tags: O, PLACE
+/Users/rikhoekstra/develop/republic_ner_matching/.venv/lib/python3.12/site-packages/flair/trainers/trainer.py:545: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler(enabled=use_amp and flair.device.type != "cpu")
+  Starting training...
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Model: "SequenceTagger(
+  (embeddings): TransformerWordEmbeddings(
+    (model): BertModel(
+      (embeddings): BertEmbeddings(
+        (word_embeddings): Embedding(30523, 768, padding_idx=0)
+        (position_embeddings): Embedding(512, 768)
+        (token_type_embeddings): Embedding(2, 768)
+        (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (encoder): BertEncoder(
+        (layer): ModuleList(
+          (0-11): 12 x BertLayer(
+            (attention): BertAttention(
+              (self): BertSdpaSelfAttention(
+                (query): Linear(in_features=768, out_features=768, bias=True)
+                (key): Linear(in_features=768, out_features=768, bias=True)
+                (value): Linear(in_features=768, out_features=768, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+              )
+              (output): BertSelfOutput(
+                (dense): Linear(in_features=768, out_features=768, bias=True)
+                (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+              )
+            )
+            (intermediate): BertIntermediate(
+              (dense): Linear(in_features=768, out_features=3072, bias=True)
+              (intermediate_act_fn): GELUActivation()
+            )
+            (output): BertOutput(
+              (dense): Linear(in_features=3072, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+      )
+      (pooler): BertPooler(
+        (dense): Linear(in_features=768, out_features=768, bias=True)
+        (activation): Tanh()
+      )
+    )
+  )
+  (word_dropout): WordDropout(p=0.05)
+  (locked_dropout): LockedDropout(p=0.5)
+  (embedding2nn): Linear(in_features=768, out_features=768, bias=True)
+  (rnn): LSTM(768, 256, batch_first=True, bidirectional=True)
+  (linear): Linear(in_features=512, out_features=4, bias=True)
+  (loss_function): ViterbiLoss()
+  (crf): CRF()
+)"
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Corpus: 9847 train + 1178 dev + 1408 test sentences
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Train:  9847 sentences
+2026-06-09 12:08:50,282         (train_with_dev=False, train_with_test=False)
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Training Params:
+2026-06-09 12:08:50,282  - learning_rate: "0.1" 
+2026-06-09 12:08:50,282  - mini_batch_size: "16"
+2026-06-09 12:08:50,282  - max_epochs: "10"
+2026-06-09 12:08:50,282  - shuffle: "True"
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Plugins:
+2026-06-09 12:08:50,282  - AnnealOnPlateau | patience: '3', anneal_factor: '0.5', min_learning_rate: '0.0001'
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Final evaluation on model from best epoch (best-model.pt)
+2026-06-09 12:08:50,282  - metric: "('micro avg', 'f1-score')"
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Computation:
+2026-06-09 12:08:50,282  - compute on device: mps
+2026-06-09 12:08:50,282  - embedding storage: cpu
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 Model training base path: "models/gysberg_delegate_ner"
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:08:50,282 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:10:14,869 epoch 1 - iter 61/616 - loss 0.55108142 - time (sec): 84.57 - samples/sec: 966.68 - lr: 0.100000 - momentum: 0.000000
+2026-06-09 12:12:06,285 epoch 1 - iter 122/616 - loss 0.42505937 - time (sec): 196.00 - samples/sec: 836.78 - lr: 0.100000 - momentum: 0.000000
+2026-06-09 12:13:46,460 epoch 1 - iter 183/616 - loss 0.37836644 - time (sec): 296.17 - samples/sec: 833.33 - lr: 0.100000 - momentum: 0.000000
+2026-06-09 12:15:03,124 epoch 1 - iter 244/616 - loss 0.35583880 - time (sec): 372.84 - samples/sec: 875.44 - lr: 0.100000 - momentum: 0.000000

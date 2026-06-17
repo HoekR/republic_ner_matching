@@ -1,0 +1,25 @@
+{
+  "headline": "Current measured errors are linking-level errors. Span-level errors are not yet quantified in this run because no predicted-span file was provided.",
+  "linking": {
+    "benchmark_scope": "linking_only",
+    "benchmark_note": "This benchmark feeds known name variants into the matcher, so span detection is held constant. Observed failures here are identity-resolution errors, not extraction misses.",
+    "rows": 2709,
+    "top1_correct": 1774,
+    "top1_errors": 935,
+    "top1_accuracy": 0.6549,
+    "top1_error_rate": 0.3451,
+    "error_breakdown": {
+      "no_candidate": 0,
+      "wrong_delegate": 935
+    },
+    "divergence_breakdown": [
+      {
+        "band": "near_canonical",
+        "rows": 2709,
+        "top1_accuracy": 0.6549,
+        "top1_error_rate": 0.3451
+      }
+    ]
+  },
+  "spans": null
+}

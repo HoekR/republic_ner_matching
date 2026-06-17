@@ -3,26 +3,112 @@
 Functions:
     load_inventory_metadata(path) -> dict[int, dict]
     load_ner(path, inv_lookup, year_min, year_max, chunk_size) -> pd.DataFrame
+    normalize_name_for_matching(text) -> str
     clean_span(text) -> str
+    mask_name_pattern(text, unknown=False) -> str
+    extract_title(text) -> str
     split_multi_person(text) -> list[str]
 """
 
 import json
 import pathlib
 import re
+from typing import Callable
 
 import pandas as pd
 
-# Dutch honorifics and titles to strip before matching.
-# Use \.? + lookahead instead of trailing \b so the period is consumed.
-_TITLE_RE = re.compile(
-    r"\b(mr|meester|heere|hertog|grave|graeve|graaf|marquis|monsr?"
-    r"|vrouwe?|jonkheer|de\s+heer|de\s+jonge|jhr|ds|dr|prof)\.?(?=\s|$)",
+# Non-identifying honorifics — strip before matching (carry no identity value).
+_HONORIFIC_RE = re.compile(
+    r"\b(mr|meester|monsr?|de\s+heer|ds|dr|prof|ra.?dt)\.?(?=\s|$)",
     re.IGNORECASE,
 )
 
+# Noble / rank titles — extract separately; the estate name that follows is
+# valuable for disambiguation (e.g. "grave van Rechteren" → title="grave",
+# span retains "van Rechteren" for TF-IDF matching).
+_NOBLE_TITLE_RE = re.compile(
+    r"\b(heere?|hertog|grave|graeve|graaf|marquis|vrouwe?|jonkheer|jhr|de\s+jonge)\.?(?=\s|$)",
+    re.IGNORECASE,
+)
+
+# Interposition (tussenvoegsel) abbreviation normalisation.
+# Applied before matching so that span text and delegate patterns use the same
+# canonical form.  Order matters: most-specific patterns first.
+#
+# Common abbreviated forms in 17th/18th-century Dutch:
+#   v.d.r. / v.d.r  → van der
+#   v.d.e. / v.d.e  → van de
+#   v.d.   / vd     → van de   (ambiguous; "van de" is more frequent than "van den")
+#   v.     / v      → van      (only when followed by a capitalised name token)
+#   d.     / d      → de       (rare as standalone abbreviation)
+#   op d.           → op de
+#   in 't           → in het   (rare, keep as-is — 't already low-IDF)
+_INTERP_NORMS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"\bv\.?\s*d\.?\s*r\.?(?=\s|$)", re.IGNORECASE), "van der"),
+    (re.compile(r"\bv\.?\s*d\.?\s*e\.?(?=\s|$)", re.IGNORECASE), "van de"),
+    (re.compile(r"\bv\.?\s*d\.?(?=\s|$)",         re.IGNORECASE), "van de van der"),
+    (re.compile(r"\bop\s+d\.?(?=\s|$)",           re.IGNORECASE), "op de"),
+    # bare "v." only when directly followed by a word character
+    (re.compile(r"\bv\.(?=\s+\w)",                re.IGNORECASE), "van"),
+]
+
+# Conservative phonetic normalisation for Dutch historical spelling variants.
+# These rules intentionally target high-frequency OCR/orthography drift patterns
+# seen in names and surnames and mirror the Track B soundex principles in PLAN.md.
+_SPELLING_NORMS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"ae", re.IGNORECASE), "aa"),
+    (re.compile(r"eij", re.IGNORECASE), "ij"),
+    (re.compile(r"ey", re.IGNORECASE), "ij"),
+    (re.compile(r"uij", re.IGNORECASE), "ui"),
+    (re.compile(r"uy", re.IGNORECASE), "ui"),
+    # Keep ck/x-family rules in a strict order to avoid over-replacement.
+    (re.compile(r"ckx", re.IGNORECASE), "ks"),
+    (re.compile(r"cks", re.IGNORECASE), "ks"),
+    (re.compile(r"x", re.IGNORECASE), "ks"),
+    (re.compile(r"kk", re.IGNORECASE), "k"),
+    (re.compile(r"ck", re.IGNORECASE), "k"),
+    (re.compile(r"ngh", re.IGNORECASE), "ng"),
+    (re.compile(r"gh", re.IGNORECASE), "g"),
+    (re.compile(r"(?<!s)ch", re.IGNORECASE), "g"),
+    (re.compile(r"c", re.IGNORECASE), "k"),
+    (re.compile(r"ph", re.IGNORECASE), "f"),
+    (re.compile(r"y", re.IGNORECASE), "ij"),
+]
+
+# Targeted long-s OCR confusions (s ↔ f) seen in raw spans.
+# Keep this list conservative and evidence-driven to avoid changing genuine
+# names that start with "F".
+_LONG_S_NORMS: list[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]]] = [
+    (re.compile(r"\bfch", re.IGNORECASE), "sch"),
+    (re.compile(r"\braadpenfionaris\b", re.IGNORECASE), "raadpensionaris"),
+    (re.compile(r"\bminifter\b", re.IGNORECASE), "minister"),
+    (re.compile(r"\bmajeft(eyt|eit)\b", re.IGNORECASE), lambda m: f"majest{m.group(1)}"),
+    (re.compile(r"\brefident\b", re.IGNORECASE), "resident"),
+    (re.compile(r"\bfecretaris\b", re.IGNORECASE), "secretaris"),
+    (re.compile(r"\bconful\b", re.IGNORECASE), "consul"),
+    (re.compile(r"\bamfterdam\b", re.IGNORECASE), "amsterdam"),
+    (re.compile(r"\bkeyferlijcke\b", re.IGNORECASE), "keyserlijcke"),
+    (re.compile(r"\bkeyferinne\b", re.IGNORECASE), "keyserinne"),
+    (re.compile(r"\bheynfius\b", re.IGNORECASE), "heynsius"),
+    (re.compile(r"\bwafsenaer\b", re.IGNORECASE), "wassenaer"),
+]
+
 # Split multi-person spans on Dutch conjunctions and punctuation
 _SPLIT_RE = re.compile(r"\s+ende\s+|,\s*|;\s*", re.IGNORECASE)
+_PATTERN_TOKEN_RE = re.compile(r"[A-Za-zÀ-ÿ]+(?:[-'][A-Za-zÀ-ÿ]+)*|\d+|[^\w\s]", re.UNICODE)
+_NAME_PARTICLES = {
+    "van",
+    "de",
+    "den",
+    "der",
+    "ten",
+    "te",
+    "tot",
+    "op",
+    "in",
+    "het",
+    "en",
+}
 
 
 def load_inventory_metadata(path: str | pathlib.Path) -> dict[int, dict]:
@@ -110,11 +196,104 @@ def load_ner(
     return pd.concat(chunks, ignore_index=True)
 
 
-def clean_span(text: str) -> str:
-    """Strip Dutch titles and normalise whitespace; return lowercased result."""
-    text = _TITLE_RE.sub(" ", text)
+def normalize_interpositions(text: str) -> str:
+    """Expand abbreviated Dutch tussenvoegsels to their canonical form.
+
+    Applies to both NER span text and delegate pattern strings so both sides
+    of the TF-IDF comparison use the same surface form.
+    """
+    for pattern, replacement in _INTERP_NORMS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+def normalize_spelling_variants(text: str) -> str:
+    """Normalise historical Dutch spelling variants to a shared form.
+
+    This is a light-weight phonetic canonicalisation layer so variants like
+    ``Broeckhuijsen`` and ``Broeckhuysen`` converge before vector scoring.
+    """
+    for pattern, replacement in _LONG_S_NORMS:
+        text = pattern.sub(replacement, text)
+    for pattern, replacement in _SPELLING_NORMS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+def normalize_name_for_matching(text: str) -> str:
+    """Canonicalise name text for matching without stripping identity tokens.
+
+    Intended for delegate pattern indexing and pre-cleaned name spans where we
+    want between-variant stability (interpositions + orthography) but do not
+    want to remove meaningful title/name words.
+    """
+    text = normalize_interpositions(text)
+    text = normalize_spelling_variants(text)
     text = re.sub(r"\s+", " ", text).strip().lower()
     return text
+
+
+def extract_title(text: str) -> str:
+    """Return the first noble/rank title found in *text*, or empty string.
+
+    Titles preceded by a stripped honorific (e.g. "de heer") are not matched
+    because :func:`clean_span` removes those honorifics first.  Call
+    ``extract_title`` on the *original* raw span to capture the title before
+    honorific stripping, or accept that "de heer" produces no title.
+    """
+    # strip non-identifying honorifics first so "de heer" doesn't leave a
+    # dangling "heer" that the noble-title regex would pick up as a title.
+    cleaned = _HONORIFIC_RE.sub(" ", text)
+    m = _NOBLE_TITLE_RE.search(cleaned)
+    return m.group(0).strip().lower() if m else ""
+
+
+def clean_span(text: str) -> str:
+    """Strip non-identifying honorifics, normalise whitespace; return lowercased result.
+
+    Noble titles (grave, hertog, jonkheer, …) are intentionally kept so the
+    estate name that follows them remains available for TF-IDF matching.
+    Use :func:`extract_title` to capture the title itself as a separate field.
+    """
+    text = _HONORIFIC_RE.sub(" ", text)
+    return normalize_name_for_matching(text)
+
+
+def mask_name_pattern(text: str | None, unknown: bool = False) -> str:
+    """Convert name-like text into a non-identifying structural signature.
+
+    This keeps token layout and particles (van/de/der/...) visible for pattern
+    analysis, while replacing lexical identity tokens with length markers.
+    """
+    if text is None or (isinstance(text, float) and pd.isna(text)):
+        return "[UNK_NAME]" if unknown else ""
+
+    value = re.sub(r"\s+", " ", str(text)).strip()
+    if not value:
+        return "[UNK_NAME]" if unknown else ""
+
+    masked_tokens: list[str] = []
+    for token in _PATTERN_TOKEN_RE.findall(value):
+        if token.isdigit():
+            masked_tokens.append(f"D{len(token)}")
+            continue
+
+        if re.fullmatch(r"[A-Za-zÀ-ÿ]+(?:[-'][A-Za-zÀ-ÿ]+)*", token):
+            lower = token.lower()
+            if lower in _NAME_PARTICLES:
+                masked_tokens.append(lower)
+            elif len(token) == 1:
+                masked_tokens.append("I")
+            else:
+                masked_tokens.append(f"N{len(token)}")
+            continue
+
+        masked_tokens.append(token)
+
+    masked = " ".join(masked_tokens)
+    if unknown:
+        return f"[UNK_NAME] {masked}" if masked else "[UNK_NAME]"
+    return masked
 
 
 def split_multi_person(text: str) -> list[str]:

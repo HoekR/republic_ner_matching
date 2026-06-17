@@ -25,11 +25,12 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from match import build_store, match_ner
+from match import build_attendance_year_index, build_store, match_ner
 from preprocess import (
     clean_span,
     load_inventory_metadata,
     load_ner,
+    normalize_interpositions,
     split_multi_person,
 )
 
@@ -71,9 +72,9 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument(
         "--year-tolerance",
         type=int,
-        default=15,
+        default=0,
         metavar="N",
-        help="Years ± around delegate active period for temporal gate (default 15).",
+        help="Years ± around delegate active period for temporal gate (default 0).",
     )
     p.add_argument(
         "--min-score",
@@ -81,6 +82,23 @@ def _parse_args() -> argparse.Namespace:
         default=0.1,
         metavar="F",
         help="Minimum combined score to keep a candidate (default 0.1).",
+    )
+    p.add_argument(
+        "--attendance",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help=(
+            "Optional attendance parquet path(s). Can be repeated. "
+            "Used as a soft yearly prior for candidate ranking."
+        ),
+    )
+    p.add_argument(
+        "--attendance-boost",
+        type=float,
+        default=0.1,
+        metavar="F",
+        help="Multiplicative boost factor for attendance hits (default 0.1 = +10%).",
     )
     return p.parse_args()
 
@@ -135,6 +153,12 @@ def main() -> None:
     print("Loading inventory metadata …")
     inv_lookup = load_inventory_metadata(inv_meta_path)
     print(f"  {len(inv_lookup):,} inventories")
+
+    attendance_index: dict[str, set[int]] | None = None
+    if args.attendance:
+        print("Loading attendance prior …")
+        attendance_index = build_attendance_year_index([str(pathlib.Path(p).expanduser()) for p in args.attendance])
+        print(f"  {len(attendance_index):,} delegates with attendance-year entries")
 
     # --- Stream NER file, match, write ---
     print(f"Matching NER spans from {ner_path.name} …")
@@ -201,6 +225,8 @@ def main() -> None:
             top_k=args.top_k,
             year_tolerance=args.year_tolerance,
             min_score=args.min_score,
+            attendance_years_by_id=attendance_index,
+            attendance_boost=args.attendance_boost,
         )
 
         # Attach provenance columns

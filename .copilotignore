@@ -1,0 +1,25 @@
+# Virtual environment and caches
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Large binary / serialised data files
+data/*.pkl
+data/*.parquet
+data/hoe_store.pkl*
+data/kwic_*.pkl
+
+# Eval outputs (generated artefacts, not source)
+data/eval/*.parquet
+data/eval/*.csv
+data/eval/*.json
+
+# Flat resolution exports (large generated files)
+resolutions_flat.csv
+resolutions_flat.parquet
+
+# uv lock file (dependency solver detail, rarely useful for code suggestions)
+uv.lock
+
+# git internals
+.git/

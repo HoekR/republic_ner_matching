@@ -1,0 +1,5 @@
+usage: run_match.py [-h] --ner PATH [--out PATH] [--delegates PATH]
+                    [--inv-meta PATH] [--year-min YEAR] [--year-max YEAR]
+                    [--top-k K] [--chunk-size N] [--year-tolerance N]
+                    [--min-score F] [--attendance PATH] [--attendance-boost F]
+run_match.py: error: the following arguments are required: --ner

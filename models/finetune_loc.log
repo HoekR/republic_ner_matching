@@ -1,0 +1,119 @@
+✓ Metal Performance Shaders (MPS) enabled for GPU acceleration
+======================================================================
+GysBERT Fine-tuning on LOC-Annotated 1626-1630 Data
+Started: 2026-06-09 12:17:40
+======================================================================
+
+Loading LOC-annotated training pairs...
+  Loaded 21310 pairs
+  Columns: ['resolution_id', 'paragraph_texts', 'htr_span', 'canonical_entity', 'entity_type', 'entity_id', 'offset', 'date', 'source']
+  Entity types: <ArrowStringArray>
+['place']
+Length: 1, dtype: str
+
+Creating corpus...
+  Train: 15634 pairs (852 dates)
+  Val: 3059 pairs (183 dates)
+  Test: 2617 pairs (183 dates)
+Formatting sentences...
+Formatting:   0%|          | 0/6293 [00:00<?, ?it/s]Formatting:   1%|          | 66/6293 [00:00<00:09, 659.43it/s]Formatting:   4%|▎         | 235/6293 [00:00<00:04, 1262.18it/s]Formatting:   6%|▌         | 362/6293 [00:00<00:05, 1044.95it/s]Formatting:   8%|▊         | 518/6293 [00:00<00:04, 1223.70it/s]Formatting:  10%|█         | 645/6293 [00:00<00:05, 1053.68it/s]Formatting:  13%|█▎        | 804/6293 [00:00<00:04, 1205.91it/s]Formatting:  15%|█▌        | 955/6293 [00:00<00:04, 1294.06it/s]Formatting:  17%|█▋        | 1090/6293 [00:00<00:04, 1103.70it/s]Formatting:  20%|█▉        | 1245/6293 [00:01<00:04, 1219.63it/s]Formatting:  22%|██▏       | 1407/6293 [00:01<00:03, 1326.26it/s]Formatting:  25%|██▍       | 1547/6293 [00:01<00:04, 1109.33it/s]Formatting:  27%|██▋       | 1704/6293 [00:01<00:03, 1223.11it/s]Formatting:  30%|██▉       | 1861/6293 [00:01<00:03, 1313.31it/s]Formatting:  32%|███▏      | 2019/6293 [00:01<00:03, 1385.35it/s]Formatting:  34%|███▍      | 2164/6293 [00:01<00:03, 1085.89it/s]Formatting:  37%|███▋      | 2336/6293 [00:01<00:03, 1234.12it/s]Formatting:  40%|███▉      | 2512/6293 [00:02<00:02, 1365.62it/s]Formatting:  43%|████▎     | 2676/6293 [00:02<00:02, 1436.84it/s]Formatting:  45%|████▌     | 2839/6293 [00:02<00:02, 1486.67it/s]Formatting:  48%|████▊     | 2995/6293 [00:02<00:02, 1109.76it/s]Formatting:  50%|█████     | 3154/6293 [00:02<00:02, 1217.73it/s]Formatting:  53%|█████▎    | 3317/6293 [00:02<00:02, 1317.82it/s]Formatting:  55%|█████▌    | 3477/6293 [00:02<00:02, 1388.39it/s]Formatting:  58%|█████▊    | 3628/6293 [00:02<00:01, 1421.04it/s]Formatting:  60%|██████    | 3778/6293 [00:03<00:02, 1003.05it/s]Formatting:  62%|██████▏   | 3931/6293 [00:03<00:02, 1116.76it/s]Formatting:  65%|██████▍   | 4080/6293 [00:03<00:01, 1203.36it/s]Formatting:  67%|██████▋   | 4234/6293 [00:03<00:01, 1285.57it/s]Formatting:  70%|██████▉   | 4381/6293 [00:03<00:01, 1333.44it/s]Formatting:  72%|███████▏  | 4529/6293 [00:03<00:01, 1373.13it/s]Formatting:  74%|███████▍  | 4677/6293 [00:03<00:01, 1402.97it/s]Formatting:  77%|███████▋  | 4827/6293 [00:03<00:01, 1428.28it/s]Formatting:  79%|███████▉  | 4974/6293 [00:04<00:01, 934.45it/s] Formatting:  82%|████████▏ | 5135/6293 [00:04<00:01, 1077.29it/s]Formatting:  84%|████████▍ | 5285/6293 [00:04<00:00, 1173.82it/s]Formatting:  86%|████████▋ | 5438/6293 [00:04<00:00, 1259.99it/s]Formatting:  89%|████████▉ | 5587/6293 [00:04<00:00, 1319.84it/s]Formatting:  91%|█████████▏| 5744/6293 [00:04<00:00, 1386.73it/s]Formatting:  94%|█████████▎| 5898/6293 [00:04<00:00, 1429.46it/s]Formatting:  96%|█████████▌| 6048/6293 [00:04<00:00, 1440.88it/s]Formatting:  98%|█████████▊| 6197/6293 [00:05<00:00, 882.46it/s]                                                                 Formatting:   0%|          | 0/1168 [00:00<?, ?it/s]Formatting:  14%|█▍        | 161/1168 [00:00<00:00, 1602.64it/s]Formatting:  28%|██▊       | 322/1168 [00:00<00:00, 1555.14it/s]Formatting:  41%|████      | 478/1168 [00:00<00:00, 1483.42it/s]Formatting:  54%|█████▎    | 627/1168 [00:00<00:00, 1475.31it/s]Formatting:  66%|██████▋   | 775/1168 [00:00<00:00, 1458.92it/s]Formatting:  79%|███████▉  | 921/1168 [00:00<00:00, 1438.89it/s]Formatting:  92%|█████████▏| 1076/1168 [00:00<00:00, 1472.76it/s]                                                                 Formatting:   0%|          | 0/951 [00:00<?, ?it/s]Formatting:  16%|█▌        | 149/951 [00:00<00:00, 1489.34it/s]Formatting:  31%|███▏      | 298/951 [00:00<00:00, 1489.61it/s]Formatting:  47%|████▋     | 447/951 [00:00<00:00, 654.87it/s] Formatting:  63%|██████▎   | 597/951 [00:00<00:00, 842.86it/s]Formatting:  79%|███████▊  | 747/951 [00:00<00:00, 1001.45it/s]Formatting:  95%|█████████▍| 900/951 [00:00<00:00, 1135.02it/s]                                                               /Users/rikhoekstra/develop/republic_ner_matching/finetune_gysberg_loc.py:163: DeprecationWarning: Call to deprecated method __init__. (The 'SentenceDataset' class was renamed to 'FlairDatapointDataset') -- Deprecated since version 0.11.
+  train=SentenceDataset(train_sentences),
+/Users/rikhoekstra/develop/republic_ner_matching/finetune_gysberg_loc.py:164: DeprecationWarning: Call to deprecated method __init__. (The 'SentenceDataset' class was renamed to 'FlairDatapointDataset') -- Deprecated since version 0.11.
+  dev=SentenceDataset(val_sentences),
+/Users/rikhoekstra/develop/republic_ner_matching/finetune_gysberg_loc.py:165: DeprecationWarning: Call to deprecated method __init__. (The 'SentenceDataset' class was renamed to 'FlairDatapointDataset') -- Deprecated since version 0.11.
+  test=SentenceDataset(test_sentences),
+  Train sentences: 6293
+  Val sentences: 1168
+  Test sentences: 951
+
+
+Fine-tuning GysBERT...
+  Loading emanjavacas/GysBERT...
+  Creating sequence tagger...
+2026-06-09 12:17:50,054 Computing label dictionary. Progress:
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+0it [00:00, ?it/s]5604it [00:00, 56031.50it/s]6293it [00:00, 55786.94it/s]
+2026-06-09 12:17:50,168 Dictionary created for label 'ner' with 2 values: O (seen 569937 times), PLACE (seen 8849 times)
+2026-06-09 12:17:50,168 SequenceTagger predicts: Dictionary with 2 tags: O, PLACE
+/Users/rikhoekstra/develop/republic_ner_matching/.venv/lib/python3.12/site-packages/flair/trainers/trainer.py:545: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler(enabled=use_amp and flair.device.type != "cpu")
+  Starting training...
+2026-06-09 12:17:50,180 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Model: "SequenceTagger(
+  (embeddings): TransformerWordEmbeddings(
+    (model): BertModel(
+      (embeddings): BertEmbeddings(
+        (word_embeddings): Embedding(30523, 768, padding_idx=0)
+        (position_embeddings): Embedding(512, 768)
+        (token_type_embeddings): Embedding(2, 768)
+        (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (encoder): BertEncoder(
+        (layer): ModuleList(
+          (0-11): 12 x BertLayer(
+            (attention): BertAttention(
+              (self): BertSdpaSelfAttention(
+                (query): Linear(in_features=768, out_features=768, bias=True)
+                (key): Linear(in_features=768, out_features=768, bias=True)
+                (value): Linear(in_features=768, out_features=768, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+              )
+              (output): BertSelfOutput(
+                (dense): Linear(in_features=768, out_features=768, bias=True)
+                (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+              )
+            )
+            (intermediate): BertIntermediate(
+              (dense): Linear(in_features=768, out_features=3072, bias=True)
+              (intermediate_act_fn): GELUActivation()
+            )
+            (output): BertOutput(
+              (dense): Linear(in_features=3072, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+        )
+      )
+      (pooler): BertPooler(
+        (dense): Linear(in_features=768, out_features=768, bias=True)
+        (activation): Tanh()
+      )
+    )
+  )
+  (word_dropout): WordDropout(p=0.05)
+  (locked_dropout): LockedDropout(p=0.5)
+  (embedding2nn): Linear(in_features=768, out_features=768, bias=True)
+  (rnn): LSTM(768, 256, batch_first=True, bidirectional=True)
+  (linear): Linear(in_features=512, out_features=4, bias=True)
+  (loss_function): ViterbiLoss()
+  (crf): CRF()
+)"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Corpus: 6293 train + 1168 dev + 951 test sentences
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Train:  6293 sentences
+2026-06-09 12:17:50,181         (train_with_dev=False, train_with_test=False)
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Training Params:
+2026-06-09 12:17:50,181  - learning_rate: "0.1" 
+2026-06-09 12:17:50,181  - mini_batch_size: "16"
+2026-06-09 12:17:50,181  - max_epochs: "10"
+2026-06-09 12:17:50,181  - shuffle: "True"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Plugins:
+2026-06-09 12:17:50,181  - AnnealOnPlateau | patience: '3', anneal_factor: '0.5', min_learning_rate: '0.0001'
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Final evaluation on model from best epoch (best-model.pt)
+2026-06-09 12:17:50,181  - metric: "('micro avg', 'f1-score')"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Computation:
+2026-06-09 12:17:50,181  - compute on device: mps
+2026-06-09 12:17:50,181  - embedding storage: cpu
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 Model training base path: "models/gysberg_delegate_ner_loc"
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:17:50,181 ----------------------------------------------------------------------------------------------------
+2026-06-09 12:18:28,902 epoch 1 - iter 39/394 - loss 0.10827372 - time (sec): 38.72 - samples/sec: 1492.91 - lr: 0.100000 - momentum: 0.000000

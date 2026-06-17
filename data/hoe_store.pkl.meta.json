@@ -1,0 +1,6 @@
+{
+  "python_version": "3.12.13",
+  "python_major_minor": "3.12",
+  "sklearn_version": "1.8.0",
+  "perscatrep_path": "/Users/rikhoekstra/develop/republic_ner_matching/data/perscatrep.tsv"
+}

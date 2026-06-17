@@ -1,0 +1,114 @@
+{
+  "other": {
+    "total_occurrences": 5523,
+    "distinct_forms": 1055,
+    "top_forms": [
+      "'",
+      ".",
+      "-",
+      ",",
+      "jr",
+      "„",
+      "st",
+      "f. g",
+      "=",
+      "2"
+    ]
+  },
+  "person_citizen": {
+    "total_occurrences": 357952,
+    "distinct_forms": 87845,
+    "top_forms": [
+      "resident",
+      "keyser",
+      "sijne keyserlijcke majesteyt",
+      "heere resident",
+      "heere grave van rechteren",
+      "grave",
+      "president",
+      "onderdanen",
+      "burger",
+      "resident van"
+    ]
+  },
+  "person_family": {
+    "total_occurrences": 49680,
+    "distinct_forms": 20720,
+    "top_forms": [
+      "rechters",
+      "rechter",
+      "doctor",
+      "pachters",
+      "pachter",
+      "vader",
+      "rechteren",
+      "kinderen",
+      "kinderen van",
+      "dochter"
+    ]
+  },
+  "person_legal_status": {
+    "total_occurrences": 346191,
+    "distinct_forms": 106143,
+    "top_forms": [
+      "weduwe",
+      "rentmeester",
+      "coninck",
+      "heeren van raesfelt",
+      "syn excie",
+      "weduwe van",
+      "wijlen",
+      "syn extie",
+      "syne mat",
+      "wylen"
+    ]
+  },
+  "person_meeting_role": {
+    "total_occurrences": 162392,
+    "distinct_forms": 58678,
+    "top_forms": [
+      "gedeputeerden",
+      "gecommitteerden",
+      "heeren gedeputeerden",
+      "haer ho:mo: gedeputeerden",
+      "gedeputeerde",
+      "hare ho:mo: gedeputeerden",
+      "gecommitteerde",
+      "heeren haer ho:mo: gedeputeerden",
+      "gedepden",
+      "ruijters"
+    ]
+  },
+  "person_profession": {
+    "total_occurrences": 2545179,
+    "distinct_forms": 759568,
+    "top_forms": [
+      "griffier",
+      "consul",
+      "secretaris",
+      "commissaris",
+      "agent",
+      "ontfanger",
+      "schipper",
+      "ontfanger generael",
+      "capn",
+      "capiteyn"
+    ]
+  },
+  "person_title": {
+    "total_occurrences": 781372,
+    "distinct_forms": 167790,
+    "top_forms": [
+      "heeren van ommeren",
+      "colonnel",
+      "sijne",
+      "sijne mat",
+      "ter vergaderinge presiderende",
+      "coninck van denemarcken",
+      "extraordinaris envoyé van",
+      "lieutenant",
+      "coninck van vranckrijck",
+      "heeren"
+    ]
+  }
+}

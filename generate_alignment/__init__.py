@@ -1,0 +1,1 @@
+"""Alignment generation pipeline package."""

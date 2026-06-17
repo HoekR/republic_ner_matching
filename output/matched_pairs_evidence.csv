@@ -1,0 +1,372 @@
+sample_id,enriched_date,flat_date,date_diff_days,is_same_day,is_summary_anchor,confidence_score,evidence_summary,places_found_in_flat,persons_found_in_flat,organizations_found_in_flat,enriched_preview,flat_preview
+1,1627-03-06,1627-03-05,1,False,False,601,"date: 1 day gap; places: 2/10 matched (Utrecht, Heusden); persons: 0/6 matched; orgs: 0/1 matched; anchor: no","['Utrecht', 'Heusden']",[],[],"De raden van State
+ De Rover, Stavenisse,
+ Veltriel
+ en Gruijs verschijnen ter
+ vergadering. Zij verklaren dat de fortificaties tegen minder geld
+ kunnen worden aanbesteed als de aannemers contant geld 
+ gegeven wordt. Zij vragen of een dergelijke belofte mag worden
+ gedaan. 
+ HHM besluiten de beste","Synde geproponeert dat eenige borgers ende borgers Vrouwen tot Breda fixe domicilium houdende met namen lyn knepen met haere kinderen, May Stoffels met haere kinderen, Anthoni den schipper met syn Vrouw, Jasper den kremer met syn Vrouw,
+
+Neel boenders, Maiken Gorissen met haer suster, Ien de decke e"
+2,1629-02-21,1629-02-21,0,True,True,10601,"date: same-day; places: 2/8 matched (Tunis, Palermo); persons: 0/0 matched; orgs: 0/6 matched; anchor: yes","['Tunis', 'Palermo']",[],[],"De gedeputeerden van Holland delen mee dat er bij de Staten van
+ Holland, momenteel ter dagvaart, door
+ echtgenotes,
+ kinderen, ouders en vrienden zeer sterk wordt aangedrongen op de 
+ vrijlating van de Nederlandse gevangenen in
+ Tunis en Algiers, de 115
+ matrozen
+ tegen wie in Palermo op Sicilië
+ e","De heeren van Hollant hebben geproponeert dat de heeren Staten haere principale jegenwoordich ter dachvaert vergadert synde seer hart aengelopen worden, vande huisvrouwen ende kinderen ouders ende vrunden respective van d'ingesetenen deser landen tot Thunis ende Algier gevangen sittende als oock med"
+3,1629-06-05,1629-06-05,0,True,True,10201,"date: same-day; places: 0/3 matched; persons: 0/5 matched; orgs: 2/10 matched (2, 29); anchor: yes",[],[],"['2', '29']","Sommelsdyck en Oenema delen mee dat de
+ gisteren genomen resolutie om een delegatie te sturen naar de op
+ het punt van de legerlasten in gebreke blijvende provincies,
+ vandaag
+ naar de RvS is verstuurd. Zij
+ hebben
+ daarop
+ de tekorten nagekeken en het volgende vastgesteld. 
+ In Gelderland hebben he","Ontfangen een missive vanden heer Schaffer geschreven tot Liewerden den ijen deses, ende neffens dien, de consenten vande heeren van Vrieslant opde lichtinge vande waergelders: ten ije. op d'alliantie van Sweden: ende ten iije. optije. en ije Consent van Vrieslivyffdepaert inde legerlasten van desen"
+4,1630-01-29,1630-01-29,0,True,True,11201,"date: same-day; places: 4/17 matched (Efferen, Goch, Schravelen, Veluwe); persons: 0/7 matched; orgs: 0/0 matched; anchor: yes","['Efferen', 'Goch', 'Schravelen', 'Veluwe']",[],[],"Rantwyck en andere gedeputeerden van HHM hebben conform de
+ resolutie van 26 jan. aan Z.Exc. de inhoud van het schriftelijke
+ rapport van
+ Van
+ de
+ Cappelle meegedeeld. Dit handelt over het
+ verschaffen van een maand gage voor de troepen onder
+ graaf
+ Willem in [Gulik en
+ Kleef] 
+ de beraming deze m","Opt' versouck vanden Student Hazius, Is hem nae voorgaende deliberae toegeleyt tot promotie van syne studie de somme van hondert guldens, Waer van hem ordonnantie gedepescheert sal worden.
+
+Is inde vergaderinge binne gestaen de Secretaris Huygens ende heeft van weegen den Raet van State haer Ho:Mo: "
+5,1629-04-12,1629-04-12,0,True,True,10601,"date: same-day; places: 2/8 matched (Amsterdam, Wadden); persons: 0/6 matched; orgs: 0/2 matched; anchor: yes","['Amsterdam', 'Wadden']",[],[],"In aanwezigheid van Z.Exc. en de RvS buigt de
+ vergadering zich over de commissie, de instructie en een concept
+ van
+ een artikelbrief die de gecommitteerden van de
+ Admiraliteit te Amsterdam op 7
+ april
+ aan HHM
+ voorgelegd hebben. Volgens deze stukken heeft
+ Mathias Tipotius, commissaris van
+ de
+ ","Ontfangen een missive vanden selven geschreven als vooren den eersten deses houdende advertentie. Waerop egeen resolutie, Is gevallen. Is ter presentie van syn Excie. ende des Raets van State geexamineert de commissie ende instructie midtsgaders seker concept van een artyckelbrieff byde Gecommitteer"
+6,1628-09-18,1628-09-18,0,True,False,10301,date: same-day; places: 1/9 matched (Utrecht); persons: 0/5 matched; orgs: 0/1 matched; anchor: no,['Utrecht'],[],[],"Soelen, Terestein,
+ Overlander en
+ Van der Lingen, afgevaardigden
+ voor
+ de uitdieping
+ en verbetering van de Rijn en IJssel, compareren. Conform de
+ resolutie van 22
+ dec.
+ 1626, die van de RvS van 4 jan. 1627 en latere, gelijksoortige
+ besluiten hebben zij met het leggen van de Vosselsche krib aan",Synde byde heeren van t'quartier van Nymegen voorgedragen dat haer hooch Mo: goetgevonden hebben den ixen. deses te schryuen aen t'collegie ter admiraliteyt tot Rotterdam om te hebben bericht opde clachte die de coopluijden & andere ingesetenen der voors Stede hebben gedaen ter saecke van xvic lxxi.
+7,1627-12-18,1627-12-18,0,True,True,11201,"date: same-day; places: 4/11 matched (Emden, Bourtange, Bellingwolde, Norden); persons: 0/4 matched; orgs: 0/4 matched; anchor: yes","['Emden', 'Bourtange', 'Bellingwolde', 'Norden']",[],[],"Conform de resolutie van 14 dec. worden met Z.Exc., Ernst Casimir en met de
+ RvS de vandaag ontvangen
+ brieven besproken, zowel van de Gedeputeerde
+ Staten
+ van
+ Groningen als van commandant Erentreiter,
+ en andere berichten over de komst van het
+ keizerlijk volk naar Oost-Friesland. 
+ Mede gelet op","President de Heer Walta, Present de Heeren Post Prandium
+
+Synde volgens de resolutie vanden xiiijen. deses met Syn Extie. den heere Graeff Ernst Casimir van Nassauw Stadtholder van Vrieslandt, Stadt Groeningen ende Ommelanden @t ende den Raedt van State in deliberatie geleit de missiven alsdoen ophu"
+8,1628-06-13,1628-06-12,1,False,False,1002,"date: 1 day gap; places: 3/8 matched (Holtmeer, Zutphen, Leur); persons: 0/6 matched; orgs: 1/3 matched (2); anchor: no","['Holtmeer', 'Zutphen', 'Leur']",[],['2'],"De binnengekomen Maximiliaen, vrijheer van Batenburch, en dr. Maerten
+ Vermeer dienen een remonstrantie in.De
+ remonstrantie is geïnsereerd in
+ S.G. 3187. 
+ Op last van de Staten en het Hof van Gelderland heeft de momber de remonstrant voor het Hof gedaagd met het doel hem zijn
+ recht van appèl, het","President de heer Ploos, present de heeren Hungens, Martis den xiijen. Juny Feit, Noortwyck, 26. van Beveren, vander Dusse,
+
+Gelesen synde de requeste van Capn. Godefriedt zur Muchlen versoeckende loopgelt voor syn onderhebbent volck daermede hy in dienste van haer ho:Mo: is aengenomen, Is tselue af"
+9,1629-12-07,1629-12-07,0,True,True,10702,"date: same-day; places: 2/3 matched (Breda, Emden); persons: 0/6 matched; orgs: 1/8 matched (29); anchor: yes","['Breda', 'Emden']",[],['29'],"Gelezen is het antwoordGeïnsereerd in S.G. 3188. van thesaurier-generaal Van Goch, de voormalige
+ ontvanger-generaal en de
+ huidige ontvanger-generaal in
+ navolging van de
+ resolutie van HHM d.d. 4 dec. over de vele klachten waarmee HHM en
+ de
+ RvS dagelijks worden overvallen. Het betreft klachten o",Synde gelesen de requeste van d'erffgen onder benefitie van inventaris van wylen Mr. Willem Martini eerste als ords. Raet inden Rade van Brabant Erfgenamen vanden Is hun Supplten na voorgaende deliberatie geconsenteert ende geaccordeert Raetsheer Martinieen half Jaer tractements soo van eerste Raet 
+10,1627-02-27,1627-02-27,0,True,True,14201,"date: same-day; places: 14/26 matched (Dordrecht, Merwede, Zeeland, Holland, Brabant); persons: 0/2 matched; orgs: 0/2 matched; anchor: yes","['Dordrecht', 'Merwede', 'Zeeland', 'Holland', 'Brabant', 'Hertogenbosch', 'Biesbosch', 'Hooge Kil', 'Bassekil', 'Holland', 'Zeeland', 'Lorregat', 'Breda', 'Altena']",[],[],"HHM hervatten de behandeling van de remonstrantie van de gedeputeerden van Dordrecht, op 21 jan. door de afgevaardigden van de
+ Rotterdamse Admiraliteit 
+ overhandigd. Het stuk bevat onder meer plannen voor de
+ beveiliging
+ van de
+ Hollandse rivieren. Een betere
+ beveiliging van de rivieren tegen vi","Geresumeert synde de missive vande Gecommitteerde Raden ter Admirt. tot Rotterdam den xxven. deses ontfangen, Is geaccordeert dat sy de verhuirders ende vercopers vande schepen die sy volgens d'overgesondene lyste schuldich syn de somme van vierenvyftich duisent achtenveertich guldens vyffthien stui"
+11,1629-09-01,1629-09-01,0,True,True,10901,"date: same-day; places: 3/21 matched (Amersfoort, Arnhem, Rees); persons: 0/3 matched; orgs: 0/1 matched; anchor: yes","['Amersfoort', 'Arnhem', 'Rees']",[],[],"Ontvangen is een brief van het Hof van Gelderland d.d. Arnhem 30 aug., inhoudend dat de keizerlijke troepen onder het gebied van de graaf van Montecuculi direct met de capitulatie te Amersfoort
+ vele boeren en hun wagens en paarden beladen met geplunderde
+ goederen
+ mee hebben genomen. Ze geven HHM ","Ontfangen een missive van t'collegie ter Admiraliteyt tot Amsterdam geschreven aldaer den lesten augusti lestleden houdende, dat niet iegenstaende de sluytinge van eedt ende drinckwaeren gedaen den 19e. July ende 3e. augusti lestleden, de selve in groote abundantie met binnelantsche paspoorten van d"
+12,1628-01-25,1628-01-25,0,True,True,12701,"date: same-day; places: 9/30 matched (Venlo, Roermond, Rees, Breda, Altena); persons: 0/1 matched; orgs: 0/0 matched; anchor: yes","['Venlo', 'Roermond', 'Rees', 'Breda', 'Altena', 'Heusden', 'Brabant', 'Zutphen', 'Somme']",[],[],"Essen en andere gecommitteerden hebben gesproken over
+ verhoging van de inkomsten uit de
+ konvooien en licenten. Zij overhandigen 
+ een memorieDe memorie is geïnsereerd In
+ S.G. 3187 en gedrukt in: Aitzema, S.
+ & O. kwarto II, 620-626/folio I,
+ 773-775.van maatregelen die uitgevoerd
+ zouden kunnen w","Alsoo door het versuym van het suyveren der binnen Lantsche pasporten, merckelycke frauden worden gepleecht, daer door het gemeene Lant soo grooten schade heeft geleden, ende noch Is lydende, ten regarde die vyant, bysonder de Licenten geslooten synde, daer door middel wort gegeuen om alles te becom"
+13,1628-07-07,1628-07-07,0,True,True,10601,"date: same-day; places: 2/12 matched (Texel, Noorwegen); persons: 0/3 matched; orgs: 0/4 matched; anchor: yes","['Texel', 'Noorwegen']",[],[],"HHM hervatten het gisteren gedane rapport van de aanwezige afgevaardigden van de Admiraliteitscolleges inzake het door de Fransen veroveren van op Engeland handelende Nederlandse schepen en het schoonmaken en
+ bevoorraden van de tot bescherming van Het Kanaal
+ ingezette schepen. 
+ Aangaande het eers","omme te revictualieren, niet langer aen lant blyvende als den tyt van acht off ten lancksten thien dagen, ende alsdan sich weder sal laten vinden op haere gedestineerde plaets ende vaerwater (ter ware sulcx by storm, onweder, ende harde contrarie winden off andersints wierde beleth) staende t'selue "
+14,1628-04-28,1628-04-28,0,True,True,10601,"date: same-day; places: 2/11 matched (Bourtange, Hasselt); persons: 0/1 matched; orgs: 0/3 matched; anchor: yes","['Bourtange', 'Hasselt']",[],[],"De heren van de RvS overhandigen het advies van hen en Z.Exc. inzake de remonstrantie van Friesland en Groningen over het bouwen van
+ enkele fortificaties. 
+ I Leerort dient te blijven zoals het is. Het oude werk richting
+ Leer moet echter worden gerepareerd opdat het niet
+ door
+ kanonschoten kan wo","Noch ontfangen een missiue vanden Agent Mibassen geen resolutie vereyschende.
+
+Syn ter vergaderinge gecompareert de heeren Raden van State, ende Is op derselver aduis goetgevonden de Prouincien aen te schryuen, dat sy vande nieuwe lichtinge van theen duysent man, de compaignien op haer gerepartieert"
+15,1626-03-31,1626-03-31,0,True,True,10901,"date: same-day; places: 3/8 matched (Arnhem, Rees, Goch); persons: 0/0 matched; orgs: 0/0 matched; anchor: yes","['Arnhem', 'Rees', 'Goch']",[],[],"Schippers uit Nijmegen, Tiel, Arnhem en
+ Culemborg met hun schepen in Rees
+ verzoeken hun bederfelijke vis en waren in kleine hoeveelheden en
+ tegen
+ attestatie naar neutrale plaatsen te mogen brengen. Aangezien
+ onlangs
+ nog op paspoort een partij goederen van Emmerik
+ naar
+ Kleef en Goch is vervoe","Is gelesen de reqte. van verscheidene schippers van Nimmegen, Thiel, Arnhem, ende Culenborch, tegenwoordich met haere schepen tot Rees liggende, Versouckende dat sy haere verderfflycke visch ende waeren met cleine quantiteit mogen brengen op Neutrale plaetzen, mits brengende attestatie deselve aldae"
+16,1630-05-04,1630-05-04,0,True,True,11501,"date: same-day; places: 5/10 matched (Olinda, Saluzzo, Mantua, Emden, Emden); persons: 0/6 matched; orgs: 0/0 matched; anchor: yes","['Olinda', 'Saluzzo', 'Mantua', 'Emden', 'Emden']",[],[],"Deze resolutie is gedeeltelijk door een
+ klerk ingeschreven in S.G. 55. 
+ In de vergadering compareert ambassadeur Guzzoni. Hij heeft HHM gelukgewenst met de zege over
+ Olinda en Pernambuco. Hij bericht
+ verder over de oorlogssituatie tussen de koning van
+ Frankrijk
+ en
+ de hertog van Mantua in het
+","Is gelesen de requeste van Wouter van Rymsdyck: Licentmeester binnen der Stadt Grave houdende versouck dat haer Ho:Mo: om de redenen in de Rymsdyck, Convoynr. voors requeste verhaelt, Jan van Rymsdyck syn suppliants soon souden willen verleenen acte expectatif ende commissie vant' voors ampt te bedi"
+17,1629-05-26,1629-05-26,0,True,True,10901,"date: same-day; places: 3/12 matched (Valence, Languedoc, Amsterdam); persons: 0/6 matched; orgs: 0/1 matched; anchor: yes","['Valence', 'Languedoc', 'Amsterdam']",[],[],"Ambassadeur De Beaugij deelt de vergadering mee dat hij van zijn meester, de
+ koning van Frankrijk, brieven
+ heeft ontvangen
+ d.d.
+ Susa 26 april. Nadat hij Casale ontzet heeft, is
+ de
+ koning er nu ook in geslaagd Gonsales te
+ verdrijven uit alle plaatsen die deze in
+ Monferrato
+ bezet hield. Verde","Het versouck van Johannes Angelius Werdenhagen om met de somme van ses duysent vier hondert eenen vyftich gul tien stuivers opde lyste vande crediteuren van heer Administrator gestelt te worden als de selve somme aen syn L. ten achteren synde. Is nae voorgaende deliberatie affgeslagen, Adamus Strigl"
+18,1629-08-18,1629-08-18,0,True,True,13102,"date: same-day; places: 10/25 matched (Amersfoort, Amerongen, Vianen, Arnhem, Wageningen); persons: 0/8 matched; orgs: 1/1 matched (7); anchor: yes","['Amersfoort', 'Amerongen', 'Vianen', 'Arnhem', 'Wageningen', 'Buren', 'Vianen', 'Leerdam', 'Asperen', 'Nederbetuwe']",[],['7'],"Deze resolutie is door een klerk
+ ingeschreven in S.G. 54 en gedeeltelijk afgedrukt in
+ Aitzema, S. & O. kwarto II,
+ 856-857/folio I, 871. 
+ Raadsheren Diderick van Bemmel en burggraaf Bernard van
+ Welderen hebben uit kracht van
+ hun
+ geloofsbrieven van het Hof van
+ Gelderland d.d. 6/16 augustus. HH",Synde gelesen de requeste van Symon Graffils uyt den lande van Rutsenborch sittende binnen Geertruytdenberch gevangen gesecundeert by missive van syn Excie. in dato 17e. deses om te mogen genieten t' beneficie vande wisselinge der gevangenen den 16e Juny lestleden gearresteert daerinne hy suppliant 
+19,1628-03-13,1628-03-13,0,True,True,10601,"date: same-day; places: 2/7 matched (Texel, Montpellier); persons: 0/14 matched; orgs: 0/2 matched; anchor: yes","['Texel', 'Montpellier']",[],[],"HHM lezen een groot memoriaal van de Franse ambassadeur.Het in het Frans gestelde memoriaal is
+ geïnsereerd in S.G. 3187 en in vertaling gedrukt in:
+ Aitzema, S. & O. kwarto II,
+ 610-613/folio I,
+ 768-770. 
+ Nadat D'Espesses eergisteren bij HHM heeft aangedrongen op het dikwijls verzochte paspoort, ","Is gelesen een groot memoriael byden heer Ambassr. van Vranckryck Ingesonden, daerby deselue alnoch versouckt consent om te mogen uytvoeren de Waeren inde Memorie den xen. deses ouergegeuen gespecificeert, en daerbeneffens een groote deductie maeckt ouer t'geene by den hoogen Crychsraet in deliberat"
+20,1626-12-05,1626-12-04,1,False,False,402,date: 1 day gap; places: 1/16 matched (Dalen); persons: 0/1 matched; orgs: 1/3 matched (26); anchor: no,['Dalen'],[],['26'],"Aangevoerd wordt dat Z.Exc. naar aanleiding van de eergisteren ontvangen brief van de Gedeputeerde Staten van Groningen voorstelt van de 43 in Friesland en Groningen gelegerde compagnieën soldaten
+ er vijftien bij Dalen onder te brengen. Die kunnen
+ dan
+ tezamen met de vijftien ruitercompagnieën uit","Opt versouck van Jan van Dalen Griffier van Chrychsraet, Is om redenen daerinne verhaelt hem voor dit lopende Jaer 1626. toegeleit de somme van vyftich guldens eens.
+
+Is David Lommelin gepresenteert hebbende een boexken toegeleit vyfthien guldens. Synde byde heeren gisteren gecommitteert totte confe"
+21,1629-10-16,1629-10-16,0,True,False,10301,date: same-day; places: 1/7 matched (Veluwe); persons: 0/0 matched; orgs: 0/3 matched; anchor: no,['Veluwe'],[],[],"HHM zullen in verband met het overgaan van 's-Hertogenbosch en het verlaten van de Veluwe door de vijand
+ de Admiraliteit te Rotterdam
+ schriftelijk
+ verzoeken om informatie wat voor schepen dit College heeft liggen
+ op de
+ Maas, de Waal en de
+ Rijn. Ook zullen de Admiraliteit te
+ Amsterdam en in he",het versouck van Capn Dominicus van Coevorden om te hebben betalinge van syn achterstallige soldien Is gestelt ter dispositie van Raedt van State. Francois Falckenburch is uyt commiseratie toegeleyt de somme van drie gul die hem door de camerbewaerder herdersum sullen worden betaelt Mr. antonis vand
+22,1626-01-20,1626-01-21,1,False,False,301,date: 1 day gap; places: 1/13 matched (Vlissingen); persons: 0/6 matched; orgs: 0/3 matched; anchor: no,['Vlissingen'],[],[],"Over de zaterdag jl. door de pachters van de konvooien en licenten ingeleverde puntenGeïnsereerd door een klerk in S.G. 51. besluiten HHM het volgende:
+ 
+ I De supplianten vragen hun rekest d.d. 3 nov. 1625 in te willigen en te gelasten dat zij in hoger beroep mogen gaan tegen de gewezen of nog te w","Alsoo de Leger lasten, soo langs soo grooter vallen, ende mitsdien verstaen wert dat daerop nauwer toesicht dient genomen te werden, ende specialicken opte schepen die int leger gebruickt werden, Is goetgevonden dat uyt de Vergaderinge van haer ho:Mo: ende het Collegie des Raedts van State eenige ge"
+23,1628-02-03,1628-02-03,0,True,True,11201,"date: same-day; places: 4/13 matched (Emden, Norden, Eems, Jade); persons: 0/2 matched; orgs: 0/3 matched; anchor: yes","['Emden', 'Norden', 'Eems', 'Jade']",[],[],"De RvS adviseert d.d. 1 feb. op de op 27, 29 en 31 jan. ontvangen brieven van Ernst Casimir en de gedeputeerden in Emden. 
+ HHM besluiten op het eerste punt van de zes vragen van de stad Emden conform het advies en eerder genomen resoluties, met name die van 22 januari. De toevoer naar Oost-Frieslan","Is gelesen het aduis des Raedts van State geformeert den 1en. deses opte respectiue missiven soo vanden heere Stadtholder Graeff Ernst Casimir van Nassauw s. als vande heeren haer Ho:Mo: gedeputeerden tot Embden den 27e 29. ende 31e. January lestleden ontfangen, ende naer deliberatie daerop gehouden"
+24,1629-01-27,1629-01-27,0,True,True,10201,"date: same-day; places: 0/0 matched; persons: 0/3 matched; orgs: 2/14 matched (2, 29); anchor: yes",[],[],"['2', '29']","Deze resolutie is door een klerk
+ ingeschreven in S.G. 54. Deze resolutie is in enigszins gewijzigde
+ versie ook gedrukt: Aitzema, S. & O.
+ kwarto II, 701-705/folio I, 809-811. 
+ Essen en de andere gedeputeerden rapporteren over hun besogne rond
+ de staat van oorlog op zee voor het jaar 1629. Ze heb","Ontfangen een missive van haer Ho:Mo: gesanten in Vranryck geschreven tot Paris den xiijen. deses Waerop egeen resolutie is gevallen. Synde byde heeren Essen ende andere haer Ho:Mo: Gedepden gerapporteert, hoe dat sy gebesoigeert hadden opden staedt van oorloge te water voor het jaer 1629. ende dien"
+25,1629-11-21,1629-11-21,0,True,True,10601,"date: same-day; places: 2/5 matched (Utrecht, Veluwe); persons: 0/7 matched; orgs: 0/6 matched; anchor: yes","['Utrecht', 'Veluwe']",[],[],"Gehoord is het verslag van Essen en de andere afgevaardigden van HHM die in navolging van de
+ resolutie van gisteren gesproken hebben met Z.Exc. over de
+ inkwartiering van de regimenten van de oversten
+ Morgan, Holck,
+ Ferents en
+ Rosecrantz,
+ alsmede
+ van 24 vrije compagnieën infanterie in het Land","Ontfangen een missiue van Burgermrn Recht ende Raden der Stadt Harlingen gescreuen aldaer den 8. deses waer by sy ouersenden de namen van drie personen in Turckien gevangen sittende. Waerop gedelibereert synde, Is goetgevonden en verstaen dat deselue persoonen gestelt sullen worden opde lyste om aen"
+26,1627-06-03,1627-06-03,0,True,True,12101,"date: same-day; places: 7/21 matched (Walcheren, Texel, Het Vlie, Noorwegen, Bocht); persons: 0/3 matched; orgs: 0/4 matched; anchor: yes","['Walcheren', 'Texel', 'Het Vlie', 'Noorwegen', 'Bocht', 'Seine', 'Oostende']",[],[],"De resolutie is door een klerk ingeschreven in S.G. 52.Z.Exc. verschijnt ter vergadering met de aanwezige
+ gedeputeerden van de Admiraliteiten te Rotterdam, Amsterdam en in het
+ Noorderkwartier. De bespreking
+ van het
+ ontwerp voor het kruisen op zee met het oog op een betere
+ zeebewaking - door de ","Is geresumeert de provisionele ordre, die opt cruyren vande zee byde selve Gedeputeerden ende die van Zeelant naerder is beraemt geworden tot beter beveilinge vande zee, ende synde daerop gedelibereert, Is eyntlyck genomen de resolutie hiernaer volgende geinsereert.
+
+De Staten Generael der Vereenich"
+27,1626-07-17,1626-07-16,1,False,False,601,"date: 1 day gap; places: 2/16 matched (Nederbetuwe, Voorn); persons: 0/0 matched; orgs: 0/0 matched; anchor: no","['Nederbetuwe', 'Voorn']",[],[],"De gecommitteerden tot de beveiliging van de Waal en de Maas en Z.Exc. zijn van mening dat de
+ Overbetuwe, de Nederbetuwe en de
+ Tielerwaard langs de Waaldijk dit jaar met troepen
+ bezet moeten worden. Van Nijmegen tot
+ Gorinchem zouden op de
+ belangrijkste
+ plekken zo zuinig mogelijk nieuwe redoute","Synde byde heeren van Utrecht mede voorgestelt de hervattinge vande besoignes van Isselstroom, is goet gevonden daermede te supersederen tot den volgenden dach,
+
+Synde geresumeert het point van negotiatie der tweehondert duysent gul tot betalinge vant Regiment van Candale ende derthien Compen. Ruyte"
+28,1628-12-16,1628-12-15,1,False,False,301,date: 1 day gap; places: 1/16 matched (Amboina); persons: 0/8 matched; orgs: 0/1 matched; anchor: no,['Amboina'],[],[],"Essen en andere gedeputeerden hebben in aanwezigheid van
+ Z.Exc. besprekingen gevoerd met Joachimi. Ten eerste over de
+ Oost-Indische Compagnie en over het nakomen van de bepalingen
+ inzake het vrijgeven van drie in
+ Engeland gearresteerde Oost-Indiëvaarders.
+ Verzocht is commissie te depêcheren voo","Getreden sijnde inde vier pointen vant Tractaet van Alliancie met de Croone van Vranckrijck op eenige pointen d'eerste vande aggreatie, t' ije. vande explicatie vande Amiz et Alliez, t' iije vant' emploij vant contresecours, ende t'iiije van niet te mogen tracteren met den Coninck van Spaigne van Tr"
+29,1627-01-06,1627-01-06,0,True,False,10301,date: same-day; places: 1/26 matched (Bolspolder); persons: 0/2 matched; orgs: 0/1 matched; anchor: no,['Bolspolder'],[],[],"HHM lezen het advies van de RvS d.d. 3 dec. 1626 over de door de Infanta d.d. 28 juli 1626 te Brussel aangevulde artikelen in de
+ commissie voor Jean Pleuren. 
+ De RvS zal hetgeen
+ door
+ HHM conform het advies op elk van de punten is
+ besloten ten uitvoer brengen. De in het Frans gestelde akte is me","Synde gelesen een placcaet vanden Coninck van hispaignen den Sur le iije. Idem.
+
+deselve te doen verpachten sullen werden gelast
+
+Byaldien van s‛vyants van deser syde gelycke seulement lxvij L xiijs par mois, sur les mots y enserrez, scavoir avec ses appendances e comprenant les Poldres nommez Nassa"
+30,1626-06-11,1626-06-12,1,False,False,301,date: 1 day gap; places: 1/4 matched (Somme); persons: 0/0 matched; orgs: 0/3 matched; anchor: no,['Somme'],[],[],"De Zeeuwse Admiraliteit schrijft 8 juni dat in strijd met de resolutie d.d. 18 okt. 1625 in Holland, zowel door Rotterdam als
+ door
+ Amsterdam, wordt toegestaan dat 
+ Haarlems
+ linnen
+ tegen
+ de oude rechten van 12 st. per stuk wordt uitgevoerd naar
+ Calais. 
+ Ook wordt in Holland van anderhalve sma","Ter Cuilen, Schaffer, Broethema, Opt versouck van Sackville Crouw dienaer van hertoch van Buckingam, Is geaccordeert dat hy vry sonder te betalen Convoy off licent, sal mogen naer Engelant voeren Seven coffers met clederen, vier koffers voor Syne Mat. twee houte cassen met Ebben Cabinetten, vyff cas"
+31,1626-10-14,1626-10-14,0,True,True,11201,"date: same-day; places: 4/14 matched (Antwerpen, Walcheren, Altena, Heusden); persons: 0/11 matched; orgs: 0/4 matched; anchor: yes","['Antwerpen', 'Walcheren', 'Altena', 'Heusden']",[],[],"Van Z.Exc. is een brief d.d. 11 okt. ontvangen waarin hij mededeling
+ doet van belangwekkende zaken. Spinola heeft
+ 400.000 gld. naar Duinkerke gestuurd en
+ Mansfeld trekt met
+ alle schepen
+ van
+ het land ook die kant op. In Antwerpen zijn
+ duizend matrozen
+ gemonsterd met het doel een aanval te ple","Heeren Rantwijck, Kelffken, Hend.
+
+Broeckhoven, Antwerpen, Ontfangen een missive van Syn Extie. geschreven den xien. Schagen, Duyck, Vosbergen, deses, Daerby deselve oversent eenige advisen van importantie gedateert den xxijen. Septembris lestleden, houdende datte Marquis Spinola 5oo guldens te Duin"
+32,1630-02-27,1630-02-27,0,True,True,10601,"date: same-day; places: 2/9 matched (Essen, Berg); persons: 0/4 matched; orgs: 0/0 matched; anchor: yes","['Essen', 'Berg']",[],[],"Noortwyck rapporteert conform de resolutie van HHM met Z.Exc.
+ nader te hebben gesproken over het advies van de RvS van 22 feb.
+ over de klachten van die van Essen
+ over de door 
+ het ingekwartierde voetvolk en de
+ ruiterij
+ aldaar gepleegde excessen. Het advies luidde dat de stad Essen
+ van een dee",Ontfangen een missive vant' Collegie ter Admiraliteyt tot Amsterdam geschreven aldaer den 23e. deses houdende rescriptie op haer Ho:Mo: brieff vanden 9e. daer te vooren belangende t'exerceren vande judicature over seker fleuytschip met syne soutladinge byt' voors Collegie vry verclaert ende naderhan
+33,1629-03-12,1629-03-12,0,True,True,10901,"date: same-day; places: 3/11 matched (Amsterdam, Tunis, Palermo); persons: 0/3 matched; orgs: 0/3 matched; anchor: yes","['Amsterdam', 'Tunis', 'Palermo']",[],[],"Bas en Beaumont rapporteren dat
+ kapitein
+ Cleuter nog voor het versturen van
+ de brief door HHM op 10 maart van Amsterdam naar
+ 's-Gravenhage
+ is gereisd. Daar hebben zij in aanwezigheid van Z.Exc. met hem
+ gesproken over het voorgenomen plan. De kapitein heeft gezegd
+ dat
+ zijn schip en dat van de","Is gelesen de requeste van Gualterus Gerbrandi Pomeranus predicant opde Leur, clagende over het groot gewelt, foulen en exactien die de soldaten van s‛vyants syde soo door convoyen als andersints hem hebben aengedaen. Ten ije. dat de auditeur tot Breda ende d'officieren vande licenten aldaer, hem su"
+34,1628-08-01,1628-07-31,1,False,False,1201,"date: 1 day gap; places: 4/16 matched (Westervoort, Zutphen, Bronsbergen, Hattem); persons: 0/1 matched; orgs: 0/0 matched; anchor: no","['Westervoort', 'Zutphen', 'Bronsbergen', 'Hattem']",[],[],"Hertevelt bericht krachtens de resolutie van 19 juli de ter
+ verdediging van de IJssel aanbestede forten te
+ hebben gecontroleerd. De
+ forten
+ bij het Westervoortse veer onder
+ IJsseloord en aan het eind van ""Deekens
+ weerden""
+ onder Doesburg bij ""Stevens huis""
+ worden beide
+ conform het plan gebouw","Syn in de vergaderinge gecompareert d'aenwesende Gedepden van t'Collegie ter Admiraliteyt tot Amsterdam rapporterende dat sy achtervolgens haer hooch Mo: resolutie van 24e. July lestleden, een uyt den haeren nae Amsterdam hadden affgesonden, om neffens den fiscael van haer Collegie te helpen nemen p"
+35,1627-08-09,1627-08-09,0,True,False,10101,date: same-day; places: 0/3 matched; persons: 0/7 matched; orgs: 1/5 matched (7); anchor: no,[],[],['7'],"Essen, Haersolte en
+ Schaffer
+ berichten d.d. Zutphen 6 aug. welke proviand zij naar
+ het
+ leger hebben gestuurd. Zij menen dat het hieraan niet zal
+ ontbreken,
+ maar wel aan geld. 
+ De RvS is ter vergadering ontboden om de gisteren afgebroken beraadslaging hierover te hervatten. De heren van Hollan","President de Heer Broersema, Present de Mercurij den xjen. Augusti 1627.
+
+Synde gecommuniceert eenige brieven van advis vanden Viant te Santvliet ende van de besichtinge die hy gedaen heeft tusschen het eerste ende tweede blaugareuse gat aende cant vande riviere, By die van Zeelant overgesonden met "
+36,1626-05-20,1626-05-19,1,False,False,601,"date: 1 day gap; places: 2/19 matched (Emden, Norden); persons: 0/3 matched; orgs: 0/1 matched; anchor: no","['Emden', 'Norden']",[],[],"Met Z.Exc. en de RvS is, na gedaan
+ verslag,
+ gesproken over de zaak van Oost-Friesland. Met hun
+ advies is het volgende besluitIngeschreven in
+ S.G. 51 door een klerk. De resolutie is gedrukt:
+ Aitzema, S. & O. kwarto II,
+ 52-56/folio I,
+ 511-512. genomen. 
+ Aangezien de graaf van Oost-Friesland zi","Opt versouck van Francois Poor Engelsman, om te hebben een recompens voor d'ontdeckinge der frauden inde monsteringen by hem gedaen, Is geappointeert dat hy hem sal hebben t'addresseren aen den Raedt van State. Synde met Syn Extie. ende den Raedt van State, naer gedaene rapport, gedelibereert opte s"
+37,1627-11-13,1627-11-13,0,True,True,12101,"date: same-day; places: 7/22 matched (Seine, Texel, Noorwegen, Bocht, Vlissingen); persons: 0/2 matched; orgs: 0/5 matched; anchor: yes","['Seine', 'Texel', 'Noorwegen', 'Bocht', 'Vlissingen', 'Walcheren', 'Oostende']",[],[],"Deze resolutie is door een klerk
+ ingeschreven in S.G. 52. 
+ De gecommitteerden van HHM en degenen die door de heren van Holland nog uit enkele steden zijn opgeroepen, doen in aanwezigheid
+ van Z.Exc. en
+ Ernst Casimir verslag van het
+ overleg
+ met de aanwezige afgevaardigden van de
+ Admiraliteiten ","Is binnen gestaen Capitein Hemkens comende van 50.
+
+Boloigne ende heeft gecommuniceert een missive vanden Agent Mibassen den vijen. deses aen hem gescreven, houdende dat den Viant met sesthien schepen Is uytgelopen, segt mede dat de Lieutenant Admirael Dorp het uytlopen nyet en hadde vernomen. Waero"
+38,1627-10-18,1627-10-18,0,True,True,10901,"date: same-day; places: 3/5 matched (Oostende, Vlissingen, Texel); persons: 0/8 matched; orgs: 0/6 matched; anchor: yes","['Oostende', 'Vlissingen', 'Texel']",[],[],"In aanwezigheid van Z.Exc., Ernst Casimir en de
+ RvS zijn luitenant-admiraal
+ Dorp,
+ teruggekeerd
+ van de kust van Vlaanderen, en
+ Gans
+ gehoord. Dorp 
+ rapporteert dat langs de kust niet meer dan zestien schepen en drie
+ jachten liggen, en dat te Duinkerke 26 en
+ te
+ Oostende acht schepen klaarligg","Heeren Grave, Rantwijck, Renssen, Hendrick van Eck, Diderick van Eck, Feith, Noortwijck,
+
+Schaffer, Broersema, Syn Extie. ende Syn Gen: Graeff Ernst Casimir van Nassau ter Vergaderinge comparerende, Is in derselver presentie gehoort den Lieutenant Admirael Dorp comen vande custe van Vlaenderen, als "
+39,1627-07-23,1627-07-22,1,False,False,1201,"date: 1 day gap; places: 4/9 matched (Breda, Steenbergen, Bourtange, Bellingwolde); persons: 0/1 matched; orgs: 0/6 matched; anchor: no","['Breda', 'Steenbergen', 'Bourtange', 'Bellingwolde']",[],[],"De RvS verschijnt ter vergadering wegens diverse punten. 
+ I De burgers van Breda klagen ernstig over de trage teruggave van
+ door hen tijdens de belegering van de
+ stad aan compagnieën geleend geld. 
+ HHM schrijven de nalatige provincies Gelderland, Zeeland en Friesland
+ ernstig de supplianten te b","Alsoo de pachters van een vierde part der convoien en Licenten by verscheidene remonstrantien versocht hebben mede te mogen teickenen de binnenlantsche paspoorten, ende datte heeren van hollant t‛elckens verclaert hebben t'selve te moeten brengen aende Vergaderinge der heeren Staten derselver provin"
+40,1627-04-14,1627-04-14,0,True,True,10901,"date: same-day; places: 3/15 matched (Gestel, Breda, Postel); persons: 0/4 matched; orgs: 0/0 matched; anchor: yes","['Gestel', 'Breda', 'Postel']",[],[],"HHM wijzen af: 
+ Het verzoek van de ingezetenen van Gestel bij Eindhoven en Oerle en
+ Valkenswaard in de
+ Meierij van 's-Hertogenbosch om
+ een gelijkluidende akte te krijgen als op 2 sept. 1626 is gegeven
+ aan de
+ dorpen en
+ kwartieren van Breda, Bergen op
+ Zoom,
+ Rijen, Herentals,
+ Hoogstraten,
+ Ar","Het versoeck vande Ingesetenen van Gestel by Einthoven, mitsgaders oerssen ende Verckensweert inde Meyerie vanden Bosch, om te hebben gelycke acte als den ijen. Septembris 1626. vergunt Is geweest aende Dorpen ende Quartieren van Breda, Bergen op Zoom, Rien, Herentaels, hoochstraten, Arckel, Santhou"
+41,1629-07-25,1629-07-25,0,True,True,11602,"date: same-day; places: 5/11 matched (Veluwe, Utrecht, Arnhem, Dordrecht, Amsterdam); persons: 0/6 matched; orgs: 1/8 matched (Dordrecht); anchor: yes","['Veluwe', 'Utrecht', 'Arnhem', 'Dordrecht', 'Amsterdam']",[],['Dordrecht'],"Gelezen zijn de missives van de gedeputeerden te velde d.d. 23 juli, twee brieven van het Hof
+ van
+ Gelre d.d. 13 juli o.s. en een missive van de
+ Gedeputeerde Staten van Utrecht
+ d.d. 14
+ juli
+ o.s., die alle melden dat de vijand de IJssel is
+ overgestoken en zich aan de rand van de Veluwe
+ verscha","Ouerlander, Gans, ende veel extraords. Synde gelesen de missiven van heeren haer Ho:Mo: Gedeputeerden in t' leger onder dato 23e. deses, als oock twee brieven van heeren Cantzeler ende Raden van Gelderlant in dato 13e. lestleden ouden styls mitsgaders een missive van heeren Gedeputeerde Staten van U"
+42,1626-11-12,1626-11-12,0,True,True,11501,"date: same-day; places: 5/13 matched (Grisons, Drenthe, Coevorden, Lingen, Wedde); persons: 0/6 matched; orgs: 0/1 matched; anchor: yes","['Grisons', 'Drenthe', 'Coevorden', 'Lingen', 'Wedde']",[],[],"De RvS compareert en overhandigt zijn propositie ter verkrijging van de consenten voor de petities voor 1627. Tevens verzoekt de Raad aanzuivering van de defecten in de eerdere consenten. 
+ HHM danken de Raad voor zijn goede zorgen. De provincies ontvangen kopie van de stukken. 
+ De propositieGeïnse","Opt versouck van Caspar Verleth gesecondeert met brieven van Burgemrn en Regierders der Stadt Amsterda in date den iijen deses, Is geaccordeert Octroy voor den tyt v seven Jaeren om alleen te maecken in dese Vereenichde Nederlanden allerlei soorten van dubbelde en enckelde taffen en croone carteecke"
+43,1630-03-08,1630-03-08,0,True,True,10702,"date: same-day; places: 1/5 matched (Utrecht); persons: 0/2 matched; orgs: 4/6 matched (2, 75, 5, 55); anchor: yes",['Utrecht'],[],"['2', '75', '5', '55']","Eck, gecommitteerde raad ter Admiraliteit
+ te
+ Rotterdam, verschijnt ter vergadering namens de
+ provincie Utrecht. Hij rapporteert HHM 
+ zich met zijn College conform de resolutie van HHM d.d. 30
+ jan. te hebben vervoegd in Utrecht om aldaar
+ 18.255 pond te ontvangen, als rest van 39.660 pond die de","Ontfangen noch een missive van de selve geschreven ende in dato als vooren, houdende responsive op haer Ho:Mo: brieff van den 7. february lestleden, belangende den vrydom van Tollen ende licenten den 26. November mede lestleden aen de Stadt Wesel geconsenteert, van dat sy rescribenten aen d'officier"
+44,1627-09-03,1627-09-03,0,True,True,11201,"date: same-day; places: 4/14 matched (Drongelen, Engelen, Etten, Sprang); persons: 0/52 matched; orgs: 0/0 matched; anchor: yes","['Drongelen', 'Engelen', 'Etten', 'Sprang']",[],[],"Ingevolge van de gisteren genomen resolutie is de volgende personen uitvoer van paarden toegestaan: Suijdewijn van Nuijssenborch en jonkvrouw Margareta
+ Studelincx, weduwe
+ van Dirck van Nuissenborch, ieder
+ twee ruinen of
+ merries naar Capelle; Willem
+ Willemsen, Hendrick
+ Theunissen,
+ Willem Adria","Is geaccordeert aen Gysbert Dimmer Drost tot Steenbergen den uytvoer van een ruin ende twee moer peerden naer Steenbergen, op een binnenlantsche paspoorte ende onder cautie datte selve nergens elders sullen werden verbracht.
+
+In gevolge vande resolutie gisteren genomen Is geaccordeert dat uytgevoert"
+45,1628-05-04,1628-05-03,1,False,False,1501,"date: 1 day gap; places: 5/12 matched (Boneschans, Bellingwolde, Bourtange, Hasselt, Bergen op Zoom); persons: 0/2 matched; orgs: 0/3 matched; anchor: no","['Boneschans', 'Bellingwolde', 'Bourtange', 'Hasselt', 'Bergen op Zoom']",[],[],"Deze resolutie is in S.G. 53 door een
+ klerk ingeschreven. 
+ Met de ter vergadering verschenen Z.Exc. resumeren HHM de door Friesland en Groningen verzochte fortificatie, de 
+ verschaffing van vivres, munitie en volk en een vliegend leger.
+ 
+ Aangaande de fortificatie besluiten HHM de omgeving van L","Oock is goetgevonden, dat aen Bellingwoldersyl eenige reparatien sullen mogen gedaen worden, te weeten, aende sluyse, en eenich aerdewerck voor een duysent gulden drie off vier, ende dat aende Bourtange d'oude wercken sullen gerepareert, ende aende Munstersche syde een hoornwerck gemaeckt mogen werd"

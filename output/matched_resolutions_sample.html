@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resolution Alignment with Summary Anchors (±3 days)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        h1 { color: #333; border-bottom: 3px solid #0066cc; padding-bottom: 10px; }
+        .info { background-color: #e8f4f8; border-left: 4px solid #0066cc; padding: 12px; margin-bottom: 20px; border-radius: 4px; }
+        .legend { background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; }
+        th { background-color: #0066cc; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        tr:hover { background-color: #f9f9f9; }
+        tr.summary-anchor { background-color: #e8f5e9; }
+        tr.summary-anchor:hover { background-color: #c8e6c9; }
+        td.num { background-color: #f0f0f0; font-weight: bold; width: 40px; text-align: center; }
+        td.id { font-family: 'Courier New', monospace; font-size: 0.85em; color: #666; }
+        td.date { font-weight: 500; text-align: center; width: 100px; }
+        td.diff { background-color: #fff3cd; font-weight: 500; text-align: center; width: 100px; }
+        td.arrow { text-align: center; font-weight: bold; color: #0066cc; width: 50px; }
+        td.text { color: #555; max-width: 180px; word-break: break-word; }
+        td.entities { background-color: #e3f2fd; text-align: center; width: 100px; font-size: 0.85em; }
+        td.found-entities { background-color: #fffde7; text-align: left; width: 240px; font-size: 0.82em; line-height: 1.35; }
+        td.matches { background-color: #f3e5f5; text-align: center; width: 140px; font-weight: 500; font-size: 0.85em; }
+        .summary { margin-top: 20px; padding: 15px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>Resolution Alignment with Summary Anchor Heuristic</h1>
+    <div class="info">
+        <strong>Matching Strategy:</strong><br>
+        • Date window: ±3 days<br>
+        • Entity matching: Canonical names from LOC, PER, ORG entities<br>
+        • <strong>Summary Anchor Heuristic:</strong> Same-day resolutions with multiple entity types are treated as "summary" anchors
+    </div>
+    <div class="legend">
+        <strong>Visual Indicators:</strong><br>
+        • <strong>🔗</strong> = Summary anchor (same-day + multiple entity types: best matching signal)<br>
+        • <strong>●</strong> = Same-day match (strong signal even without summary anchor)<br>
+        • <strong style="background-color: #e8f5e9; padding: 2px 4px;">Green row</strong> = Summary anchor row
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Enriched ID</th>
+                <th>Enr Date</th>
+                <th>Enriched Text</th>
+                <th>Entities</th>
+                <th>Entities Found</th>
+                <th></th>
+                <th>Flat ID</th>
+                <th>Flat Date</th>
+                <th>Date Diff</th>
+                <th>Flat Text</th>
+                <th>Matched</th>
+            </tr>
+        </thead>
+        <tbody>
+        <tr class="summary-anchor">
+            <td class="num">1</td>
+            <td class="id">162910sept.xml#12</td>
+            <td class="date">1629-09-10</td>
+            <td class="text">Ter vergadering compareren Sommelsdyck en thesaurier-generaal Van
+ Goch. Zij
+ delen HHM mee dat de RvS conform de resolutie heeft
+ geschreven
+ aan Gel</td>
+            <td class="entities">12p, 9ps, 9o</td>
+            <td class="found-entities">Places: Veluwe, Deventer, Zutphen, Arnhem, Utrecht, Deventer<br>Orgs: 5, 2, 29</td>
+            <td class="arrow">●↓</td>
+            <td class="id">session-3188-num-208-resolution-4</td>
+            <td class="date">1629-09-10</td>
+            <td class="diff">+0d 🔗</td>
+            <td class="text">Ontfangen een rescriptie van d'eerste presiderende ende andere Raeden van Brabant geschreven in den Hage den 5e. deses op haer Ho:Mo: missive van 29e.</td>
+            <td class="matches"><strong>6/12</strong> p, <strong>0/9</strong> ps, <strong>3/9</strong> o</td>
+        </tr>
+            
+        <tr class="summary-anchor">
+            <td class="num">2</td>
+            <td class="id">162925jul.xml#0</td>
+            <td class="date">1629-07-25</td>
+            <td class="text">Gelezen zijn de missives van de gedeputeerden te velde d.d. 23 juli, twee brieven van het Hof
+ van
+ Gelre d.d. 13 juli o.s. en een missive van de
+ Ged</td>
+            <td class="entities">11p, 6ps, 8o</td>
+            <td class="found-entities">Places: Veluwe, Utrecht, Arnhem, Dordrecht, Amsterdam<br>Orgs: Dordrecht</td>
+            <td class="arrow">●↓</td>
+            <td class="id">session-3188-num-173-resolution-1</td>
+            <td class="date">1629-07-25</td>
+            <td class="diff">+0d 🔗</td>
+            <td class="text">Ouerlander, Gans, ende veel extraords. Synde gelesen de missiven van heeren haer Ho:Mo: Gedeputeerden in t' leger onder dato 23e. deses, als oock twee</td>
+            <td class="matches"><strong>5/11</strong> p, <strong>0/6</strong> ps, <strong>1/8</strong> o</td>
+        </tr>
+            
+        <tr class="summary-anchor">
+            <td class="num">3</td>
+            <td class="id">162918aug.xml#24</td>
+            <td class="date">1629-08-18</td>
+            <td class="text">Deze resolutie is door een klerk
+ ingeschreven in S.G. 54 en gedeeltelijk afgedrukt in
+ Aitzema, S. & O. kwarto II,
+ 856-857/folio I, 871. 
+ Raadshere</td>
+            <td class="entities">25p, 8ps, 1o</td>
+            <td class="found-entities">Places: Amersfoort, Amerongen, Vianen, Arnhem, Wageningen, Buren, Vianen, Leerdam, Asperen, Nederbetuwe<br>Orgs: 7</td>
+            <td class="arrow">●↓</td>
+            <td class="id">session-3188-num-194-resolution-12</td>
+            <td class="date">1629-08-18</td>
+            <td class="diff">+0d 🔗</td>
+            <td class="text">Synde gelesen de requeste van Symon Graffils uyt den lande van Rutsenborch sittende binnen Geertruytdenberch gevangen gesecundeert by missive van syn </td>
+            <td class="matches"><strong>10/25</strong> p, <strong>0/8</strong> ps, <strong>1/1</strong> o</td>
+        </tr>
+            
+        <tr class="">
+            <td class="num">4</td>
+            <td class="id">162931jul.xml#6</td>
+            <td class="date">1629-07-31</td>
+            <td class="text">Ploos, teruggekeerd uit het leger voor
+ 's-Hertogenbosch, verzoekt in verband met de
+ penibele 
+ situatie het grootste deel van de nieuw te lichten tr</td>
+            <td class="entities">7p, 3ps, 3o</td>
+            <td class="found-entities">Places: Utrecht, Veluwe<br>Orgs: 29</td>
+            <td class="arrow"> ↓</td>
+            <td class="id">session-3188-num-178-resolution-11</td>
+            <td class="date">1629-07-30</td>
+            <td class="diff">+1d</td>
+            <td class="text">Is goetgevonden ende verstaen datmen sal schryven aende Provincien die defectueus syn inde legerlasten, dat sy willen opbrengen haer resterende quota,</td>
+            <td class="matches"><strong>2/7</strong> p, <strong>0/3</strong> ps, <strong>1/3</strong> o</td>
+        </tr>
+            
+        <tr class="summary-anchor">
+            <td class="num">5</td>
+            <td class="id">163020ap.xml#14</td>
+            <td class="date">1630-04-20</td>
+            <td class="text">Ter vergadering zijn de extraordinaris
+ gedeputeerden van Zeeland Joost van der Hooge en Adriaen Nicolai
+ gecompareerd. Na
+ overhandiging van hun
+ gel</td>
+            <td class="entities">6p, 6ps, 2o</td>
+            <td class="found-entities">Places: Amsterdam<br>Orgs: 29</td>
+            <td class="arrow">●↓</td>
+            <td class="id">session-3189-num-100-resolution-3</td>
+            <td class="date">1630-04-20</td>
+            <td class="diff">+0d 🔗</td>
+            <td class="text">Ontfangen een missive vande Directeurs van Middelantsche zee ende Levantischen handel geschreven tot Amsterdam den 18. deses, belangende de betalinge </td>
+            <td class="matches"><strong>1/6</strong> p, <strong>0/6</strong> ps, <strong>1/2</strong> o</td>
+        </tr>
+            
+        <tr class="">
+            <td class="num">6</td>
+            <td class="id">163028ap.xml#3</td>
+            <td class="date">1630-04-28</td>
+            <td class="text">President Beaumont deelt mee dat Z.Exc. in overweging geeft de uitvoer van
+ paarden een korte tijd te verbieden. Hij heeft uit goede bron 
+ vernomen
+ </td>
+            <td class="entities">7p, 1ps, 3o</td>
+            <td class="found-entities">Places: Utrecht<br>Orgs: 29</td>
+            <td class="arrow"> ↓</td>
+            <td class="id">session-3189-num-108-resolution-3</td>
+            <td class="date">1630-04-29</td>
+            <td class="diff">+1d</td>
+            <td class="text">Synde gelesen de requeste vande Capn. Barent Schaeff ende Hans Bornon houdende dat sy supplianten alnoch niet en hebben becomen de respective schepen </td>
+            <td class="matches"><strong>1/7</strong> p, <strong>0/1</strong> ps, <strong>1/3</strong> o</td>
+        </tr>
+            
+        <tr class="summary-anchor">
+            <td class="num">7</td>
+            <td class="id">162908sept.xml#9</td>
+            <td class="date">1629-09-08</td>
+            <td class="text">HHM lezen het advies van de RvS d.d. 7 sept. op de op 5 sept. overhandigde instructie die het Hof van Gelderland heeft gegeven aan Glimmer en de gecom</td>
+            <td class="entities">9p, 6ps, 1o</td>
+            <td class="found-entities">Places: Arnhem, Huissen, Betuwe, Veluwe<br>Orgs: 7</td>
+            <td class="arrow">●↓</td>
+            <td class="id">session-3188-num-206-resolution-2</td>
+            <td class="date">1629-09-08</td>
+            <td class="diff">+0d 🔗</td>
+            <td class="text">Is gelesen t'advis des Raets van State geformeert den 7e. deses op d'instructie die Thoff van Gelderlant gegeven heeft aende heeren Glimmer ende Gecom</td>
+            <td class="matches"><strong>4/9</strong> p, <strong>0/6</strong> ps, <strong>1/1</strong> o</td>
+        </tr>
+            
+        <tr class="summary-anchor">
+            <td class="num">8</td>
+            <td class="id">162729me.xml#11</td>
+            <td class="date">1627-05-29</td>
+            <td class="text">Edzard Jacob Clant, Willem Ubbena tho Eemum,
+ Menno
+ Broersema en dr. Schate
+ Gockinga,
+ respectievelijk jonker, hoofdeling, raad en secretaris van de</td>
+            <td class="entities">10p, 5ps, 3o</td>
+            <td class="found-entities">Places: Ommelanden, Eems, Lauwers<br>Orgs: 26</td>
+            <td class="arrow">●↓</td>
+            <td class="id">session-3186-num-98-resolution-8</td>
+            <td class="date">1627-05-29</td>
+            <td class="diff">+0d 🔗</td>
+            <td class="text">Syn gelesen ende goetgevonden de concepten vande brieven voorgisteren geordonneert te rescriberen aen den Con: van Vranckryck ende Churfurst van Trier</td>
+            <td class="matches"><strong>3/10</strong> p, <strong>0/5</strong> ps, <strong>1/3</strong> o</td>
+        </tr>
+            </tbody>
+    </table>
+    <div class="summary">
+        <strong>✓ Report Generated</strong><br>
+        Total with found entities: 10<br>
+        Summary anchors (same-day + multi-type): 6<br>
+        Same-day matches: 6
+    </div>
+</body>
+</html>

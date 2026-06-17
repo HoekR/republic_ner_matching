@@ -1,0 +1,4559 @@
+[
+  {
+    "id": "O0000002",
+    "name": "Admiraliteit te Londen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Admiraliteit",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000003",
+    "name": "Admiraliteit van Amsterdam",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Oorlog",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000004",
+    "name": "Admiraliteit van Friesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Oorlog",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000005",
+    "name": "Admiraliteit van Rotterdam",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Oorlog",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000006",
+    "name": "Admiraliteit van Westfriesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Oorlog",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000007",
+    "name": "Admiraliteit van Zeeland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Oorlog",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000008",
+    "name": "Admiraliteiten in Denemarken",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Admiraliteit",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000009",
+    "name": "Admiraliteiten in Frankrijk",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Admiraliteit",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000010",
+    "name": "Admiraliteiten in Pruissen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Admiraliteit",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000011",
+    "name": "Admiraliteiten in Zweden",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Admiraliteit",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000012",
+    "name": "Admiraliteiten in de Zuidelijke Nederlanden",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Admiraliteit",
+      "Zuidelijke Nederlanden",
+      "Landelijk",
+      "Zeevaart"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000021",
+    "name": "Battaillon van het Regiment van den Generaal Grave de Envie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000024",
+    "name": "Battaillon van het tweede Regiment Orange Nassau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000026",
+    "name": "Bondgenootschap te Lande",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bataafse tijd",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000028",
+    "name": "Burgerlijk hof te Suriname",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000030",
+    "name": "Cavallerye van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000031",
+    "name": "Chambre Mi-Partie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Zuidelijke Nederlanden",
+      "Rechtspraak",
+      "Landelijk",
+      "Generaliteit",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000032",
+    "name": "Classis van Amsterdam",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000033",
+    "name": "Classis van Breda",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000034",
+    "name": "Classis van Dordrecht",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000035",
+    "name": "Classis van Gorinchem",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000036",
+    "name": "Classis van Kampen",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000037",
+    "name": "Classis van Leiden",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000038",
+    "name": "Classis van Maastricht",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000039",
+    "name": "Classis van Peel en Kempelandt",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000040",
+    "name": "Classis van Tholen",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000041",
+    "name": "Classis van Walcheren",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000042",
+    "name": "Classis van Zuid-Beveland",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000043",
+    "name": "Classis van ’s Gravenhage",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000044",
+    "name": "Classis van ’s Hertogenbosch",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Republiek",
+      "Plaatselijk",
+      "Classis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011982",
+    "name": "Compagnie Guardes du Corps",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000045",
+    "name": "Comptoir van Negotiatie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Financiën",
+      "Wereld",
+      "Landelijk",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000046",
+    "name": "Comptoir van de Convooien en Licenten",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Financiën",
+      "Generaliteit",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000047",
+    "name": "Comptoir van de Domeinen van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Generaliteit",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000048",
+    "name": "Comptoir van de Ontvanger-Generaal",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Financiën",
+      "Generaliteit",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000049",
+    "name": "Comptoir-Generaal van de Unie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Financiën",
+      "Generaliteit",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000050",
+    "name": "Congres te Soissons",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000051",
+    "name": "Congres van Noord-Amerika",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000052",
+    "name": "Congres van de Vrede van Utrecht",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000053",
+    "name": "Consulaat te Algiers",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Landelijk",
+      "Handel",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000054",
+    "name": "Consulaat te Cadix",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Handel",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000055",
+    "name": "Consulaat te Genua",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Handel",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000056",
+    "name": "Consulaat te Gibraltar",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Handel",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011983",
+    "name": "Corps Artillerye, in Guarnisoen te Namen",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011984",
+    "name": "Corps Troupes van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000064",
+    "name": "Deense Afrikaanse Compagnie",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Republiek",
+      "Wereld",
+      "Landelijk",
+      "Zeevaart",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000065",
+    "name": "Domeinen van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000066",
+    "name": "Doopsgezinden",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Landelijk",
+      "Religieuze gezindte",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012268",
+    "name": "Doorluchtige Huis van Bergen op Zoom",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Plaatselijk",
+      "Bestuur",
+      "Financieel"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000067",
+    "name": "Franse Indische Compagnie",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Republiek",
+      "Wereld",
+      "Landelijk",
+      "Zeevaart",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000068",
+    "name": "Franse Synode",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Synode",
+      "Godsdienst",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012269",
+    "name": "Gasthuizen in de Republiek",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012270",
+    "name": "Geheime Raad te Luik",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011985",
+    "name": "Generaliteitsfinanciekamer",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Financiën",
+      "Bestuur",
+      "Landelijk",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000070",
+    "name": "Generaliteitsmunt",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Munt",
+      "Financiën",
+      "Landelijk",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000071",
+    "name": "Generaliteitsmuntkamer",
+    "category": "ORG",
+    "labels": [
+      "Munt",
+      "Republiek",
+      "Landelijk",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000072",
+    "name": "Generaliteitsrekenkamer",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Financiën",
+      "Landelijk",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000073",
+    "name": "Gezamenlijke Admiraliteiten",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Landelijk",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011986",
+    "name": "Gouvernement van de Zuidelijke Nederlanden",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012271",
+    "name": "Grafelijk Gerecht van de Vroenhof",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Lokaal",
+      "Rechtspraak"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011987",
+    "name": "Griffie van de Staten-Generaal",
+    "category": "ORG",
+    "labels": [
+      "Landelijk",
+      "Generaliteit",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000074",
+    "name": "Groenlandse Compagnie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000075",
+    "name": "Grote Raad van Mechelen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Rechtspraak",
+      "Bestuur",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011988",
+    "name": "Guarde du Corps van den Koning van Vrankryk",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011989",
+    "name": "Guarnisoen te Breda",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011990",
+    "name": "Guarnisoen te Doornik",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011991",
+    "name": "Guarnisoen van Bergen op Zoom",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000082",
+    "name": "Guarnisoen van Maastricht",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011992",
+    "name": "Guarnisoen van Wesel",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000086",
+    "name": "Guarnisoen van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011993",
+    "name": "Heeren haar Hoog Mogende Gedeputeerden in het Leger en te Velde",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011994",
+    "name": "Hervormde kerken",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Landelijk",
+      "Religieuze gezindte",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011995",
+    "name": "Hof van Brussel",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Zuidelijke Nederlanden",
+      "Rechtspraak",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000091",
+    "name": "Hof van Gelderland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000092",
+    "name": "Hof van Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012272",
+    "name": "Hof van Justitie in Demerary",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Rechtspraak",
+      "Koloniaal",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012273",
+    "name": "Hof van Justitie te Venlo",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011996",
+    "name": "Hof van Roermond",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011997",
+    "name": "Hof van Venlo",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000094",
+    "name": "Hof van Vlaanderen",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Zuidelijke Nederlanden",
+      "Rechtspraak",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011998",
+    "name": "Hof van de Duitse Keizer",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0011999",
+    "name": "Hof van de Hertog van Savoye",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012000",
+    "name": "Hof van de Keurvorst van Brandenburg",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012001",
+    "name": "Hof van de Keurvorst van Keulen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012002",
+    "name": "Hof van de Keurvorst van Saksen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012003",
+    "name": "Hof van de Koning van Denemarken",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012004",
+    "name": "Hof van de Koning van Engeland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012005",
+    "name": "Hof van de Koning van Frankrijk",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012006",
+    "name": "Hof van de Koning van Polen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012007",
+    "name": "Hof van de Koning van Portugal",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012008",
+    "name": "Hof van de Koning van Pruissen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012009",
+    "name": "Hof van de Koning van Sardinië",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012010",
+    "name": "Hof van de Koning van Sicilië",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012011",
+    "name": "Hof van de Koning van Spanje",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012012",
+    "name": "Hof van de Koning van Zweden",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012013",
+    "name": "Hof van de Koningin van Hongarije",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012274",
+    "name": "Hof van de Russische Keizer",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012015",
+    "name": "Hof van de Turkse Keizer",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Vorstenhof",
+      "Bestuur",
+      "Wereld",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012275",
+    "name": "Hofgerecht van Oostfriesland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000097",
+    "name": "Hoge Raad van Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012016",
+    "name": "Hoge Regering in Brazilië",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Bestuur",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012017",
+    "name": "Hoge Regering te Batavia",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Bestuur",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000098",
+    "name": "Hollandse Admiraliteiten",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Republiek",
+      "Oorlog",
+      "Admiraliteit",
+      "Zeevaart",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012276",
+    "name": "Hoog Brabants Gerecht te Maastricht",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012277",
+    "name": "Hoog Luiks Gerecht te Maastricht",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012018",
+    "name": "Hoogduitse Joodse Natie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Religieuze gezindte",
+      "Godsdienst",
+      "Joods",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012278",
+    "name": "Hoven van Civiele Justitie in West-Indië",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Rechtspraak",
+      "Wereld",
+      "Koloniaal",
+      "Bataafse tijd"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012279",
+    "name": "Hoven van Criminele Justitie in West-Indië",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Rechtspraak",
+      "Wereld",
+      "Koloniaal",
+      "Bataafse tijd"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012280",
+    "name": "Hoven van Justitie in Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012019",
+    "name": "Int Leger",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012281",
+    "name": "Kapittels",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Rooms-Katholiek",
+      "Zuidelijke Nederlanden",
+      "Godsdienst"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012282",
+    "name": "Keizerlijke Raad te Luik",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000127",
+    "name": "Kloosters",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Rooms-Katholiek",
+      "Zuidelijke Nederlanden",
+      "Godsdienst"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000128",
+    "name": "Landsadvocaat",
+    "category": "ORG",
+    "labels": [
+      "Landelijk",
+      "Generaliteit",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000129",
+    "name": "Latijnse school te Maastricht",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Onderwijs",
+      "Plaatselijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000130",
+    "name": "Latijnse school te ’s Hertogenbosch",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Onderwijs",
+      "Plaatselijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012021",
+    "name": "Leeger van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012022",
+    "name": "Leegers van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012024",
+    "name": "Leger by Douay",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012025",
+    "name": "Leger tot Hougaarde",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012026",
+    "name": "Leger van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012027",
+    "name": "Leger voor Gent",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012028",
+    "name": "Leger voor Ryssel",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012029",
+    "name": "Leger voor St Venant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012023",
+    "name": "Leger",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012030",
+    "name": "Legers van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000133",
+    "name": "Munt van Friesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000134",
+    "name": "Munt van Gelderland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000135",
+    "name": "Munt van Groningen",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000136",
+    "name": "Munt van Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000137",
+    "name": "Munt van Overijssel",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000138",
+    "name": "Munt van Utrecht",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000139",
+    "name": "Munt van Westfriesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000140",
+    "name": "Munt van Zeeland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek",
+      "Munt"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000144",
+    "name": "Nationale Vergadering van Frankrijk",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000143",
+    "name": "Nationale Vergadering",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Bestuur",
+      "Bataafse tijd",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000146",
+    "name": "Noordse Compagnie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Zeevaart",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000147",
+    "name": "Officie Fiscaal van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000148",
+    "name": "Oostindische Compagnie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Wereld",
+      "Landelijk",
+      "Zeevaart",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000149",
+    "name": "Ottomanische Porta",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Wereld",
+      "Diplomatie"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000150",
+    "name": "Parlement van Bordeaux",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000151",
+    "name": "Parlement van Doornik",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Zuidelijke Nederlanden",
+      "Rechtspraak",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000152",
+    "name": "Parlement van Engeland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000153",
+    "name": "Parlement van Parijs",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Rechtspraak",
+      "Bestuur",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000154",
+    "name": "Parlement van Rennes",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000155",
+    "name": "Parlement van Rouaan",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000156",
+    "name": "Parlement van Schotland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012186",
+    "name": "Portugese Joodse Natie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Religieuze gezindte",
+      "Godsdienst",
+      "Joods",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012187",
+    "name": "Protestantsche Cantons in Switzerlant",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012286",
+    "name": "Raad der Koloniën van de Staat in West-Indië",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Bestuur",
+      "Wereld",
+      "Koloniaal",
+      "Bataafse tijd"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012188",
+    "name": "Raad en Leenhof van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000161",
+    "name": "Raad van Brabant te Brussel",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012287",
+    "name": "Raad van Curaçao",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Republiek",
+      "Plaatselijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012288",
+    "name": "Raad van Justitie in Brazilië",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Rechtspraak",
+      "Koloniaal",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012289",
+    "name": "Raad van Justitie te Batavia",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Rechtspraak",
+      "Koloniaal",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012290",
+    "name": "Raad van Justitie van Essequibo",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Rechtspraak",
+      "Koloniaal",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000166",
+    "name": "Raad van St Eustacius",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Republiek",
+      "Plaatselijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000168",
+    "name": "Raad van State te Brussel",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000169",
+    "name": "Raad van State van Engeland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000170",
+    "name": "Raad van State van Frankrijk",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000167",
+    "name": "Raad van State",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Bestuur",
+      "Landelijk",
+      "Generaliteit"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000171",
+    "name": "Raad van Suriname",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000172",
+    "name": "Raad van Vlaanderen",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012189",
+    "name": "Raat van State in het Leger",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012190",
+    "name": "Regering van Algiers",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Wereld",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012291",
+    "name": "Regering van Luik",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuurlijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012191",
+    "name": "Regering van Tripoli",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Wereld",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012192",
+    "name": "Regering van Tunis",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Wereld",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012193",
+    "name": "Regiment Carabiniers van den Grave van Albemarle",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000178",
+    "name": "Regiment Dragonders van den Collonel Mattha",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012194",
+    "name": "Regiment Dragonders van den Collonel van Massau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000179",
+    "name": "Regiment Dragonders van den Collonel van der Duin",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012195",
+    "name": "Regiment Dragonders van den Generaal Dopf",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000181",
+    "name": "Regiment Dragonders van den Grave van Bylant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000183",
+    "name": "Regiment Dragonders van den Lieutenant Generaal Prince van Hessen Cassel",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000188",
+    "name": "Regiment Grisons van den Generaal Major Schmit",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000190",
+    "name": "Regiment Guardes Dragonders",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012197",
+    "name": "Regiment Guardes Dragonders, in Guarnisoen te Lier",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012198",
+    "name": "Regiment Guardes te Paart",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012199",
+    "name": "Regiment Infanterye ten dienste van den Staat",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000198",
+    "name": "Regiment Orange Gelderlant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000205",
+    "name": "Regiment Switsers van den Generaal Major Sturler",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012200",
+    "name": "Regiment Switsers van den Generaal Major Sturler, in Guarnisoen te Venlo",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012201",
+    "name": "Regiment Switsers van den Grave van Albemarle",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000206",
+    "name": "Regiment Switzers van Chambrier",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000210",
+    "name": "Regiment Switzers van het Canton van Bern",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000216",
+    "name": "Regiment Zwitzers van den Generaal Major May",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000218",
+    "name": "Regiment Zwitzersche Guardes",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012202",
+    "name": "Regiment van Graue Ernst van Nassau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000258",
+    "name": "Regiment van Saxen Gotha",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000259",
+    "name": "Regiment van St Amant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012203",
+    "name": "Regiment van St Germain Beaupré",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000263",
+    "name": "Regiment van Walef",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000270",
+    "name": "Regiment van den Brigadier Berkhoffer",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012204",
+    "name": "Regiment van den Brigadier Caris",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000271",
+    "name": "Regiment van den Brigadier Chambrier",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012205",
+    "name": "Regiment van den Brigadier Cronstrom",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000277",
+    "name": "Regiment van den Brigadier Idsinga",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012206",
+    "name": "Regiment van den Brigadier May",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012207",
+    "name": "Regiment van den Brigadier Plettenburg",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012208",
+    "name": "Regiment van den Brigadier Schaak",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000278",
+    "name": "Regiment van den Brigadier Spaan",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012209",
+    "name": "Regiment van den Brigadier van Els",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000283",
+    "name": "Regiment van den Brigadier van Rechteren",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000285",
+    "name": "Regiment van den Brigadier van der Duin",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012210",
+    "name": "Regiment van den Collonel Frieshem",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000314",
+    "name": "Regiment van den Colonnel Brog",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012211",
+    "name": "Regiment van den Colonnel Lutzou",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012212",
+    "name": "Regiment van den Erf Prins van Oostvrieslant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012213",
+    "name": "Regiment van den Generaal Dopf",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000322",
+    "name": "Regiment van den Generaal Major Ek",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012214",
+    "name": "Regiment van den Generaal Major Friesheim",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012215",
+    "name": "Regiment van den Generaal Major Heyden",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000325",
+    "name": "Regiment van den Generaal Major Huffel",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012216",
+    "name": "Regiment van den Generaal Major Lauder",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000327",
+    "name": "Regiment van den Generaal Major Lindeboom",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012217",
+    "name": "Regiment van den Generaal Major Sturler",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012218",
+    "name": "Regiment van den Generaal Major Villegas",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000343",
+    "name": "Regiment van den Generaal Major van Keppel",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012219",
+    "name": "Regiment van den Generaal Major van Pallant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000345",
+    "name": "Regiment van den Generaal Salisch",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000347",
+    "name": "Regiment van den Grave van Albemarle",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012220",
+    "name": "Regiment van den Grave van Athlone",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012221",
+    "name": "Regiment van den Grave van Claar",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000348",
+    "name": "Regiment van den Grave van Clair",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012222",
+    "name": "Regiment van den Grave van Dona",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012223",
+    "name": "Regiment van den Grave van Erbach",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000349",
+    "name": "Regiment van den Grave van Erbag",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012224",
+    "name": "Regiment van den Grave van Hornes",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000350",
+    "name": "Regiment van den Grave van Oostvrieslant",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000351",
+    "name": "Regiment van den Grave van Rochefort",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000352",
+    "name": "Regiment van den Grave van Tilly",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012225",
+    "name": "Regiment van den Grave van der Nath",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000353",
+    "name": "Regiment van den Heere Prince van Nassau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012226",
+    "name": "Regiment van den Heere van 's Gravemoer",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012228",
+    "name": "Regiment van den Hertog van Holsteyn Norburg",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012227",
+    "name": "Regiment van den Hertog van Holsteyn",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012229",
+    "name": "Regiment van den Hertog van Saxen Eysenach",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012230",
+    "name": "Regiment van den Hertog van Wirtemberg",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000355",
+    "name": "Regiment van den Kroon Prins van Pruissen",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000356",
+    "name": "Regiment van den Kroonprins van Pruissen",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012231",
+    "name": "Regiment van den Lieutenant Generaal Dompré",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012232",
+    "name": "Regiment van den Lieutenant Generaal Friesheym",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012233",
+    "name": "Regiment van den Major Generaal Fagel",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012234",
+    "name": "Regiment van den Major Generaal Hubert",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012235",
+    "name": "Regiment van den Major Generaal Ittersum",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012236",
+    "name": "Regiment van den Prince van Holsteyn Beek",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000364",
+    "name": "Regiment van den Prince van Nassauw",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012237",
+    "name": "Regiment van den Prince van Wurtemberg",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012238",
+    "name": "Regiment van den Prins Frederik van Brandenburg, in Guarnisoen te Naamen",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012239",
+    "name": "Regiment van den heere Prince van Waldek",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000268",
+    "name": "Regiment van den",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000375",
+    "name": "Regimenten - Artillerie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regiment",
+      "Regimenten naar wapen",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000376",
+    "name": "Regimenten - Cavallerie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regiment",
+      "Regimenten naar wapen",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000377",
+    "name": "Regimenten - Deens",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000378",
+    "name": "Regimenten - Dragonders",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regiment",
+      "Regimenten naar wapen",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000379",
+    "name": "Regimenten - Engels",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000380",
+    "name": "Regimenten - Frans",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000381",
+    "name": "Regimenten - Garderegimenten",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regiment",
+      "Regimenten naar wapen",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000382",
+    "name": "Regimenten - Grisons",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000383",
+    "name": "Regimenten - Infanterie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regiment",
+      "Regimenten naar wapen",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000384",
+    "name": "Regimenten - Mineurs",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regiment",
+      "Regimenten naar wapen",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000385",
+    "name": "Regimenten - Schots",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000386",
+    "name": "Regimenten - Waals",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000387",
+    "name": "Regimenten - Zweeds",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000388",
+    "name": "Regimenten - Zwitsers",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Regimenten naar herkomst",
+      "Oorlog",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000425",
+    "name": "Rekenkamer te Brussel",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Republiek",
+      "Financiën",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000426",
+    "name": "Rekenkamer van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000427",
+    "name": "Rekenkamer van Friesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000428",
+    "name": "Rekenkamer van Gelderland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000429",
+    "name": "Rekenkamer van Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000430",
+    "name": "Rekenkamer van Spanje",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Republiek",
+      "Financiën",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000431",
+    "name": "Rekenkamer van Zeeland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Financiën",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000432",
+    "name": "Remonstranten",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Landelijk",
+      "Religieuze gezindte",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000433",
+    "name": "Representanten van het Bataafse Volk",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Bestuur",
+      "Bataafse tijd",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000434",
+    "name": "Representanten van het Franse Volk",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur",
+      "Bataafse tijd"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000435",
+    "name": "Representanten van het volk van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000436",
+    "name": "Representanten van het volk van Drenthe",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000437",
+    "name": "Representanten van het volk van Friesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000438",
+    "name": "Representanten van het volk van Gelderland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000439",
+    "name": "Representanten van het volk van Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000440",
+    "name": "Representanten van het volk van Overijssel",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000441",
+    "name": "Representanten van het volk van Stad en Lande",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000442",
+    "name": "Representanten van het volk van Utrecht",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000443",
+    "name": "Representanten van het volk van Zeeland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Bataafse tijd",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012245",
+    "name": "Ridderschap van Holland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012246",
+    "name": "Ridderschap van Oostfriesland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000444",
+    "name": "Rijksdag",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Landelijk",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000445",
+    "name": "Rijkskamergericht",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Rechtspraak",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000450",
+    "name": "Roomsgezinden",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Rooms-Katholiek",
+      "Religieuze gezindte",
+      "Godsdienst",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000451",
+    "name": "Societeit van Suriname",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Bestuur",
+      "Wereld",
+      "Landelijk",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012292",
+    "name": "Staat der Verenigde Nederlanden",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Bestuur",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012247",
+    "name": "Staten van Brabant",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012248",
+    "name": "Staten van Doornik",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012249",
+    "name": "Staten van Drente",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012250",
+    "name": "Staten van Friesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012251",
+    "name": "Staten van Gelderland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012252",
+    "name": "Staten van Holland en Westfriesland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012253",
+    "name": "Staten van Overijssel",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012254",
+    "name": "Staten van Overmaze",
+    "category": "ORG",
+    "labels": [
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012255",
+    "name": "Staten van Stad en Lande",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012256",
+    "name": "Staten van Utrecht",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012257",
+    "name": "Staten van Vlaanderen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012258",
+    "name": "Staten van Zeeland",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012259",
+    "name": "Staten-Generaal van de Republiek",
+    "category": "ORG",
+    "labels": [
+      "Landelijk",
+      "Generaliteit",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012293",
+    "name": "Stenden van Bohemen",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012260",
+    "name": "Stenden van Oostfriesland",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Bestuur"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012294",
+    "name": "Stenden van de drie Landen van Overmaze",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Bestuur",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000453",
+    "name": "Strafhof te Suriname",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Regionaal",
+      "Rechtspraak",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000454",
+    "name": "Synode van Berg",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Synode",
+      "Godsdienst",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000455",
+    "name": "Synode van Dordrecht",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Synode",
+      "Landelijk",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000456",
+    "name": "Synode van Gelderland",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Regionaal",
+      "Synode",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000457",
+    "name": "Synode van Holland en West-Friesland",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Regionaal",
+      "Synode",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000458",
+    "name": "Synode van Utrecht",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Regionaal",
+      "Synode",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000459",
+    "name": "Synode van Zuid-Holland",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Regionaal",
+      "Synode",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000460",
+    "name": "Synoden in de verenigde Nederlanden",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Regionaal",
+      "Synode",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012261",
+    "name": "Troupes van hare Majesteyt de Koninginne van Groot Brittannien",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000466",
+    "name": "Universiteit Douay",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Regionaal",
+      "Onderwijs"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012295",
+    "name": "Universiteit Franeker",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Onderwijs",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000467",
+    "name": "Universiteit Groningen",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Onderwijs",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012296",
+    "name": "Universiteit Harderwijk",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Onderwijs",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000468",
+    "name": "Universiteit Leiden",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Onderwijs",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000469",
+    "name": "Universiteit Leuven",
+    "category": "ORG",
+    "labels": [
+      "Europa",
+      "Zuidelijke Nederlanden",
+      "Regionaal",
+      "Onderwijs"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000470",
+    "name": "Universiteit Utrecht",
+    "category": "ORG",
+    "labels": [
+      "Regionaal",
+      "Onderwijs",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000471",
+    "name": "Vleeshouwersgilde van Amsterdam",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Plaatselijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000472",
+    "name": "Waalse Synode",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Synode",
+      "Landelijk",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000473",
+    "name": "Waalse kerken",
+    "category": "ORG",
+    "labels": [
+      "Godsdienst",
+      "Landelijk",
+      "Religieuze gezindte",
+      "Republiek"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000475",
+    "name": "Weeshuizen in Amsterdam",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Weeshuis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000476",
+    "name": "Weeshuizen in Delft",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Weeshuis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000477",
+    "name": "Weeshuizen in Maastricht",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Weeshuis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000478",
+    "name": "Weeshuizen in ’s Gravenhage",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Weeshuis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000479",
+    "name": "Weesmeesteren van Curaçao",
+    "category": "ORG",
+    "labels": [
+      "Wereld",
+      "Republiek",
+      "Plaatselijk",
+      "Weeshuis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000480",
+    "name": "Weesmeesteren van Suriname",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Plaatselijk",
+      "Weeshuis"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000481",
+    "name": "Westindische Compagnie",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Handel",
+      "Wereld",
+      "Landelijk",
+      "Zeevaart",
+      "Koloniaal"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000482",
+    "name": "eerste Regiment Orange Nassau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012262",
+    "name": "heeren Gedeputeerde in het leger",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012263",
+    "name": "heeren hare Hoog Mogende Gedeputeerden in het Leger",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012264",
+    "name": "in het leger",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000485",
+    "name": "militie van den Staat in de Spaansche Nederlanden",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0012265",
+    "name": "tweede Battaillon van het eerste Regiment Orange Nassau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  },
+  {
+    "id": "O0000488",
+    "name": "tweede Battaillon van het tweede Regiment Orange Nassau",
+    "category": "ORG",
+    "labels": [
+      "Republiek",
+      "Oorlog",
+      "Regimenten op naam",
+      "Regiment",
+      "Landelijk"
+    ],
+    "comment": null,
+    "links": []
+  }
+]
