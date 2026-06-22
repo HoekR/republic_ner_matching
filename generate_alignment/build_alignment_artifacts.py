@@ -1215,6 +1215,13 @@ def write_verification_html(
             margin-top: 12px;
             flex-wrap: wrap;
         }}
+        .pagination-bottom {{
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
         .pagination button {{
             flex: 0 0 auto;
             background: #374151;
@@ -1264,9 +1271,9 @@ def write_verification_html(
             <button onclick="exportVerification()">Export Summary</button>
         </div>
         <div class="pagination">
-            <button id="prevPageButton" onclick="previousPage()">Previous</button>
-            <div class="page-info" id="pageInfo">Page 1 of 1</div>
-            <button id="nextPageButton" onclick="nextPage()">Next</button>
+            <button class="prev-page-button" onclick="previousPage()">Previous</button>
+            <div class="page-info">Page 1 of 1</div>
+            <button class="next-page-button" onclick="nextPage()">Next</button>
         </div>
         <table class="entity-table">
             <thead>
@@ -1284,6 +1291,12 @@ def write_verification_html(
     </div>
 
     <div id="samplesContainer"></div>
+
+    <div class="pagination pagination-bottom">
+        <button class="prev-page-button" onclick="previousPage()">Previous</button>
+        <div class="page-info">Page 1 of 1</div>
+        <button class="next-page-button" onclick="nextPage()">Next</button>
+    </div>
 
     <div class="summary">
         <h2>Verification Summary</h2>
@@ -1401,9 +1414,16 @@ def write_verification_html(
 
         function updatePagination() {{
             const total = totalPages();
-            document.getElementById('pageInfo').textContent = `Page ${{currentPage}} of ${{total}}`;
-            document.getElementById('prevPageButton').disabled = currentPage <= 1;
-            document.getElementById('nextPageButton').disabled = currentPage >= total;
+            const pageLabel = `Page ${{currentPage}} of ${{total}}`;
+            document.querySelectorAll('.page-info').forEach((element) => {{
+                element.textContent = pageLabel;
+            }});
+            document.querySelectorAll('.prev-page-button').forEach((button) => {{
+                button.disabled = currentPage <= 1;
+            }});
+            document.querySelectorAll('.next-page-button').forEach((button) => {{
+                button.disabled = currentPage >= total;
+            }});
         }}
 
         function previousPage() {{

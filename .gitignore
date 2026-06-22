@@ -1,5 +1,9 @@
 __pycache__/
 credentials.txt
+.venv/
+.uvcache/
+*.egg-info/
+output/
 data/kwic_heinsius.jsonl
 data/kwic_heinsius.pkl
 data/training_pairs_1626_1630.jsonl
