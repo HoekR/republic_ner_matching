@@ -1,0 +1,4 @@
+# Copy to data_manifest.local.toml (gitignored) for per-machine paths.
+
+# [tiers.warm]
+# root = "/data/storage1tb/myproject"

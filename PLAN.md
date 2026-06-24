@@ -698,13 +698,29 @@ the corrections list is fetched directly from MySQL.
 
 ## Data paths (defaults)
 
+Logical names are defined in [`data_manifest.toml`](data_manifest.toml). Resolve at runtime:
+
+```bash
+uv run python -m data_io.check
+```
+
+| Logical name | Relative path (via `data/` symlink) |
+|---|---|
+| resolutions_flat | `resolutions/resolutions_flat.parquet` |
+| per_annotations | `annotations/PER-annotations.json` |
+| loc_annotations | `annotations/LOC-annotations.json` |
+| delegates_reference | `reference/delegates_reference.parquet` |
+| patterns_reference | `reference/patterns_reference.parquet` |
+| inventory_metadata | `reference/inventory_metadata.json` |
+| ner_per_annotations | `~/develop/.../downloads/annotations-layer_PER.tsv.gz` (hot tier) |
+| gnb_passport_sessions | `/Volumes/Extreme SSD/scratch/gnb_passport_sessions.jsonl` |
+
+See [docs/DATA.md](docs/DATA.md) for tier layout. Legacy table:
+
 | File | Path |
 |---|---|
-| NER PER annotations | `~/Downloads/annotations-unaggregated/annotations-layer_PER.tsv.gz` |
+| NER PER annotations (download) | `~/Downloads/annotations-unaggregated/annotations-layer_PER.tsv.gz` |
 | HOE annotations | `~/Downloads/annotations-unaggregated/annotations-layer_HOE.tsv.gz` |
-| delegates_reference | `data/delegates_reference.parquet` |
-| patterns_reference | `data/patterns_reference.parquet` |
-| inventory_metadata | `data/inventory_metadata.json` |
 | results | `data/results.parquet` |
 | hoe_vocab | `data/hoe_vocab.parquet` |
 | hoe_category_counts | `data/hoe_category_counts.json` |

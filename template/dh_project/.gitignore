@@ -1,0 +1,6 @@
+.venv/
+.uvcache/
+__pycache__/
+*.egg-info/
+data_manifest.local.toml
+.pytest_cache/

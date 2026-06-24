@@ -1,0 +1,83 @@
+[phases]
+explore = "jsonl, pkl, xlsx, ad-hoc notebooks"
+semi = "jsonl, markdown+yaml frontmatter"
+frozen = "parquet (duckdb-queryable)"
+
+[tiers.hot]
+root = "/Users/rikhoekstra/develop"
+mount_check = ""
+
+[tiers.warm]
+root = "/Volumes/2tb disk"
+mount_check = "/Volumes/2tb disk"
+
+[tiers.scratch]
+root = "/Volumes/Extreme SSD/scratch"
+mount_check = "/Volumes/Extreme SSD"
+
+[tiers.collab]
+root = "/Users/rikhoekstra/Nextcloud2/Republic"
+mount_check = "/Users/rikhoekstra/Nextcloud2"
+
+[datasets.resolutions_flat]
+tier = "warm"
+path = "datasets/republic/resolutions/resolutions_flat.parquet"
+phase = "frozen"
+description = "Resolution paragraphs with dates"
+parent = ""
+
+[datasets.per_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/PER-annotations.json"
+phase = "frozen"
+description = "Person NER annotations"
+parent = ""
+
+[datasets.loc_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/LOC-annotations.json"
+phase = "frozen"
+description = "Location NER annotations"
+parent = ""
+
+[datasets.delegates_reference]
+tier = "warm"
+path = "datasets/republic/reference/delegates_reference.parquet"
+phase = "frozen"
+description = "One row per delegate; matcher lookup table"
+parent = ""
+
+[datasets.patterns_reference]
+tier = "warm"
+path = "datasets/republic/reference/patterns_reference.parquet"
+phase = "frozen"
+description = "Pattern inventory for variant lookup"
+parent = ""
+
+[datasets.inventory_metadata]
+tier = "warm"
+path = "datasets/republic/reference/inventory_metadata.json"
+phase = "frozen"
+description = "Republic inventory metadata"
+parent = ""
+
+[datasets.ner_per_annotations]
+tier = "hot"
+path = "Downloads/annotations-unaggregated/annotations-layer_PER.tsv.gz"
+phase = "explore"
+description = "Unaggregated PER NER export (TSV)"
+parent = ""
+
+[datasets.gnb_passport_sessions]
+tier = "scratch"
+path = "gnb_passport_sessions.jsonl"
+phase = "semi"
+description = "Filtered GNB sessions where passports were on the agenda"
+parent = "gnb_raw_resolutions"
+
+[datasets.gnb_raw_resolutions]
+tier = "warm"
+path = "data"
+phase = "explore"
+description = "Legacy Republic archives on warm drive (pagexml, sessions_json)"
+parent = ""

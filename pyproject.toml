@@ -18,6 +18,7 @@ dependencies = [
     "scikit-learn>=1.8.0",
     "tqdm>=4.66.0",
     "openpyxl>=3.1.2",
+    "tomli-w>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -38,4 +39,4 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["generate_alignment", "tests"]
+include = ["generate_alignment", "data_io", "tests"]

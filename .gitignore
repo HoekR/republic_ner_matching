@@ -4,6 +4,7 @@ credentials.txt
 .uvcache/
 *.egg-info/
 output/
+data_manifest.local.toml
 data/kwic_heinsius.jsonl
 data/kwic_heinsius.pkl
 data/training_pairs_1626_1630.jsonl

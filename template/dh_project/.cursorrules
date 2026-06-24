@@ -1,0 +1,9 @@
+# Data manifest discipline (see AGENTS.md and docs/DATA.md)
+
+- Never hardcode absolute data paths in Python; use data_manifest.toml + data_io.resolve/load/save_*.
+- Register new datasets in data_manifest.toml before writing code that references them.
+- Run `uv run python -m data_io.check` after manifest changes.
+- Pipeline outputs must use save_semi_structured or save_parquet (automatic provenance sidecars).
+- Use archive-scan / scripts/archive_inbox.sh only for legacy orphan files, not data_io outputs.
+- Read PLAN.md at session start; update its data-path table when datasets change.
+- Never discard archival metadata fields during transforms.
