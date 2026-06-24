@@ -43,6 +43,9 @@ LOC_ANNOTATIONS_FILE = DATADIR / "LOC-annotations.json"
 ORG_ANNOTATIONS_FILE = DATADIR / "ORG-annotations.json"
 PLACE_OVERLAP_FILE = DATADIR / "place_overlap_1626_1630.xlsx"
 ORG_OVERLAP_FILE = DATADIR / "org_overlap_1626_1630.xlsx"
+PER_OVERLAP_FILE = DATADIR / "per_overlap_1626_1630.xlsx"
+
+PERSON_SIGNAL_SCALE = 0.2
 
 SESSION_ID_PATTERN = re.compile(r"(session-\d+)")
 NO_ANCHOR_DIAG_SCORE = -1e9
@@ -197,17 +200,23 @@ def build_overlap_lookups(
     places_df: pd.DataFrame,
     orgs_df: pd.DataFrame,
     paragraph_to_resolution: dict[str, str],
+    persons_df: pd.DataFrame | None = None,
 ) -> tuple[
     dict[tuple[str, str], set[str]],
     dict[tuple[str, str], set[str]],
     dict[tuple[str, str], set[str]],
+    dict[tuple[str, str], set[str]],
 ]:
-    """Build place-only, org-only, and combined Excel overlap lookups."""
+    """Build place-only, org-only, person-only, and combined Excel overlap lookups."""
     place_lookup: dict[tuple[str, str], set[str]] = {}
     org_lookup: dict[tuple[str, str], set[str]] = {}
+    person_lookup: dict[tuple[str, str], set[str]] = {}
     combined_lookup: dict[tuple[str, str], set[str]] = {}
 
-    for source_df, target_lookup in ((places_df, place_lookup), (orgs_df, org_lookup)):
+    for source_df, target_lookup in (
+        (places_df, place_lookup),
+        (orgs_df, org_lookup),
+    ):
         for _, row in source_df.iterrows():
             if pd.isna(row["volgnr"]) or pd.isna(row["paragraph_id"]) or pd.isna(row["name"]):
                 continue
@@ -221,7 +230,21 @@ def build_overlap_lookups(
             target_lookup.setdefault(pair, set()).add(entity_name)
             combined_lookup.setdefault(pair, set()).add(entity_name)
 
-    return place_lookup, org_lookup, combined_lookup
+    if persons_df is not None and not persons_df.empty:
+        for _, row in persons_df.iterrows():
+            if pd.isna(row["volgnr"]) or pd.isna(row["paragraph_id"]) or pd.isna(row["name"]):
+                continue
+            volgnr = str(row["volgnr"]).strip()
+            paragraph_id = str(row["paragraph_id"]).strip()
+            flat_id = paragraph_to_resolution.get(paragraph_id)
+            if not flat_id:
+                continue
+            pair = (volgnr, flat_id)
+            entity_name = str(row["name"]).strip()
+            person_lookup.setdefault(pair, set()).add(entity_name)
+            combined_lookup.setdefault(pair, set()).add(entity_name)
+
+    return place_lookup, org_lookup, person_lookup, combined_lookup
 
 
 def extract_session_id(flat_id: str) -> str | None:
@@ -417,6 +440,26 @@ def calculate_idf_weights(all_overlaps_df: pd.DataFrame) -> dict[str, float]:
     total_docs = len(all_overlaps_df)
     counts = Counter(names)
     return {ent: math.log(total_docs / count) for ent, count in counts.items() if count > 0}
+
+
+def score_typed_overlap(
+    enriched_id: str,
+    target_id: str,
+    place_lookup: dict[tuple[str, str], set[str]],
+    org_lookup: dict[tuple[str, str], set[str]],
+    person_lookup: dict[tuple[str, str], set[str]],
+    idf_weights: dict[str, float],
+    person_signal_scale: float = PERSON_SIGNAL_SCALE,
+) -> tuple[float, float, float]:
+    """Return anchor (place+org), person, and combined IDF-weighted scores."""
+    pair = (enriched_id, target_id)
+    anchor_entities = place_lookup.get(pair, set()) | org_lookup.get(pair, set())
+    person_entities = person_lookup.get(pair, set())
+    anchor_score = sum(idf_weights.get(entity, 1.0) for entity in anchor_entities)
+    person_score = person_signal_scale * sum(
+        idf_weights.get(entity, 1.0) for entity in person_entities
+    )
+    return anchor_score, person_score, anchor_score + person_score
 
 
 def align_session(
@@ -780,7 +823,7 @@ def run(
         paragraph_ids,
     )
 
-    place_lookup, org_lookup, overlap_lookup = build_overlap_lookups(
+    place_lookup, org_lookup, _person_lookup, overlap_lookup = build_overlap_lookups(
         places_df,
         orgs_df,
         paragraph_to_resolution,

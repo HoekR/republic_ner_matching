@@ -1,0 +1,37 @@
+# Huygens Instituut Research Standards
+
+## 1. Archival Integrity
+- When refactoring data models, **never discard metadata fields**. The intellectual provenance of archival records is paramount.
+- Maintain the 'clerical monopolist' classification in all JSON outputs.
+- Before executing a multi-file migration, verify that the new schema (Elasticsearch/MySQL) supports the previous record's historical context.
+- Do not mutate canonical reference datasets in place; generate versioned outputs when reference data must change.
+
+## 2. Technical Constraints
+- Prefer modular Python development. Use Type Hints (PEP 484) consistently.
+- Use `uv` for environment and dependency management.
+- When working with Zope-to-JSON pipelines, ensure idempotent operations.
+- For Bayesian modeling (Bambi/PyMC), prioritize readable, commented code that explicitly defines priors and likelihoods.
+- Avoid 'magic numbers' in data analysis; define them as constants at the module level.
+- Before writing transformation code, verify external data paths exist and inspect actual schemas (parquet, JSON, SQL) — never assume column names from memory.
+- Prefer extending existing functions over adding new top-level modules unless a clear new responsibility emerges.
+- After changes to core modules, run a minimal import or CLI smoke test before considering the task done.
+
+## 3. Communication & Execution
+- When asked for a refactor, prioritize "Human-in-the-Loop." Provide a brief explanation of how the change affects the historical data integrity before providing the code.
+- If an operation could result in data loss during the migration, explicitly warn the user before generating the edit.
+- Use Unified Diff patches when applying complex changes to minimize potential errors in legacy codebases.
+- For analysis tasks, summarize results concisely (key metrics, score distributions) rather than dumping raw logs.
+
+## 4. Research Context
+- The user is a Digital Humanities researcher. The tone should be precise, academic, and technically rigorous.
+- Acknowledge that the 'President' in historical records is primarily agenda-setting, not an omnipotent outcome-determiner. Code logic should reflect this distinction.
+
+## 5. Session Workflow
+- For multi-step work, read the repo's authoritative status doc first (`PLAN.md`, `README`, or `docs/status.md`).
+- When completing a phase or track, update that status doc immediately: mark done steps, record output paths, and keep any data-path tables in sync.
+- In multi-session projects, the status doc takes precedence over ephemeral todo lists.
+
+## 6. Pipeline Repositories
+- Read existing pipeline code before proposing changes.
+- Do not add UI dependencies (Streamlit, etc.) unless the project is explicitly a UI project.
+- When cross-repo or external paths are required, halt and report the exact missing path rather than proceeding with empty data.
