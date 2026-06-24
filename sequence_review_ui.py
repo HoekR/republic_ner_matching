@@ -7,6 +7,7 @@ import ast
 import json
 import re
 from collections import defaultdict
+from html import escape
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -27,6 +28,7 @@ from build_alignment_new import (
     enriched_text,
     enriched_volgnr,
     extract_session_id,
+    score_typed_overlap,
 )
 
 
@@ -1090,6 +1092,82 @@ def _session_for_enriched_date(
     return None
 
 
+def build_pin_placement_tasks(
+    placement_queue: list[dict[str, Any]],
+    enriched_by_date: dict[str, list[dict[str, Any]]],
+    places_df: pd.DataFrame,
+    orgs_df: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    """Convert coverage-gap queue rows into resolution-search task records."""
+    enriched_lookup: dict[str, dict[str, Any]] = {}
+    for rows in enriched_by_date.values():
+        for enriched in rows:
+            enriched_id = enriched_volgnr(enriched) or ""
+            if enriched_id:
+                enriched_lookup[enriched_id] = enriched
+
+    tasks: list[dict[str, Any]] = []
+    for item in placement_queue:
+        enriched_id = str(item.get("enriched_id", ""))
+        enriched = enriched_lookup.get(enriched_id, {})
+        tasks.append(
+            {
+                "task_id": str(item.get("task_id") or enriched_id),
+                "enriched_id": enriched_id,
+                "enriched_date": str(item.get("enriched_date") or enriched.get("date", ""))[:10],
+                "flat_id": None,
+                "session_id": item.get("session_id"),
+                "enriched_preview": enriched_text(enriched)[:600] if enriched else "",
+                "flat_preview_auto": "",
+                "auto_paragraph_id": None,
+                "auto_resolution_id": None,
+                "hint_resolution_id": item.get("hint_resolution_id"),
+                "gt_paragraph_id": None,
+                "blocked_paragraph_ids": [],
+                "reason": "pin_placement_gap",
+                "prior_verdict": None,
+                "in_verification_sample": False,
+                "overlap_score": item.get("overlap_score"),
+                "candidate_count": item.get("candidate_count"),
+                "year": item.get("year"),
+                "suggested_search_terms": suggested_search_terms_for_enriched(
+                    enriched_id,
+                    places_df,
+                    orgs_df,
+                ),
+            }
+        )
+    return tasks
+
+
+def write_pin_placement_html(
+    tasks: list[dict[str, Any]],
+    res_df: pd.DataFrame,
+    paragraph_to_resolution: dict[str, str],
+    output_path: Path,
+    *,
+    places_df: pd.DataFrame | None = None,
+    orgs_df: pd.DataFrame | None = None,
+) -> None:
+    """Pin-placement gap queue — same export path as resolution search."""
+    write_resolution_search_html(
+        tasks,
+        res_df,
+        paragraph_to_resolution,
+        output_path,
+        places_df=places_df,
+        orgs_df=orgs_df,
+        page_title="Pin Placement Queue",
+        page_heading="Systematic pin placement (year × session gaps)",
+        page_note=(
+            "<p class='note'><b>Goal:</b> place one verified pin per empty year×session cell. "
+            "Tasks are ranked by place/org/person overlap — not auto-pinned. "
+            "Export uses the same <code>sequence_correction_summary.json</code> path as resolution search.</p>"
+        ),
+        storage_key="pin_placement_pins_v1",
+    )
+
+
 def write_resolution_search_html(
     tasks: list[dict[str, Any]],
     res_df: pd.DataFrame,
@@ -1099,6 +1177,10 @@ def write_resolution_search_html(
     year_max: int = 1630,
     places_df: pd.DataFrame | None = None,
     orgs_df: pd.DataFrame | None = None,
+    page_title: str = "Resolution Search Annotator",
+    page_heading: str = "Resolution search annotator",
+    page_note: str | None = None,
+    storage_key: str = "resolution_search_pins_v1",
 ) -> None:
     """Manual search UI: query flat resolutions, pick paragraph, export pins."""
     search_index = build_resolution_search_index(
@@ -1129,10 +1211,22 @@ def write_resolution_search_html(
 
     tasks_json = json.dumps(tasks, ensure_ascii=False)
     sessions_json = json.dumps(sessions, ensure_ascii=False)
+    title_esc = escape(page_title)
+    heading_esc = escape(page_heading)
+    default_note = (
+        f"<p class='note'><b>What you annotate:</b> pins become <code>curated_pins</code> on re-run — not new rows "
+        f"in the 50-item verification sample. Each re-run rebuilds this list: sample mismatches, rejections, and "
+        f"<b>unlinked enrichments</b> on review days (including same-day splits). Jump to a task via the dropdown or "
+        f"<code>verify_resolution_search.html#1626-02-25_3</code>. Workflow: search → pick resolution → pick paragraph "
+        f"→ <b>Pin match</b>. Search uses HTR text <i>plus</i> overlap entity names; empty search lists same-day "
+        f"resolutions. Export → move <code>sequence_correction_summary.json</code> to <code>output/</code>, then run:"
+        f"{CORRECTION_CLI_BLOCK}</p>"
+    )
+    note_block = page_note if page_note is not None else default_note
 
     html = f"""<!DOCTYPE html>
 <html><head><meta charset='utf-8'>
-<title>Resolution Search Annotator</title>
+<title>{title_esc}</title>
 <script src='resolution_search_index.js'></script>
 <script src='resolution_paragraphs.js'></script>
 <style>
@@ -1185,17 +1279,17 @@ h1 {{ margin: 0 0 6px; color: #1a365d; font-size: 1.35rem; }}
 #results {{ max-height: 620px; overflow-y: auto; }}
 </style></head><body>
 <div class='header'>
-  <h1>Resolution Search Annotator</h1>
+  <h1>{heading_esc}</h1>
   <p class='meta'>Search flat resolutions by your own terms, then pinpoint the matching paragraph. Rejected auto-links stay blocked after <code>session_chain_alignment.py</code>.</p>
   <div class='toolbar'>
     <span id='progress' class='meta'>0 / 0</span>
     <label class='meta'>Task <select id='taskJump' onchange='jumpToTask(this.value)'></select></label>
-    <label class='meta'>Show <select id='reasonFilter' onchange='applyReasonFilter()'><option value="">all reasons</option><option value="same_day_split">same-day split</option><option value="chain_gap">chain gap</option><option value="chain_mismatch">mismatch</option><option value="rejected_no_pin">rejected</option></select></label>
+    <label class='meta'>Show <select id='reasonFilter' onchange='applyReasonFilter()'><option value="">all reasons</option><option value="pin_placement_gap">pin gap</option><option value="same_day_split">same-day split</option><option value="chain_gap">chain gap</option><option value="chain_mismatch">mismatch</option><option value="rejected_no_pin">rejected</option></select></label>
     <button class='primary' onclick='exportPins()'>Export pins</button>
     <button class='muted' onclick='clearStorage()'>Clear saved</button>
   </div>
 </div>
-<p class='note'><b>What you annotate:</b> pins become <code>curated_pins</code> on re-run — not new rows in the 50-item verification sample. Each re-run rebuilds this list: sample mismatches, rejections, and <b>unlinked enrichments</b> on review days (including same-day splits). Jump to a task via the dropdown or <code>verify_resolution_search.html#1626-02-25_3</code>. Workflow: search → pick resolution → pick paragraph → <b>Pin match</b>. Search uses HTR text <i>plus</i> overlap entity names; empty search lists same-day resolutions. Export → move <code>sequence_correction_summary.json</code> to <code>output/</code>, then run:{CORRECTION_CLI_BLOCK}</p>
+{note_block}
 <div id='task'></div>
 <div class='pagination'>
   <button id='prevBtn' onclick='changePage(-1)'>← Previous</button>
@@ -1207,7 +1301,7 @@ const TASKS = {tasks_json};
 const ALL_TASKS = TASKS;
 let TASKS_FILTERED = [...ALL_TASKS];
 const SESSIONS = {sessions_json};
-const STORAGE_KEY = 'resolution_search_pins_v1';
+const STORAGE_KEY = '{storage_key}';
 let page = 0;
 let pins = {{}};
 let selectedResolution = null;
@@ -1463,6 +1557,7 @@ function render() {{
     rejected_no_pin: '<span class="badge">rejected</span>',
     same_day_split: '<span class="badge split">same-day split</span>',
     chain_gap: '<span class="badge gap">no chain link</span>',
+    pin_placement_gap: '<span class="badge split">pin gap</span>',
   }}[task.reason] || '';
 
   document.getElementById('task').innerHTML = `
@@ -1936,6 +2031,10 @@ def build_alignment_audit_records(
     orgs_df: pd.DataFrame,
     session_ranks: list[Any] | None = None,
     per_session_sample: int = 25,
+    place_lookup: dict[tuple[str, str], set[str]] | None = None,
+    org_lookup: dict[tuple[str, str], set[str]] | None = None,
+    person_lookup: dict[tuple[str, str], set[str]] | None = None,
+    idf_weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Build a risk-prioritized audit queue over chain alignments (not training labels)."""
     precision_by_session: dict[str, float] = {}
@@ -2013,6 +2112,29 @@ def build_alignment_audit_records(
             matches_labeled_gt = paragraph_id == gt_paragraph
 
         enriched = enriched_lookup.get(enriched_id, {})
+        overlap_scores: dict[str, float] = {}
+        if place_lookup is not None and org_lookup is not None and idf_weights is not None:
+            anchor_score, person_score, combined_score = score_typed_overlap(
+                enriched_id,
+                paragraph_id,
+                place_lookup,
+                org_lookup,
+                person_lookup or {},
+                idf_weights,
+            )
+            overlap_scores = {
+                "place_overlap_score": round(
+                    sum(idf_weights.get(e, 1.0) for e in place_lookup.get((enriched_id, paragraph_id), set())),
+                    3,
+                ),
+                "org_overlap_score": round(
+                    sum(idf_weights.get(e, 1.0) for e in org_lookup.get((enriched_id, paragraph_id), set())),
+                    3,
+                ),
+                "person_overlap_score": round(person_score, 3),
+                "anchor_overlap_score": round(anchor_score, 3),
+                "combined_overlap_score": round(combined_score, 3),
+            }
         record = {
             "audit_id": enriched_id,
             "enriched_id": enriched_id,
@@ -2033,6 +2155,7 @@ def build_alignment_audit_records(
             "session_precision": precision_by_session.get(session_id),
             "rejected_pair": bool(gt_flat_id and (enriched_id, gt_flat_id) in reject_keys),
             "manually_pinned": enriched_id in pin_enriched or pinned,
+            **overlap_scores,
         }
 
         if pinned or enriched_id in pin_enriched:

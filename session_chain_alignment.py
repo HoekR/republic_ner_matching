@@ -29,10 +29,12 @@ from sequence_review_ui import (
     build_alignment_audit_records,
     build_correction_records,
     build_day_sequence_payload,
+    build_pin_placement_tasks,
     build_search_tasks,
     build_session_comparison_payload,
     write_alignment_audit_html,
     write_day_sequence_html,
+    write_pin_placement_html,
     write_resolution_search_html,
     write_sequence_alignment_html,
     write_session_heatmap_comparison_html,
@@ -49,6 +51,7 @@ from analyze_sequence_entity_overlap import (
 )
 from build_alignment_new import (
     DATADIR,
+    ENRICHED_FILE,
     LOC_ANNOTATIONS_FILE,
     NO_ANCHOR_DIAG_SCORE,
     ORG_ANNOTATIONS_FILE,
@@ -57,6 +60,7 @@ from build_alignment_new import (
     PER_OVERLAP_FILE,
     PERSON_SIGNAL_SCALE,
     PLACE_OVERLAP_FILE,
+    RESOLUTIONS_FILE,
     SESSION_ID_PATTERN,
     align_session,
     build_date_to_session_map,
@@ -953,7 +957,7 @@ def main() -> None:
     if not isinstance(labeled, list):
         raise ValueError("Labeled JSON must be a list.")
 
-    enriched_all = load_json(DATADIR / "enriched_resolutions_1626_1630_complete.json")
+    enriched_all = load_json(ENRICHED_FILE)
     places_df = pd.read_excel(PLACE_OVERLAP_FILE)
     orgs_df = pd.read_excel(ORG_OVERLAP_FILE)
     persons_df = pd.read_excel(PER_OVERLAP_FILE) if PER_OVERLAP_FILE.exists() else pd.DataFrame()
@@ -1029,10 +1033,13 @@ def main() -> None:
         session_ranks,
         args.offset_penalty,
         state_version=existing_version + 1,
+        place_lookup=place_lookup,
+        org_lookup=org_lookup,
+        person_lookup=person_lookup,
     )
 
     # Build full diagnostic results with heatmaps for interactive HTML.
-    res_df = pd.read_parquet(DATADIR / "resolutions_flat.parquet")
+    res_df = pd.read_parquet(RESOLUTIONS_FILE)
     res_df["session_id"] = res_df["id"].astype(str).str.extract(SESSION_ID_PATTERN, expand=False)
     from analyze_sequence_entity_overlap import analyze_labeled_pairs, build_resolution_overlap_lookup
 
@@ -1171,6 +1178,10 @@ def main() -> None:
         orgs_df,
         session_ranks,
         per_session_sample=args.audit_sample_per_session,
+        place_lookup=place_lookup,
+        org_lookup=org_lookup,
+        person_lookup=person_lookup,
+        idf_weights=idf_weights,
     )
     audit_path = args.output_dir / "verify_alignment_audit.html"
     write_alignment_audit_html(audit_payload, audit_path)
@@ -1186,12 +1197,51 @@ def main() -> None:
         encoding="utf-8",
     )
 
+    from build_pin_coverage_report import build_coverage_grid
+
+    coverage_report = build_coverage_grid(
+        state.to_dict(),
+        state.alignments,
+        places_df,
+        orgs_df,
+        persons_df,
+        paragraph_to_resolution,
+        enriched_all,
+    )
+    coverage_path = args.output_dir / "pin_coverage_report.json"
+    placement_queue_path = args.output_dir / "pin_placement_queue.json"
+    coverage_path.write_text(json.dumps(coverage_report, indent=2, ensure_ascii=False), encoding="utf-8")
+    placement_queue_path.write_text(
+        json.dumps(coverage_report["placement_queue"], indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    pin_placement_tasks = build_pin_placement_tasks(
+        coverage_report["placement_queue"],
+        enriched_by_date,
+        places_df,
+        orgs_df,
+    )
+    pin_placement_path = args.output_dir / "verify_pin_placement.html"
+    write_pin_placement_html(
+        pin_placement_tasks,
+        res_df,
+        paragraph_to_resolution,
+        pin_placement_path,
+        places_df=places_df,
+        orgs_df=orgs_df,
+    )
+
     print(f"✓ Alignment state: {state_path}")
     print(f"✓ Propagation report: {propagation_path}")
     print(f"✓ Interactive heatmaps: {heatmap_path}")
     print(f"✓ Session comparison: {comparison_path}")
     print(f"✓ Manual correction UI: {correction_path}")
     print(f"✓ Resolution search UI: {search_path} ({len(search_tasks)} tasks)")
+    print(
+        f"✓ Pin placement UI: {pin_placement_path} "
+        f"({len(pin_placement_tasks)} gap tasks; "
+        f"{coverage_report['summary']['cells_with_pins']}/{coverage_report['summary']['total_cells']} cells covered)"
+    )
     print(f"✓ Day sequence view: {day_sequence_path} ({len(day_sequences)} days)")
     print(
         f"✓ Alignment audit UI: {audit_path} "

@@ -2,7 +2,7 @@
 
 **Status:** active development  
 **Authoritative script:** `build_alignment_new.py`  
-**Last updated:** 2026-06-22
+**Last updated:** 2026-06-24
 
 ---
 
@@ -87,9 +87,15 @@ The legacy script `generate_alignment/build_alignment_artifacts.py` remains for 
 - [x] Session-id pooling (immunity to HTR date noise within session)
 - [x] Anchor-only NW diagonal + `--min-overlap-score` filter
 - [x] `import_verification_summary.py` — merge browser export into curated/rejected JSON
-- [ ] Windowed overlap regeneration (cross-day Excel anchors)
-- [ ] Person-entity anchors in overlap scoring
-- [ ] Import verified labels back into parquet / training pipeline
+- [x] Person overlap Excel (`per_overlap_1626_1630.xlsx`) — 8,665 rows via `build_per_overlap.py`
+- [x] XML person surfaces (`person_surfaces_1626_1630.parquet`) via `extract_xml_person_surfaces.py`
+- [x] Dual person resolution (`persons_canonical` + `persons_surface`) in `resolve_enriched_entities`
+- [x] Pin-validated aliases (`output/person_aliases_from_pins.json`) via `build_person_aliases_from_pins.py`
+- [x] Person signal in NW (`PERSON_SIGNAL_SCALE=0.2`, anchor-only gate) in `session_chain_alignment.py`
+- [x] Person overlap scores in alignment audit records
+- [x] Pin coverage grid (`output/pin_coverage_report.json`) via `build_pin_coverage_report.py`
+- [x] Pin placement queue UI (`output/verify_pin_placement.html`) — shares correction import path
+- [x] Auto-import of `sequence_correction_summary*.json` before chain alignment re-run
 
 ### Outputs (generated under `output/`)
 - [x] `matched_resolutions_sample.html`
@@ -97,6 +103,12 @@ The legacy script `generate_alignment/build_alignment_artifacts.py` remains for 
 - [x] `verify_ground_truth.html`
 - [x] `ground_truth_curated.json` / `ground_truth_rejected.json` (from manual verification import)
 - [x] `ground_truth_verification_analysis.json`
+- [x] `verify_resolution_search.html` + `search_tasks.json` (capped gap queue)
+- [x] `verify_pin_placement.html` + `pin_placement_queue.json`
+- [x] `pin_coverage_report.json`
+- [x] `person_aliases_from_pins.json`
+- [x] `person_overlap_evaluation.json`
+- [x] `alignment_state.json` / `corrective_ground_truth.json` (pin import state)
 
 ---
 
@@ -118,6 +130,43 @@ Separate place/org shared-entity reporting in preview, JSON exports, and verific
 
 ### ✅ M5 — Manual ground-truth workflow (complete)
 Browser-based verification UI with persistent labels and JSON export.
+
+### Person signals + systematic pinning (plan checklist — verified 2026-06-24)
+
+| Step | Status | Evidence |
+|------|--------|----------|
+| Continue search review + pin import | [x] | `import_sequence_correction.py`; auto-import on `session_chain_alignment.py`; 197 corrections / 137 pins imported; search queue **56** tasks (capped, was 489) |
+| Extract XML person surfaces | [x] | `extract_xml_person_surfaces.py`; `data.bak/person_surfaces_1626_1630.parquet`; **98.2%** enriched-with-persons have surfaces |
+| Dual person resolution | [x] | `resolve_enriched_entities()` → `persons_canonical` + `persons_surface`; **98.4%** `Id_persoon` in `persons_info.json` |
+| Build `per_overlap_1626_1630.xlsx` | [x] | `build_per_overlap.py` → `data/derived/per_overlap_1626_1630.xlsx` (8,665 rows) |
+| Pin-validated person aliases | [x] | `build_person_aliases_from_pins.py` → `output/person_aliases_from_pins.json` (237 persons, 145 pin links) |
+| Integrate person signal in NW | [x] | `person_lookup` in `session_chain_alignment.py`; `PERSON_SIGNAL_SCALE=0.2`; anchor-only gate; audit `person_overlap_score` |
+| Evaluate on labeled 50 | [x] | `evaluate_person_overlap_labeled.py` → `output/person_overlap_evaluation.json` (weak FP separation; integrated conservatively) |
+| Pin coverage grid | [x] | `build_pin_coverage_report.py` → `output/pin_coverage_report.json` — **6/30** year×session cells have pins (tooling done; coverage goal open) |
+| Pin placement queue UI | [x] | `output/pin_placement_queue.json` + `output/verify_pin_placement.html` (1 ranked gap task) |
+
+```bash
+# 1. Extract XML person surfaces (once; or use data.bak/person_surfaces_1626_1630.parquet)
+uv run python extract_xml_person_surfaces.py
+
+# 2. Build person overlap bridge
+uv run python build_per_overlap.py
+
+# 3. Evaluate on labeled 50 before trusting NW weight
+uv run python evaluate_person_overlap_labeled.py
+
+# 4. Review search tasks / pin gaps → export → import
+uv run python session_chain_alignment.py   # auto-imports sequence_correction_summary*.json
+
+# 5. Coverage + alias harvest (also runs at end of session_chain_alignment)
+uv run python build_pin_coverage_report.py
+uv run python build_person_aliases_from_pins.py
+```
+
+UIs: `output/verify_resolution_search.html` (hard cases), `output/verify_pin_placement.html` (year×session gaps).
+
+Person overlap evaluation on labeled 50: person signal does **not** separate correct vs FP (mean person_score 0.59 vs 0.62); integrated at `PERSON_SIGNAL_SCALE=0.2` with anchor-only gate.
+
 
 ### ✅ M6 — Date-window matching (complete)
 `--date-window-days N` expands flat candidate pool; cross-day text fallback for entity evidence.
@@ -183,9 +232,7 @@ Project verified enriched↔flat pairs into annotation-offset / training-pair bu
 | Places + orgs | 29 |
 | Places found in flat (aggregate) | 197 / 422 enriched |
 | Orgs found in flat (aggregate) | 65 / 136 enriched |
-| Persons found in flat (aggregate) | 0 / 265 enriched |
-
-*Person matching is not yet anchored via Excel overlap; expect low person recall until PER overlap is added.*
+| Persons found in flat (aggregate) | 0 / 265 enriched *(pre-PER-overlap sample; superseded by `per_overlap` bridge)* |
 
 ---
 
@@ -218,18 +265,11 @@ Project verified enriched↔flat pairs into annotation-offset / training-pair bu
 |--------|------------|-------------|
 | **Places** | `place_lookup`; merged into NW score | Own overlap band along paragraph axis; sequence coherence per type |
 | **Organizations** | `org_lookup`; merged into NW score | Independent band; agreement with places strengthens a link |
-| **Persons** | Not in Excel anchors; 0 recall in verification sample | Later phase; lower weight until pinpointing improves |
+| **Persons** | `person_lookup` via `per_overlap_1626_1630.xlsx`; `PERSON_SIGNAL_SCALE=0.2` | Third signal; cannot open NW diagonal alone; weak FP separation on labeled 50 |
 
-**Combined vs separate:** The pipeline already stores place-only and org-only lookups (`build_overlap_lookups`) but NW scoring still sums them into one `combined_lookup` IDF score. The next refinement is **dual-signal scoring**:
+Place and org remain primary anchors. Person overlap contributes at low weight when place/org already agree (or via manual pins). `evaluate_person_overlap_labeled.py` before raising `PERSON_SIGNAL_SCALE`.
 
-- `score_place(i,j)` and `score_org(i,j)` as separate heatmap rows or matrix layers
-- **Agreement bonus** when both peaks align at the same paragraph index (or adjacent)
-- **Disagreement flag** when place and org diagonals diverge — candidate for manual correction (R2)
-- **Combined score** only as fallback when a resolution has places but no orgs (or vice versa)
-
-Ubiquitous places (Holland, Brabant) remain in the place signal; org agreement acts as a check rather than blocking place hits.
-
-**Persons (deferred):** PER overlap is harder — sparse NER, ambiguous names, deputy/president metadata already on enriched side but not bridged to flat paragraphs. Add `person_overlap_*.xlsx` only after place/org sequence alignment stabilises; use as a third signal layer with conservative weight.
+**Persons (implemented 2026-06-24):** XML surfaces (`extract_xml_person_surfaces.py`) bridge enriched `Id_persoon` to PER via `build_per_overlap.py`. Use `persons_surface`, not registry fullnames alone, for HTR matching.
 
 ---
 
@@ -265,8 +305,9 @@ uv run python session_chain_alignment.py
 # Open output/verify_session_heatmap_comparison.html  — session diagnostics
 # Open output/verify_sequence_alignment.html          — ranked candidate picker
 # Open output/verify_day_sequences.html             — side-by-side day sequences
-# Open output/verify_resolution_search.html           — manual term search + pinpoint
-# Export sequence_correction_summary.json from browser, then:
+# Open output/verify_resolution_search.html       — manual term search + pinpoint (hard cases)
+# Open output/verify_pin_placement.html         — year×session gap queue (systematic pinning)
+# Export sequence_correction_summary.json from browser (auto-imported on next run, or):
 uv run python import_sequence_correction.py --correction output/sequence_correction_summary.json
 uv run python session_chain_alignment.py              # re-align with new pins
 ```
@@ -276,9 +317,9 @@ uv run python session_chain_alignment.py              # re-align with new pins
 ## 7. Open Questions
 
 1. **Sequence disambiguation** — NW needs stronger positional constraints; session-chain propagation in progress.
-2. **Dual-signal scoring** — Implement separate place/org heatmap layers + agreement bonus (see §2.4).
-3. **Person anchors** — Deferred until place/org sequence alignment stabilises; expect lower precision initially.
-4. **Verification target** — Expand corrective ground truth via R2 loop before M10 training-pair projection.
+2. **Dual-signal scoring** — Separate place/org heatmap layers + agreement bonus (partially in audit scores).
+3. **Pin coverage** — Tooling complete; only **6/30** year×session cells have pins (target ≥1 per cell).
+4. **Verification target** — Expand corrective ground truth via search + pin-placement UIs before M10 training-pair projection.
 
 ---
 

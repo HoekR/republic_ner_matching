@@ -32,18 +32,100 @@ MatchKind = Literal["both", "places_only", "orgs_only", "none"]
 
 ROOT = Path(__file__).resolve().parent
 DATADIR = ROOT / "data"
+DATADIR_BAK = ROOT / "data.bak"
 OUTPUT_DIR = ROOT / "output"
 
-ENRICHED_FILE = DATADIR / "enriched_resolutions_1626_1630_complete.json"
-RESOLUTIONS_FILE = DATADIR / "resolutions_flat.parquet"
-LOC_ENTITIES_FILE = DATADIR / "LOC-entities.json"
-PER_ENTITIES_FILE = DATADIR / "PER-entities.json"
-ORG_ENTITIES_FILE = DATADIR / "ORG-entities.json"
-LOC_ANNOTATIONS_FILE = DATADIR / "LOC-annotations.json"
-ORG_ANNOTATIONS_FILE = DATADIR / "ORG-annotations.json"
-PLACE_OVERLAP_FILE = DATADIR / "place_overlap_1626_1630.xlsx"
-ORG_OVERLAP_FILE = DATADIR / "org_overlap_1626_1630.xlsx"
-PER_OVERLAP_FILE = DATADIR / "per_overlap_1626_1630.xlsx"
+
+def resolve_data_file(*candidates: Path) -> Path:
+    """Return the first existing path among legacy, reorganized, and backup layouts."""
+    for path in candidates:
+        if path.exists():
+            return path
+    tried = "\n".join(f"  - {path}" for path in candidates)
+    raise FileNotFoundError(f"Required data file not found. Tried:\n{tried}")
+
+
+ENRICHED_FILE = resolve_data_file(
+    DATADIR / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR / "resolutions" / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR / "derived" / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR_BAK / "enriched_resolutions_1626_1630_complete.json",
+)
+RESOLUTIONS_FILE = resolve_data_file(
+    DATADIR / "resolutions_flat.parquet",
+    DATADIR / "resolutions" / "resolutions_flat.parquet",
+    DATADIR_BAK / "resolutions_flat.parquet",
+)
+LOC_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "LOC-entities.json",
+    DATADIR / "reference" / "LOC-entities.json",
+    DATADIR_BAK / "LOC-entities.json",
+)
+PER_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "PER-entities.json",
+    DATADIR / "reference" / "PER-entities.json",
+    DATADIR_BAK / "PER-entities.json",
+)
+ORG_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "ORG-entities.json",
+    DATADIR / "reference" / "ORG-entities.json",
+    DATADIR_BAK / "ORG-entities.json",
+)
+LOC_ANNOTATIONS_FILE = resolve_data_file(
+    DATADIR / "LOC-annotations.json",
+    DATADIR / "annotations" / "LOC-annotations.json",
+    DATADIR_BAK / "LOC-annotations.json",
+)
+ORG_ANNOTATIONS_FILE = resolve_data_file(
+    DATADIR / "ORG-annotations.json",
+    DATADIR / "annotations" / "ORG-annotations.json",
+    DATADIR_BAK / "ORG-annotations.json",
+)
+PLACE_OVERLAP_FILE = resolve_data_file(
+    DATADIR / "place_overlap_1626_1630.xlsx",
+    DATADIR / "derived" / "place_overlap_1626_1630.xlsx",
+    DATADIR_BAK / "place_overlap_1626_1630.xlsx",
+)
+ORG_OVERLAP_FILE = resolve_data_file(
+    DATADIR / "org_overlap_1626_1630.xlsx",
+    DATADIR / "derived" / "org_overlap_1626_1630.xlsx",
+    DATADIR_BAK / "org_overlap_1626_1630.xlsx",
+)
+PER_OVERLAP_FILE = resolve_data_file(
+    DATADIR / "per_overlap_1626_1630.xlsx",
+    DATADIR / "derived" / "per_overlap_1626_1630.xlsx",
+    DATADIR_BAK / "per_overlap_1626_1630.xlsx",
+)
+PERSONS_INFO_FILE = resolve_data_file(
+    DATADIR / "persons_info.json",
+    DATADIR / "reference" / "persons_info.json",
+    DATADIR_BAK / "persons_info.json",
+)
+PERSON_SURFACES_FILE = resolve_data_file(
+    DATADIR / "person_surfaces_1626_1630.parquet",
+    DATADIR / "derived" / "person_surfaces_1626_1630.parquet",
+    DATADIR_BAK / "person_surfaces_1626_1630.parquet",
+)
+PERSONS_INFO_WITH_SURFACES_FILE = resolve_data_file(
+    DATADIR / "persons_info_with_surfaces_1626_1630.json",
+    DATADIR / "derived" / "persons_info_with_surfaces_1626_1630.json",
+    DATADIR_BAK / "persons_info_with_surfaces_1626_1630.json",
+)
+XML_ZIP_FILE = resolve_data_file(
+    DATADIR / "resoluties_staten_generaal_1626-1630.zip",
+    DATADIR / "resolutions" / "resoluties_staten_generaal_1626-1630.zip",
+    DATADIR_BAK / "resoluties_staten_generaal_1626-1630.zip",
+)
+PER_ANNOTATIONS_FILE = resolve_data_file(
+    DATADIR / "PER-annotations.json",
+    DATADIR / "annotations" / "PER-annotations.json",
+    DATADIR_BAK / "PER-annotations.json",
+)
+INVENTORY_METADATA_FILE = resolve_data_file(
+    DATADIR / "inventory_metadata.json",
+    DATADIR / "reference" / "inventory_metadata.json",
+    DATADIR_BAK / "inventory_metadata.json",
+)
 
 PERSON_SIGNAL_SCALE = 0.2
 
@@ -157,17 +239,64 @@ def build_paragraph_to_resolution_map(
     return mapping
 
 
+def load_persons_info_lookup(path: Path | None = None) -> dict[str, dict[str, str]]:
+    """Map enriched person Id_persoon strings to canonical registry names."""
+    frame = pd.read_json(path or PERSONS_INFO_FILE)
+    lookup: dict[str, dict[str, str]] = {}
+    for _, row in frame.iterrows():
+        person_id = row.get("Id_persoon")
+        if pd.isna(person_id):
+            continue
+        lookup[str(int(person_id))] = {
+            "canonical_name": str(row.get("fullname") or row.get("short_name") or "").strip(),
+            "short_name": str(row.get("short_name") or "").strip(),
+        }
+    return lookup
+
+
+def load_person_surfaces_by_volgnr(path: Path | None = None) -> dict[str, list[str]]:
+    """Map enriched volgnr to XML surface spellings for person matching."""
+    surfaces_path = path or PERSON_SURFACES_FILE
+    if not surfaces_path.exists():
+        return {}
+    frame = pd.read_parquet(surfaces_path)
+    by_volgnr: dict[str, set[str]] = defaultdict(set)
+    for _, row in frame.iterrows():
+        volgnr = str(row.get("volgnr", "")).strip()
+        surface = str(row.get("surface_name", "")).strip()
+        if volgnr and surface:
+            by_volgnr[volgnr].add(surface)
+    return {volgnr: sorted(names) for volgnr, names in by_volgnr.items()}
+
+
 def resolve_enriched_entities(
     enriched: dict[str, Any],
     loc_names: dict[str, str],
     per_names: dict[str, str],
     org_names: dict[str, str],
+    persons_info: dict[str, dict[str, str]] | None = None,
+    surfaces_by_volgnr: dict[str, list[str]] | None = None,
 ) -> dict[str, list[str]]:
     places = [loc_names.get(str(item), str(item)) for item in enriched.get("places", []) if item]
-    persons = [per_names.get(str(item), str(item)) for item in enriched.get("persons", []) if item]
+    persons_canonical: list[str] = []
+    for item in enriched.get("persons", []) or []:
+        person_id = str(item)
+        if persons_info and person_id in persons_info:
+            canonical = persons_info[person_id].get("canonical_name") or persons_info[person_id].get("short_name")
+            persons_canonical.append(canonical or per_names.get(person_id, person_id))
+        else:
+            persons_canonical.append(per_names.get(person_id, person_id))
     orgs_raw = enriched.get("organizations") or enriched.get("institutions") or []
     orgs = [org_names.get(str(item), str(item)) for item in orgs_raw if item]
-    return {"places": places, "persons": persons, "orgs": orgs}
+    volgnr = enriched_volgnr(enriched) or ""
+    persons_surface = list(surfaces_by_volgnr.get(volgnr, [])) if surfaces_by_volgnr else []
+    return {
+        "places": places,
+        "persons": persons_canonical,
+        "persons_canonical": persons_canonical,
+        "persons_surface": persons_surface,
+        "orgs": orgs,
+    }
 
 
 def matched_entity_names(names: list[str], flat_text: str) -> list[str]:

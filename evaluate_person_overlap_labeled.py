@@ -20,19 +20,18 @@ from build_alignment_new import (
     DATADIR,
     LOC_ANNOTATIONS_FILE,
     ORG_ANNOTATIONS_FILE,
-    OUTPUT_DIR,
-    PLACE_OVERLAP_FILE,
     ORG_OVERLAP_FILE,
+    OUTPUT_DIR,
+    PER_OVERLAP_FILE,
+    PLACE_OVERLAP_FILE,
+    PERSON_SIGNAL_SCALE,
     build_overlap_lookups,
     build_paragraph_to_resolution_map,
     calculate_idf_weights,
 )
 
-PER_OVERLAP_FILE = DATADIR / "per_overlap_1626_1630.xlsx"
 LABELED_FILE = OUTPUT_DIR / "ground_truth_labeled.json"
 REPORT_FILE = OUTPUT_DIR / "person_overlap_evaluation.json"
-
-PERSON_SIGNAL_SCALE = 0.2
 
 
 def overlap_score(

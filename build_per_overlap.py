@@ -22,16 +22,16 @@ from build_alignment_new import (
     DATADIR,
     LOC_ANNOTATIONS_FILE,
     ORG_ANNOTATIONS_FILE,
+    PER_ANNOTATIONS_FILE,
     PER_ENTITIES_FILE,
+    PER_OVERLAP_FILE,
+    PERSON_SURFACES_FILE,
     RESOLUTIONS_FILE,
     build_paragraph_to_resolution_map,
     load_json,
 )
 
-PER_ANNOTATIONS_FILE = DATADIR / "PER-annotations.json"
-
-PERSON_SURFACES_FILE = DATADIR / "person_surfaces_1626_1630.parquet"
-OUTPUT_FILE = DATADIR / "per_overlap_1626_1630.xlsx"
+OUTPUT_FILE = DATADIR / "derived" / "per_overlap_1626_1630.xlsx"
 
 PERIOD_START = pd.Period("1626-01-01", freq="D")
 PERIOD_END = pd.Period("1630-12-31", freq="D")

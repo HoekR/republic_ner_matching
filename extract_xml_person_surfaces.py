@@ -25,18 +25,31 @@ from xml.etree import ElementTree as ET
 import pandas as pd
 from tqdm import tqdm
 
-from build_alignment_new import DATADIR, ENRICHED_FILE, OUTPUT_DIR, enriched_volgnr, load_json
+from build_alignment_new import (
+    DATADIR,
+    ENRICHED_FILE,
+    LOC_ANNOTATIONS_FILE,
+    ORG_ANNOTATIONS_FILE,
+    ORG_OVERLAP_FILE,
+    OUTPUT_DIR,
+    PER_ANNOTATIONS_FILE,
+    PER_ENTITIES_FILE,
+    PER_OVERLAP_FILE,
+    PERSON_SURFACES_FILE,
+    PERSONS_INFO_FILE,
+    PLACE_OVERLAP_FILE,
+    RESOLUTIONS_FILE,
+    XML_ZIP_FILE,
+    build_paragraph_to_resolution_map,
+    load_json,
+)
 
-XML_ZIP_DEFAULT = DATADIR / "resoluties_staten_generaal_1626-1630.zip"
-PERSONS_INFO_FILE = DATADIR / "persons_info.json"
-PER_ANNOTATIONS_FILE = DATADIR / "PER-annotations.json"
-PER_OVERLAP_FILE = DATADIR / "per_overlap_1626_1630.xlsx"
-RESOLUTIONS_FILE = DATADIR / "resolutions_flat.parquet"
+XML_ZIP_DEFAULT = XML_ZIP_FILE
 ALIGNMENT_STATE_FILE = OUTPUT_DIR / "alignment_state.json"
-OUTPUT_DEFAULT = DATADIR / "person_surfaces_1626_1630.parquet"
-AUGMENTED_PERSONS_INFO_JSON = DATADIR / "persons_info_with_surfaces_1626_1630.json"
-AUGMENTED_PERSONS_INFO_PARQUET = DATADIR / "persons_info_with_surfaces_1626_1630.parquet"
-SURFACE_NAMES_FLAT_PARQUET = DATADIR / "person_surface_names_1626_1630.parquet"
+OUTPUT_DEFAULT = DATADIR / "derived" / "person_surfaces_1626_1630.parquet"
+AUGMENTED_PERSONS_INFO_JSON = DATADIR / "derived" / "persons_info_with_surfaces_1626_1630.json"
+AUGMENTED_PERSONS_INFO_PARQUET = DATADIR / "derived" / "persons_info_with_surfaces_1626_1630.parquet"
+SURFACE_NAMES_FLAT_PARQUET = DATADIR / "derived" / "person_surface_names_1626_1630.parquet"
 
 PERIOD_START = pd.Period("1626-01-01", freq="D")
 PERIOD_END = pd.Period("1630-12-31", freq="D")
