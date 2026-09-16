@@ -99,6 +99,7 @@ class DataManager:
         self._raw = load_manifest_dict(self.manifest_path)
         self.tiers = self._parse_tiers(self._raw.get("tiers", {}))
         self.datasets = self._parse_datasets(self._raw.get("datasets", {}))
+        self._maybe_autofill_tiers_from_environments()
 
     @staticmethod
     def _parse_tiers(raw: dict[str, Any]) -> dict[str, TierConfig]:
@@ -122,15 +123,50 @@ class DataManager:
             rel_path = cfg.get("path")
             if rel_path is None:
                 raise ValueError(f"Dataset {name!r} is missing path")
+            parent = cfg.get("parent") or None
+            if parent is None:
+                # Compatibility with specs that call this `upstream_dependencies`.
+                upstream = cfg.get("upstream_dependencies")
+                if isinstance(upstream, list) and upstream:
+                    parent = str(upstream[0])
             datasets[name] = DatasetConfig(
                 name=name,
                 tier=str(cfg.get("tier", "hot")),
                 path=Path(rel_path),
                 phase=str(cfg.get("phase", "explore")),
                 description=str(cfg.get("description", "")),
-                parent=cfg.get("parent") or None,
+                parent=parent,
             )
         return datasets
+
+    def _maybe_autofill_tiers_from_environments(self) -> None:
+        """
+        Compatibility mode: if `tiers` are missing/empty but `environments.*.base_dir` exists,
+        derive tier roots from the selected environment.
+        """
+        if self.tiers:
+            return
+
+        envs = self._raw.get("environments") or {}
+        if not isinstance(envs, dict) or not envs:
+            return
+
+        env_name = os.environ.get("DATA_ENV") or os.environ.get("DATA_IO_ENV") or "local"
+        env_cfg = envs.get(env_name)
+        if not isinstance(env_cfg, dict):
+            # Fallback: prefer local if available, otherwise first env.
+            env_cfg = envs.get("local") if isinstance(envs.get("local"), dict) else next(iter(envs.values()))
+        if not isinstance(env_cfg, dict):
+            return
+
+        base_dir_raw = env_cfg.get("base_dir")
+        base_dir = _expand_path(base_dir_raw)
+        if base_dir is None:
+            return
+
+        tier_names = {ds.tier for ds in self.datasets.values()} or {"hot"}
+        for tier_name in tier_names:
+            self.tiers[tier_name] = TierConfig(root=base_dir, mount_check=None)
 
     def tier_available(self, tier_name: str) -> bool:
         tier = self.tiers.get(tier_name)

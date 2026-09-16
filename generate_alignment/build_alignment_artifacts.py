@@ -24,13 +24,45 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 DATADIR = ROOT / "data"
+DATADIR_BAK = ROOT / "data.bak"
 OUTPUT_DIR = ROOT / "output"
 
-ENRICHED_FILE = DATADIR / "enriched_resolutions_1626_1630_complete.json"
-RESOLUTIONS_FILE = DATADIR / "resolutions_flat.parquet"
-LOC_ENTITIES_FILE = DATADIR / "LOC-entities.json"
-PER_ENTITIES_FILE = DATADIR / "PER-entities.json"
-ORG_ENTITIES_FILE = DATADIR / "ORG-entities.json"
+
+def resolve_data_file(*candidates: Path) -> Path:
+    """Return the first existing path among legacy, reorganized, and backup layouts."""
+    for path in candidates:
+        if path.exists():
+            return path
+    tried = "\n".join(f"  - {path}" for path in candidates)
+    raise FileNotFoundError(f"Required data file not found. Tried:\n{tried}")
+
+
+ENRICHED_FILE = resolve_data_file(
+    DATADIR / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR / "resolutions" / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR / "derived" / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR_BAK / "enriched_resolutions_1626_1630_complete.json",
+)
+RESOLUTIONS_FILE = resolve_data_file(
+    DATADIR / "resolutions_flat.parquet",
+    DATADIR / "resolutions" / "resolutions_flat.parquet",
+    DATADIR_BAK / "resolutions_flat.parquet",
+)
+LOC_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "LOC-entities.json",
+    DATADIR / "reference" / "LOC-entities.json",
+    DATADIR_BAK / "LOC-entities.json",
+)
+PER_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "PER-entities.json",
+    DATADIR / "reference" / "PER-entities.json",
+    DATADIR_BAK / "PER-entities.json",
+)
+ORG_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "ORG-entities.json",
+    DATADIR / "reference" / "ORG-entities.json",
+    DATADIR_BAK / "ORG-entities.json",
+)
 
 
 def load_json(path: Path) -> Any:
@@ -47,11 +79,34 @@ def load_entity_names(path: Path) -> dict[str, str]:
     }
 
 
-def load_data() -> tuple[list[dict[str, Any]], pd.DataFrame, dict[str, str], dict[str, str], dict[str, str]]:
+def load_data(
+    window_buffer_days: int = 30,
+) -> tuple[list[dict[str, Any]], pd.DataFrame, dict[str, str], dict[str, str], dict[str, str]]:
     print("Loading data files...")
     enriched_all = load_json(ENRICHED_FILE)
     res_df = pd.read_parquet(RESOLUTIONS_FILE)
+    initial_flat_count = len(res_df)
     res_df["date_period"] = pd.PeriodIndex(res_df["date"].astype(str), freq="D")
+
+    # Confine flat resolutions to enriched date envelope
+    enriched_dates: list[pd.Period] = []
+    for item in enriched_all:
+        raw = item.get("date")
+        if raw:
+            try:
+                enriched_dates.append(pd.Period(str(raw)[:10], freq="D"))
+            except (TypeError, ValueError):
+                pass
+
+    if enriched_dates:
+        min_date = min(enriched_dates) - window_buffer_days
+        max_date = max(enriched_dates) + window_buffer_days
+        mask = (res_df["date_period"] >= min_date) & (res_df["date_period"] <= max_date)
+        res_df = res_df[mask].copy().reset_index(drop=True)
+        print(
+            f"✓ Confined flat resolutions to enriched window [{min_date} .. {max_date}]: "
+            f"{len(res_df)} of {initial_flat_count} retained"
+        )
 
     loc_names = load_entity_names(LOC_ENTITIES_FILE)
     per_names = load_entity_names(PER_ENTITIES_FILE)
@@ -182,7 +237,7 @@ def build_date_anchor_map(
     org_names: dict[str, str],
 ) -> dict[str, str]:
     by_date: dict[str, list[dict[str, Any]]] = {}
-    enriched_periods: list[pd.Period] = []
+    enriched_periods: list[pd.Period | None] = []
     for enriched in enriched_all:
         date_raw = enriched.get("date")
         try:
@@ -1598,6 +1653,7 @@ def run_frequency_sampling(
 ) -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
     enriched_all, res_df, loc_names, per_names, org_names = load_data()
+    anchor_map = build_date_anchor_map(enriched_all, res_df, loc_names, per_names, org_names)
 
     frequency_matches, frequency_entities = build_frequency_matches(
         enriched_all,

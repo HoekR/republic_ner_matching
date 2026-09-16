@@ -224,9 +224,8 @@ def main() -> None:
         raise FileNotFoundError(f"Missing alignment state: {args.state}")
 
     from build_alignment_new import (
-        LOC_ANNOTATIONS_FILE,
-        ORG_ANNOTATIONS_FILE,
         build_paragraph_to_resolution_map,
+        paragraph_mapping_annotation_files,
     )
 
     state = json.loads(args.state.read_text(encoding="utf-8"))
@@ -245,7 +244,7 @@ def main() -> None:
     if not persons_df.empty:
         paragraph_ids.update(persons_df["paragraph_id"].dropna().astype(str))
     paragraph_to_resolution = build_paragraph_to_resolution_map(
-        [LOC_ANNOTATIONS_FILE, ORG_ANNOTATIONS_FILE],
+        paragraph_mapping_annotation_files(),
         paragraph_ids,
     )
 

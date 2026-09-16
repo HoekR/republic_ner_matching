@@ -39,6 +39,15 @@ from sequence_review_ui import (
     write_sequence_alignment_html,
     write_session_heatmap_comparison_html,
 )
+from discover_session_tri_anchors import (
+    DailyTriAnchors,
+    build_paragraph_flat_dates,
+    discover_all_daily_tri_anchors,
+    enriched_items_for_inventory_day,
+    iter_inventory_calendar_days,
+    make_day_key,
+    paragraphs_for_inventory_on_date,
+)
 from analyze_sequence_entity_overlap import (
     aggregate_metrics,
     anchor_paragraphs_for_pair,
@@ -53,10 +62,13 @@ from build_alignment_new import (
     DATADIR,
     ENRICHED_FILE,
     LOC_ANNOTATIONS_FILE,
+    LOC_ENTITIES_FILE,
     NO_ANCHOR_DIAG_SCORE,
     ORG_ANNOTATIONS_FILE,
+    ORG_ENTITIES_FILE,
     ORG_OVERLAP_FILE,
     OUTPUT_DIR,
+    PER_ENTITIES_FILE,
     PER_OVERLAP_FILE,
     PERSON_SIGNAL_SCALE,
     PLACE_OVERLAP_FILE,
@@ -65,15 +77,19 @@ from build_alignment_new import (
     align_session,
     build_date_to_session_map,
     build_paragraph_to_resolution_map,
+    paragraph_mapping_annotation_files,
     calculate_idf_weights,
     enriched_volgnr,
     extract_session_id,
+    load_entity_names,
     load_json,
     score_typed_overlap,
 )
 
 
 PIN_BONUS = 50.0
+DATE_MATCH_BONUS = 2.0
+SEQUENCE_FILL_GAP_PENALTY = 0.05
 DEFAULT_OFFSET_PENALTY = 0.35
 DEFAULT_LABELED = OUTPUT_DIR / "ground_truth_labeled.json"
 DEFAULT_CURATED = OUTPUT_DIR / "ground_truth_curated.json"
@@ -146,6 +162,8 @@ def align_session_with_hints(
     org_lookup: dict[tuple[str, str], set[str]] | None = None,
     person_lookup: dict[tuple[str, str], set[str]] | None = None,
     person_signal_scale: float = PERSON_SIGNAL_SCALE,
+    enriched_dates: list[str] | None = None,
+    flat_dates: list[str] | None = None,
 ) -> list[tuple[int | None, int | None]]:
     """Needleman-Wunsch with optional pin bonuses and soft positional hints."""
     n = len(enriched_ids)
@@ -196,6 +214,16 @@ def align_session_with_hints(
                         diag = NO_ANCHOR_DIAG_SCORE
                     if expected_offset is not None:
                         diag -= offset_penalty * abs((j - 1) - (expected_offset + (i - 1)))
+                    if (
+                        enriched_dates
+                        and flat_dates
+                        and i - 1 < len(enriched_dates)
+                        and j - 1 < len(flat_dates)
+                        and enriched_dates[i - 1]
+                        and flat_dates[j - 1]
+                        and enriched_dates[i - 1][:10] == flat_dates[j - 1][:10]
+                    ):
+                        diag += DATE_MATCH_BONUS
 
             up = dp[i - 1][j] - gap_penalty
             left = dp[i][j - 1] - gap_penalty
@@ -222,6 +250,406 @@ def align_session_with_hints(
             alignment.append((None, j - 1))
             j -= 1
     return alignment[::-1]
+
+
+def align_session_segment(
+    enriched_ids: list[str],
+    paragraph_ids: list[str],
+    enriched_dates: list[str],
+    paragraph_dates: list[str],
+    paragraph_lookup: dict[tuple[str, str], set[str]],
+    idf_weights: dict[str, float],
+    *,
+    pin_start: int,
+    pin_end: int,
+    offset_penalty: float,
+    blocked: set[tuple[str, str]],
+    place_lookup: dict[tuple[str, str], set[str]] | None = None,
+    org_lookup: dict[tuple[str, str], set[str]] | None = None,
+    person_lookup: dict[tuple[str, str], set[str]] | None = None,
+    gap_penalty: float = SEQUENCE_FILL_GAP_PENALTY,
+) -> list[tuple[int | None, int | None]]:
+    """NW alignment on a paragraph slice with hard endpoint pins."""
+    if not enriched_ids or not paragraph_ids:
+        return []
+    if len(enriched_ids) == 1:
+        return [(0, 0)]
+    segment_pins = {0: 0, len(enriched_ids) - 1: len(paragraph_ids) - 1}
+    return align_session_with_hints(
+        enriched_ids,
+        paragraph_ids,
+        paragraph_lookup,
+        idf_weights,
+        gap_penalty=gap_penalty,
+        anchor_only_diagonal=True,
+        pinned=segment_pins,
+        expected_offset=None,
+        offset_penalty=offset_penalty,
+        blocked=blocked,
+        place_lookup=place_lookup,
+        org_lookup=org_lookup,
+        person_lookup=person_lookup,
+        enriched_dates=enriched_dates,
+        flat_dates=paragraph_dates,
+    )
+
+
+def align_session_via_tri_anchors(
+    tri: DailyTriAnchors,
+    enriched_items: list[dict[str, Any]],
+    paragraph_ids: list[str],
+    paragraph_flat_dates: dict[str, str],
+    paragraph_lookup: dict[tuple[str, str], set[str]],
+    idf_weights: dict[str, float],
+    blocked: set[tuple[str, str]],
+    offset_penalty: float,
+    place_lookup: dict[tuple[str, str], set[str]] | None = None,
+    org_lookup: dict[tuple[str, str], set[str]] | None = None,
+    person_lookup: dict[tuple[str, str], set[str]] | None = None,
+    extra_pins: dict[int, int] | None = None,
+) -> list[tuple[int | None, int | None]]:
+    """Interpolate enriched↔paragraph pairs between tri-anchors for one calendar day."""
+    if not tri.complete or not tri.start or not tri.end:
+        return []
+
+    enriched_ids = [enriched_volgnr(item) or "" for item in enriched_items]
+    enriched_dates = [str(item.get("date", ""))[:10] for item in enriched_items]
+    paragraph_dates = [paragraph_flat_dates.get(pid, "") for pid in paragraph_ids]
+
+    if tri.middle:
+        segments = [
+            (
+                tri.start.enriched_index,
+                tri.middle.enriched_index,
+                tri.start.paragraph_index,
+                tri.middle.paragraph_index,
+            ),
+            (
+                tri.middle.enriched_index,
+                tri.end.enriched_index,
+                tri.middle.paragraph_index,
+                tri.end.paragraph_index,
+            ),
+        ]
+    else:
+        segments = [
+            (
+                tri.start.enriched_index,
+                tri.end.enriched_index,
+                tri.start.paragraph_index,
+                tri.end.paragraph_index,
+            ),
+        ]
+
+    combined: dict[int, int] = {}
+    for enriched_start, enriched_end, para_start, para_end in segments:
+        if enriched_end <= enriched_start or para_end <= para_start:
+            continue
+        seg_enriched = enriched_ids[enriched_start : enriched_end + 1]
+        seg_dates = enriched_dates[enriched_start : enriched_end + 1]
+        seg_paragraphs = paragraph_ids[para_start : para_end + 1]
+        seg_para_dates = paragraph_dates[para_start : para_end + 1]
+        alignment = align_session_segment(
+            seg_enriched,
+            seg_paragraphs,
+            seg_dates,
+            seg_para_dates,
+            paragraph_lookup,
+            idf_weights,
+            pin_start=0,
+            pin_end=len(seg_paragraphs) - 1,
+            offset_penalty=offset_penalty,
+            blocked=blocked,
+            place_lookup=place_lookup,
+            org_lookup=org_lookup,
+            person_lookup=person_lookup,
+        )
+        for rel_enriched, rel_paragraph in alignment:
+            if rel_enriched is None or rel_paragraph is None:
+                continue
+            combined[enriched_start + rel_enriched] = para_start + rel_paragraph
+
+    if extra_pins:
+        for enriched_pos, paragraph_pos in extra_pins.items():
+            combined[enriched_pos] = paragraph_pos
+
+    return sorted(combined.items())
+
+
+def direct_pins_for_day(
+    pin_records: list[dict[str, Any]],
+    inventory_id: str,
+    calendar_date: str,
+    enriched_ids: list[str],
+    paragraph_ids: list[str],
+) -> dict[int, int]:
+    pins: dict[int, int] = {}
+    for record in pin_records:
+        if str(record.get("session_id", "")) != inventory_id:
+            continue
+        enriched_id = str(record.get("enriched_id", ""))
+        if not enriched_id.startswith(calendar_date):
+            continue
+        paragraph_id = str(
+            record.get("paragraph_id") or record.get("corrected_paragraph_id") or ""
+        )
+        if enriched_id not in enriched_ids or paragraph_id not in paragraph_ids:
+            continue
+        pins[enriched_ids.index(enriched_id)] = paragraph_ids.index(paragraph_id)
+    return pins
+
+
+def curated_pins_for_day(
+    curated: list[dict[str, Any]],
+    inventory_id: str,
+    calendar_date: str,
+    places_df: pd.DataFrame,
+    orgs_df: pd.DataFrame,
+    paragraph_to_resolution: dict[str, str],
+    enriched_ids: list[str],
+    paragraph_ids: list[str],
+) -> dict[int, int]:
+    pins: dict[int, int] = {}
+    for record in curated:
+        flat_id = str(record.get("flat_id", ""))
+        if extract_session_id(flat_id) != inventory_id:
+            continue
+        enriched_id = str(record.get("enriched_id", ""))
+        if not enriched_id.startswith(calendar_date):
+            continue
+        if enriched_id not in enriched_ids:
+            continue
+        anchor_paragraphs = anchor_paragraphs_for_pair(
+            enriched_id,
+            flat_id,
+            places_df,
+            orgs_df,
+            paragraph_to_resolution,
+        )
+        if not anchor_paragraphs:
+            continue
+        paragraph_id = anchor_paragraphs[0]
+        if paragraph_id not in paragraph_ids:
+            continue
+        pins[enriched_ids.index(enriched_id)] = paragraph_ids.index(paragraph_id)
+    return pins
+
+
+def run_tri_anchor_chain_alignment(
+    labeled: list[dict[str, Any]],
+    curated: list[dict[str, Any]],
+    manual_pin_records: list[dict[str, Any]],
+    rejected_pairs: list[dict[str, str]],
+    blocked_links: set[tuple[str, str]],
+    enriched_by_date: dict[str, list[dict[str, Any]]],
+    places_df: pd.DataFrame,
+    orgs_df: pd.DataFrame,
+    paragraph_to_resolution: dict[str, str],
+    paragraph_lookup: dict[tuple[str, str], set[str]],
+    idf_weights: dict[str, float],
+    date_to_sessions: dict[str, set[str]],
+    session_order: list[str],
+    session_ranks: list[SessionRank],
+    tri_anchors: dict[str, DailyTriAnchors],
+    res_df: pd.DataFrame,
+    offset_penalty: float,
+    state_version: int = 1,
+    place_lookup: dict[tuple[str, str], set[str]] | None = None,
+    org_lookup: dict[tuple[str, str], set[str]] | None = None,
+    person_lookup: dict[tuple[str, str], set[str]] | None = None,
+    state_pins: list[dict[str, Any]] | None = None,
+    *,
+    date_filter: set[str] | None = None,
+) -> AlignmentState:
+    """Chain alignment via begin/middle/end anchors per calendar-day sitting."""
+    paragraph_flat_dates = build_paragraph_flat_dates(paragraph_to_resolution, res_df)
+    _, session_ranges, global_index_by_paragraph = build_global_paragraph_stream(
+        session_order, places_df, orgs_df
+    )
+
+    lock_threshold = 0.65
+    locked_sessions = [rank.session_id for rank in session_ranks if rank.precision >= lock_threshold]
+    lock_priority = [rank.session_id for rank in session_ranks if rank.session_id in locked_sessions]
+
+    alignments_out: list[dict[str, Any]] = []
+    borders_out: list[dict[str, Any]] = []
+    curated_pins_out: list[dict[str, str]] = []
+    proposed_pairs: dict[tuple[str, str], str] = {}
+    reject_keys = {(item["enriched_id"], item["flat_id"]) for item in rejected_pairs}
+    propagation_notes: dict[str, Any] = {"mode": "tri_anchor", "days": {}}
+    inventory_alignments: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    for inventory_id, calendar_date in iter_inventory_calendar_days(
+        date_to_sessions,
+        inventory_filter=set(session_order),
+        date_filter=date_filter,
+    ):
+        day_key = make_day_key(inventory_id, calendar_date)
+        tri = tri_anchors.get(day_key)
+        if tri is None:
+            continue
+
+        paragraph_ids = paragraphs_for_inventory_on_date(
+            places_df,
+            orgs_df,
+            inventory_id,
+            calendar_date,
+            paragraph_flat_dates,
+        )
+        enriched_items = enriched_items_for_inventory_day(
+            inventory_id,
+            calendar_date,
+            enriched_by_date,
+            places_df,
+            orgs_df,
+            paragraph_to_resolution,
+            date_to_sessions,
+        )
+        enriched_ids = [enriched_volgnr(item) or "" for item in enriched_items]
+        if not enriched_ids or not paragraph_ids:
+            continue
+
+        manual_pins = direct_pins_for_day(
+            manual_pin_records,
+            inventory_id,
+            calendar_date,
+            enriched_ids,
+            paragraph_ids,
+        )
+        pins = curated_pins_for_day(
+            curated,
+            inventory_id,
+            calendar_date,
+            places_df,
+            orgs_df,
+            paragraph_to_resolution,
+            enriched_ids,
+            paragraph_ids,
+        )
+        pins.update(manual_pins)
+
+        day_alignments: list[dict[str, Any]] = []
+        if tri.complete:
+            alignment_pairs = align_session_via_tri_anchors(
+                tri,
+                enriched_items,
+                paragraph_ids,
+                paragraph_flat_dates,
+                paragraph_lookup,
+                idf_weights,
+                blocked_links,
+                offset_penalty,
+                place_lookup=place_lookup,
+                org_lookup=org_lookup,
+                person_lookup=person_lookup,
+                extra_pins=pins,
+            )
+            propagation_notes["days"][day_key] = {
+                "mode": "tri_anchor_segments",
+                "complete": True,
+                "pairs": len(alignment_pairs),
+            }
+        else:
+            propagation_notes["days"][day_key] = {
+                "mode": "skipped_incomplete_tri_anchor",
+                "complete": False,
+                "notes": tri.notes,
+            }
+            alignment_pairs = []
+
+        tri_pin_positions = set()
+        if tri.start:
+            tri_pin_positions.add(tri.start.enriched_index)
+        if tri.middle:
+            tri_pin_positions.add(tri.middle.enriched_index)
+        if tri.end:
+            tri_pin_positions.add(tri.end.enriched_index)
+
+        for enriched_pos, flat_pos in alignment_pairs:
+            enriched_id = enriched_ids[enriched_pos]
+            paragraph_id = paragraph_ids[flat_pos]
+            resolution_id = paragraph_to_resolution.get(paragraph_id, "")
+            if (enriched_id, resolution_id) in reject_keys:
+                continue
+            proposed_pairs[(enriched_id, resolution_id)] = paragraph_id
+            enriched_date = str(enriched_items[enriched_pos].get("date", ""))[:10]
+            is_tri_pin = enriched_pos in tri_pin_positions
+            is_manual_pin = enriched_pos in pins and pins[enriched_pos] == flat_pos
+            day_alignments.append(
+                {
+                    "enriched_id": enriched_id,
+                    "paragraph_id": paragraph_id,
+                    "resolution_id": resolution_id,
+                    "enriched_date": enriched_date,
+                    "calendar_date": calendar_date,
+                    "session_id": inventory_id,
+                    "day_key": day_key,
+                    "global_paragraph_index": global_index_by_paragraph.get(paragraph_id),
+                    "pinned": is_tri_pin or is_manual_pin,
+                    "propagated_hint": not (is_tri_pin or is_manual_pin),
+                    "alignment_mode": "tri_anchor",
+                }
+            )
+            if is_tri_pin or is_manual_pin:
+                curated_pins_out.append(
+                    {
+                        "enriched_id": enriched_id,
+                        "paragraph_id": paragraph_id,
+                        "session_id": inventory_id,
+                        "calendar_date": calendar_date,
+                        "source": "tri_anchor" if is_tri_pin else "manual_correction",
+                    }
+                )
+
+        if day_alignments:
+            alignments_out.extend(day_alignments)
+            inventory_alignments[inventory_id].extend(day_alignments)
+
+    for inventory_id in session_order:
+        session_alignments = inventory_alignments.get(inventory_id, [])
+        if not session_alignments:
+            continue
+        first = session_alignments[0]
+        last = session_alignments[-1]
+        borders_out.append(
+            {
+                "session_id": inventory_id,
+                "first_enriched_id": first["enriched_id"],
+                "first_paragraph_id": first["paragraph_id"],
+                "first_global_index": first["global_paragraph_index"],
+                "last_enriched_id": last["enriched_id"],
+                "last_paragraph_id": last["paragraph_id"],
+                "last_global_index": last["global_paragraph_index"],
+            }
+        )
+
+    return AlignmentState(
+        version=state_version,
+        scoring_params={
+            "offset_penalty": offset_penalty,
+            "pin_bonus": PIN_BONUS,
+            "lock_precision_threshold": lock_threshold,
+            "alignment_mode": "tri_anchor",
+        },
+        session_order=session_order,
+        session_ranks=[rank.__dict__ for rank in session_ranks],
+        locked_sessions=lock_priority,
+        curated_pins=curated_pins_out,
+        rejected_pairs=rejected_pairs,
+        alignments=alignments_out,
+        borders=borders_out,
+        propagation_report={
+            "evaluation": evaluate_labeled_pairs(
+                labeled,
+                proposed_pairs,
+                places_df,
+                orgs_df,
+                paragraph_to_resolution,
+            ),
+            "lock_priority_order": lock_priority,
+            "tri_anchor": propagation_notes,
+        },
+    )
 
 
 def rank_sessions(
@@ -937,6 +1365,19 @@ def main() -> None:
         action="store_true",
         help="Do not auto-import sequence_correction_summary*.json before alignment",
     )
+    parser.add_argument(
+        "--tri-anchor",
+        action="store_true",
+        help="Use begin/middle/end tri-anchor segment interpolation per calendar-day sitting",
+    )
+    parser.add_argument(
+        "--inventories",
+        "--sessions",
+        dest="inventories",
+        nargs="*",
+        help="Limit alignment to inventory volume ids (session-3186 = book, not a day)",
+    )
+    parser.add_argument("--dates", nargs="*", help="Limit to calendar dates YYYY-MM-DD")
     args = parser.parse_args()
 
     if not args.skip_import_corrections:
@@ -975,7 +1416,7 @@ def main() -> None:
         if str(paragraph_id).strip()
     }
     paragraph_to_resolution = build_paragraph_to_resolution_map(
-        [LOC_ANNOTATIONS_FILE, ORG_ANNOTATIONS_FILE],
+        paragraph_mapping_annotation_files(),
         paragraph_ids,
     )
     from analyze_sequence_entity_overlap import build_typed_paragraph_lookups
@@ -997,7 +1438,22 @@ def main() -> None:
     date_to_sessions = build_date_to_session_map(places_df, orgs_df, paragraph_to_resolution)
 
     session_ranks = rank_sessions(labeled, analysis if isinstance(analysis, list) else None)
-    session_order = sorted({rank.session_id for rank in session_ranks}, key=lambda sid: session_num_from_id(sid) or 0)
+    session_order = sorted(
+        {rank.session_id for rank in session_ranks},
+        key=lambda sid: session_num_from_id(sid) or 0,
+    )
+    if not session_order:
+        session_order = sorted(
+            {
+                extract_session_id(str(resolution_id))
+                for resolution_id in paragraph_to_resolution.values()
+                if extract_session_id(str(resolution_id))
+            },
+            key=lambda sid: session_num_from_id(sid) or 0,
+        )
+    if args.inventories:
+        allowed = set(args.inventories)
+        session_order = [sid for sid in session_order if sid in allowed]
 
     manual_pin_records = load_manual_pin_records(
         args.output_dir,
@@ -1013,30 +1469,100 @@ def main() -> None:
         corrective_records,
     )
     existing_version = 0
+    state_pins: list[dict[str, Any]] = []
     if STATE_PATH.exists():
-        existing_version = int(json.loads(STATE_PATH.read_text(encoding="utf-8")).get("version", 0))
+        existing_state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        existing_version = int(existing_state.get("version", 0))
+        state_pins = existing_state.get("curated_pins", [])
 
-    state = run_chain_alignment(
-        labeled,
-        curated if isinstance(curated, list) else [],
-        manual_pin_records,
-        rejected_pairs,
-        blocked_links,
-        enriched_by_date,
-        places_df,
-        orgs_df,
-        paragraph_to_resolution,
-        paragraph_lookup,
-        idf_weights,
-        date_to_sessions,
-        session_order,
-        session_ranks,
-        args.offset_penalty,
-        state_version=existing_version + 1,
-        place_lookup=place_lookup,
-        org_lookup=org_lookup,
-        person_lookup=person_lookup,
-    )
+    if args.tri_anchor:
+        date_filter = set(args.dates) if args.dates else None
+        res_df = pd.read_parquet(RESOLUTIONS_FILE)
+        tri_anchors = discover_all_daily_tri_anchors(
+            date_to_sessions,
+            enriched_by_date,
+            places_df,
+            orgs_df,
+            persons_df if not persons_df.empty else None,
+            paragraph_to_resolution,
+            res_df,
+            place_lookup,
+            org_lookup,
+            person_lookup,
+            idf_weights,
+            manual_pin_records,
+            load_entity_names(LOC_ENTITIES_FILE),
+            load_entity_names(PER_ENTITIES_FILE),
+            load_entity_names(ORG_ENTITIES_FILE),
+            state_pins,
+            inventory_filter=set(session_order),
+            date_filter=date_filter,
+            output_dir=args.output_dir,
+        )
+        tri_payload = {
+            "unit": "inventory_calendar_day",
+            "day_count": len(tri_anchors),
+            "complete_count": sum(1 for item in tri_anchors.values() if item.complete),
+            "days": {key: item.to_dict() for key, item in tri_anchors.items()},
+        }
+        tri_path = args.output_dir / "daily_tri_anchors.json"
+        tri_path.write_text(json.dumps(tri_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        legacy_path = args.output_dir / "session_tri_anchors.json"
+        legacy_path.write_text(json.dumps(tri_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        from discover_session_tri_anchors import write_tri_anchor_review_html
+
+        write_tri_anchor_review_html(tri_anchors, args.output_dir / "daily_tri_anchors_review.html")
+        print(
+            f"Tri-anchors: {tri_payload['complete_count']}/{tri_payload['day_count']} "
+            "inventory-days complete"
+        )
+        state = run_tri_anchor_chain_alignment(
+            labeled,
+            curated if isinstance(curated, list) else [],
+            manual_pin_records,
+            rejected_pairs,
+            blocked_links,
+            enriched_by_date,
+            places_df,
+            orgs_df,
+            paragraph_to_resolution,
+            paragraph_lookup,
+            idf_weights,
+            date_to_sessions,
+            session_order,
+            session_ranks,
+            tri_anchors,
+            res_df,
+            args.offset_penalty,
+            state_version=existing_version + 1,
+            place_lookup=place_lookup,
+            org_lookup=org_lookup,
+            person_lookup=person_lookup,
+            state_pins=state_pins,
+            date_filter=date_filter,
+        )
+    else:
+        state = run_chain_alignment(
+            labeled,
+            curated if isinstance(curated, list) else [],
+            manual_pin_records,
+            rejected_pairs,
+            blocked_links,
+            enriched_by_date,
+            places_df,
+            orgs_df,
+            paragraph_to_resolution,
+            paragraph_lookup,
+            idf_weights,
+            date_to_sessions,
+            session_order,
+            session_ranks,
+            args.offset_penalty,
+            state_version=existing_version + 1,
+            place_lookup=place_lookup,
+            org_lookup=org_lookup,
+            person_lookup=person_lookup,
+        )
 
     # Build full diagnostic results with heatmaps for interactive HTML.
     res_df = pd.read_parquet(RESOLUTIONS_FILE)

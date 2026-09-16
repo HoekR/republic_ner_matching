@@ -50,7 +50,7 @@ The draft in §4 assumed `paragraph_id` could be used directly as a flat key and
 
 - Flat parquet uses `session-*-num-*-resolution-*` ids.
 - Excel overlap uses `session-*-num-*-para-*` paragraph ids.
-- **Fix applied:** paragraph → resolution mapping via `LOC-annotations.json` / `ORG-annotations.json`.
+- **Fix applied:** paragraph → resolution mapping via `LOC-annotations.json`, `ORG-annotations.json`, and `PER-annotations.json` (person-tagged paragraphs often lack LOC/ORG tags).
 
 **Revised rollout order:**
 
@@ -174,7 +174,19 @@ Person overlap evaluation on labeled 50: person signal does **not** separate cor
 ### ✅ M7 — Session-first pooling (complete)
 Use `session-*` extracted from mapped flat resolution ids to define alignment blocks, decoupling from HTR calendar dates within a sitting. Default in `build_alignment_new.py` when `--date-window-days 0`.
 
-### ⬜ M8 — Windowed overlap rebuild (next)
+### ✅ M7b — Tri-anchor segment interpolation (implemented, daily granularity)
+Discover begin / middle / end anchors per **calendar-day sitting** inside an inventory volume (`discover_session_tri_anchors.py`). In flat ids, `session-3186` is the **book** (inventory number), not a meeting; a *session* is one sitting **per day**. Alignment unit is `(inventory_id, calendar_date)` e.g. `session-3186|1627-09-02`. Intermediate resolutions are interpolated with pinned Needleman–Wunsch segments between day-local anchors (`session_chain_alignment.py --tri-anchor`). Same-day entity overlap is a scoring bonus, not a join key. Inventory-days without complete tri-anchors are skipped until pins fill gaps (`build_pin_coverage_report.py`).
+
+```bash
+uv run python discover_session_tri_anchors.py --inventories session-3186 --dates 1627-09-02
+uv run python session_chain_alignment.py --tri-anchor --inventories session-3186
+```
+
+Outputs: `output/daily_tri_anchors.json`, `output/daily_tri_anchors_review.html`, `output/verify_entity_bridge_review.html` (legacy alias `session_tri_anchors.json`), updated `output/alignment_state.json`.
+
+Entity bridge approvals: review `output/verify_entity_bridge_review.html`, export `entity_bridge_approval_summary.json`, import with `uv run python entity_bridge_review.py --import output/entity_bridge_approval_summary.json`.
+
+### ⬜ M8 — Windowed overlap rebuild (in progress)
 Re-derive overlap tables allowing `|enriched_date − flat_date| ≤ N` at data-prep time (notebook logic → script).
 
 ### ✅ M9 — Human verification pass (complete — first round)

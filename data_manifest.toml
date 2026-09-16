@@ -19,6 +19,20 @@ mount_check = "/Volumes/Extreme SSD"
 root = "/Users/rikhoekstra/Nextcloud2/Republic"
 mount_check = "/Users/rikhoekstra/Nextcloud2"
 
+[datasets.sessions_json_source]
+tier = "warm"
+path = "datasets/republic/source/sessions_json-2026-02-27.tar.gz"
+phase = "frozen"
+description = "Sessions JSON source archive (tar.gz)"
+parent = ""
+
+[datasets.session_index_all]
+tier = "warm"
+path = "datasets/republic/index/session_index_all.parquet"
+phase = "frozen"
+description = "Session index (all years)"
+parent = "sessions_json_source"
+
 [datasets.resolutions_flat]
 tier = "warm"
 path = "datasets/republic/resolutions/resolutions_flat.parquet"
@@ -54,6 +68,27 @@ phase = "frozen"
 description = "Pattern inventory for variant lookup"
 parent = ""
 
+[datasets.alignment_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/alignment_1626_1630.parquet"
+phase = "frozen"
+description = "Frozen milestone sequence alignment for 1626-1630 enriched resolutions to flat HTR resolutions"
+parent = "resolutions_flat"
+
+[datasets.training_pairs_per_from_annotations]
+tier = "hot"
+path = "republic_ner_matching/data/derived/training_pairs_per_from_annotations.parquet"
+phase = "frozen"
+description = "PER (delegate name) training pairs rebuilt from annotations with corrected character offsets"
+parent = "per_annotations"
+
+[datasets.training_pairs_loc_from_annotations]
+tier = "hot"
+path = "republic_ner_matching/data/derived/training_pairs_loc_from_annotations.parquet"
+phase = "frozen"
+description = "LOC (place name) training pairs rebuilt from annotations with corrected character offsets"
+parent = "loc_annotations"
+
 [datasets.inventory_metadata]
 tier = "warm"
 path = "datasets/republic/reference/inventory_metadata.json"
@@ -81,3 +116,171 @@ path = "data"
 phase = "explore"
 description = "Legacy Republic archives on warm drive (pagexml, sessions_json)"
 parent = ""
+
+[datasets.boundary_gold_sample]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_sample.json"
+phase = "semi"
+description = "Hand-annotated session-day boundary gold for segmentation transfer"
+parent = "resolutions_flat"
+
+[datasets.boundary_gold_exception_review]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_exception_review.csv"
+phase = "explore"
+description = "Manual exception classifications for boundary-gold session days"
+parent = "boundary_gold_sample"
+
+[datasets.s4_resolution_baseline_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_resolution_baseline_predictions.jsonl"
+phase = "semi"
+description = "S4 entity-sequence Needleman-Wunsch baseline at flat-resolution granularity"
+parent = "boundary_gold_sample"
+
+[datasets.org_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/ORG-annotations.json"
+phase = "frozen"
+description = "Organisation NER annotations"
+parent = ""
+
+[datasets.boundary_gold_paragraph_axis]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_paragraph_axis.jsonl"
+phase = "semi"
+description = "Complete annotated-day flat paragraph axis with resolved entity-annotation coverage"
+parent = "resolutions_flat"
+
+[datasets.paragraph_axis_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/output/paragraph_axis_1626_1630.jsonl"
+phase = "semi"
+description = "Complete 1626-1630 flat paragraph axis with resolved entity-annotation coverage"
+parent = "resolutions_flat"
+
+[datasets.enriched_resolutions_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/enriched_resolutions_1626_1630_complete.json"
+phase = "frozen"
+description = "Normative enriched resolutions for 1626-1630"
+parent = ""
+
+[datasets.s4_corpus_paragraph_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_corpus_paragraph_predictions.jsonl"
+phase = "semi"
+description = "Corpus-scale S4 entity-NW segmentation predictions on the 1626-1630 paragraph axis"
+parent = "paragraph_axis_1626_1630"
+
+[datasets.place_overlap_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/place_overlap_1626_1630.xlsx"
+phase = "explore"
+description = "Enriched-to-HTR paragraph place overlap candidates for 1626-1630"
+parent = "loc_annotations"
+
+[datasets.org_overlap_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/org_overlap_1626_1630.xlsx"
+phase = "explore"
+description = "Enriched-to-HTR paragraph organisation overlap candidates for 1626-1630"
+parent = "org_annotations"
+
+[datasets.per_overlap_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/per_overlap_1626_1630.xlsx"
+phase = "explore"
+description = "Enriched-to-HTR paragraph person overlap candidates for 1626-1630"
+parent = "per_annotations"
+
+[datasets.s4_paragraph_axis_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_paragraph_axis_predictions.jsonl"
+phase = "semi"
+description = "S4 entity-sequence Needleman-Wunsch predictions on the boundary-gold paragraph axis"
+parent = "boundary_gold_paragraph_axis"
+
+[datasets.s5_paragraph_axis_evaluation]
+tier = "hot"
+path = "republic_ner_matching/output/s5_paragraph_axis_evaluation.jsonl"
+phase = "semi"
+description = "Eligibility-aware S5 evaluation of S4 paragraph-axis boundary predictions"
+parent = "s4_paragraph_axis_predictions"
+
+[datasets.s2_anchor_phrase_inventory]
+tier = "hot"
+path = "republic_ner_matching/output/s2_anchor_phrase_inventory.json"
+phase = "semi"
+description = "Anchor-derived opening and closing phrase inventory for 1626-1630"
+parent = "alignment_1626_1630"
+
+[datasets.s4_opening_phrase_cut_evaluation]
+tier = "hot"
+path = "republic_ner_matching/output/s4_opening_phrase_cut_evaluation.jsonl"
+phase = "semi"
+description = "Opening phrase and regex hit rates evaluated at manual boundary-gold cuts"
+parent = "boundary_gold_sample"
+
+[datasets.s4_opening_phrase_candidates]
+tier = "hot"
+path = "republic_ner_matching/output/s4_opening_phrase_candidates.jsonl"
+phase = "semi"
+description = "Tier-1 derived opening phrase candidates excluding boundary-gold dates"
+parent = "alignment_1626_1630"
+
+[datasets.s4_opening_phrase_cut_evaluation_full]
+tier = "hot"
+path = "republic_ner_matching/output/s4_opening_phrase_cut_evaluation_full.jsonl"
+phase = "semi"
+description = "Opening phrase and regex hit rates evaluated at manual boundary-gold cuts using the full uncapped candidate list"
+parent = "boundary_gold_sample"
+
+[datasets.session_date_status_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/session_date_status_1626_1630.parquet"
+phase = "frozen"
+description = "Canonical inventory-aware session-date evidence ledger for 1626-1630"
+parent = "alignment_1626_1630"
+
+[datasets.session_date_status_1626_1630_review]
+tier = "hot"
+path = "republic_ner_matching/output/session_date_status_1626_1630_review.csv"
+phase = "explore"
+description = "Date-indexed review export from the 1626-1630 session-date evidence ledger"
+parent = "session_date_status_1626_1630"
+
+[datasets.session_date_status_1626_1630_heatmap]
+tier = "hot"
+path = "republic_ner_matching/output/session_date_status_1626_1630_heatmap.html"
+phase = "explore"
+description = "Diagnostic calendar heatmaps for the 1626-1630 session-date evidence ledger"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_predictions.jsonl"
+phase = "semi"
+description = "Mapping-aware S4 corpus predictions and ledger-preserving abstentions"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_review_ui]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_review_ui.html"
+phase = "explore"
+description = "Interactive review UI for non-automatic 1626-1630 session-date mappings"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_decisions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_decisions.json"
+phase = "semi"
+description = "Browser-exported human decisions for non-automatic 1626-1630 session-date mappings"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_predictions_approved]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_predictions_approved.jsonl"
+phase = "semi"
+description = "Ledger-preserving human-approved session-date mappings for 1626-1630"
+parent = "session_date_status_1626_1630"

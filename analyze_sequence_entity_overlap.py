@@ -34,6 +34,7 @@ from build_alignment_new import (
     SESSION_ID_PATTERN,
     align_session,
     build_paragraph_to_resolution_map,
+    paragraph_mapping_annotation_files,
     calculate_idf_weights,
     enriched_volgnr,
     extract_session_id,
@@ -769,7 +770,7 @@ def main() -> None:
         if str(paragraph_id).strip()
     }
     paragraph_to_resolution = build_paragraph_to_resolution_map(
-        [LOC_ANNOTATIONS_FILE, ORG_ANNOTATIONS_FILE],
+        paragraph_mapping_annotation_files(),
         paragraph_ids,
     )
 

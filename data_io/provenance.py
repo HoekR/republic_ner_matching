@@ -14,6 +14,7 @@ import tomli_w
 
 
 DH_META_PREFIX = "dh."
+PROVENANCE_JSON_SUFFIX = ".provenance.json"
 
 
 @dataclass
@@ -66,6 +67,11 @@ def sidecar_path_for(data_path: Path, *, phase: str) -> Path:
     return data_path.with_suffix(".meta.toml")
 
 
+def provenance_json_path_for(data_path: Path) -> Path:
+    """Additional JSON sidecar required by some specs (always written)."""
+    return data_path.with_suffix(PROVENANCE_JSON_SUFFIX)
+
+
 def write_sidecar(data_path: Path, record: ProvenanceRecord) -> Path:
     sidecar = sidecar_path_for(data_path, phase=record.phase)
     payload = record.to_dict()
@@ -73,11 +79,18 @@ def write_sidecar(data_path: Path, record: ProvenanceRecord) -> Path:
         sidecar.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     else:
         sidecar.write_text(tomli_w.dumps(payload), encoding="utf-8")
+    # Policy/compat: also write a stable JSON provenance file.
+    provenance_json = provenance_json_path_for(data_path)
+    provenance_json.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     return sidecar
 
 
 def read_sidecar(data_path: Path, *, phase: str | None = None) -> dict[str, Any] | None:
     candidates: list[Path] = []
+    # Prefer the explicit JSON provenance if present.
+    candidates.append(provenance_json_path_for(data_path))
     if phase == "frozen":
         candidates.append(data_path.with_suffix(data_path.suffix + ".meta.json"))
     elif phase in {"explore", "semi"}:

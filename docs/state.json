@@ -1,0 +1,213 @@
+{
+  "project": "republic-ner-matching",
+  "last_updated": "2026-08-31 17:59",
+  "active_focus": "S4a: define and register the inventory-aware session-date status ledger before any reassignment.",
+  "tasks": [
+    {
+      "id": "S0",
+      "title": "Boundary evaluation harness",
+      "status": "done",
+      "notes": "Implemented boundary P/R/F1 at tolerance t, WindowDiff/P_k, and exact-count satisfaction; gold-data adapter remains part of S4 evaluation."
+    },
+    {
+      "id": "S1",
+      "title": "Zero-annotation diagnostics",
+      "status": "done",
+      "notes": "D1, D1c, D2, and D2b completed; findings support segmentation-transfer framing."
+    },
+    {
+      "id": "S2",
+      "title": "Anchor phrase inventory",
+      "status": "done",
+      "notes": "Harvested 1626-1630 opening/closing phrases to output/s2_anchor_phrase_inventory.json."
+    },
+    {
+      "id": "S3-tooling",
+      "title": "Boundary gold tooling",
+      "status": "done",
+      "notes": "Built sample generator, annotation UI, and merge script. Upstream res_start has zero target-inventory overlap."
+    },
+    {
+      "id": "S3-annotation",
+      "title": "Manual boundary annotation",
+      "status": "done",
+      "notes": "All 50 days annotated and merged. Exception review distinguishes segmentable, cross-day-shift, and missing-HTR cases."
+    },
+    {
+      "id": "S4",
+      "title": "Segmentation assembly",
+      "status": "inprogress",
+      "notes": "Corpus paragraph-axis baseline produced 244 predictions across 1,594 enriched days; session-date status mapping now addresses no-same-day-HTR cases."
+    },
+    {
+      "id": "S4a",
+      "title": "Session-date inputs",
+      "status": "inprogress",
+      "notes": "Define composite inventory-date key and register canonical ledger/review outputs."
+    },
+    {
+      "id": "S4b",
+      "title": "Session-date ledger",
+      "status": "todo",
+      "notes": "Build trusted-anchor and exact-date HTR evidence per inventory-date."
+    },
+    {
+      "id": "S4c",
+      "title": "Nearby session candidates",
+      "status": "todo",
+      "notes": "Record inventory-local +/-1-day candidate sessions without auto-assignment."
+    },
+    {
+      "id": "S4d",
+      "title": "Session status heatmap",
+      "status": "todo",
+      "notes": "Render a per-inventory-year calendar heatmap from the status ledger."
+    },
+    {
+      "id": "S4e",
+      "title": "Session-key consumers",
+      "status": "todo",
+      "notes": "Create review export and a separate mapping-aware corpus segmentation consumer."
+    },
+    {
+      "id": "S5",
+      "title": "Evaluation and review routing",
+      "status": "inprogress",
+      "notes": "Eligibility-aware S4 evaluation runs; route 18 insufficient-anchor abstentions after the next S4 iteration."
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "S0",
+      "to": "S5"
+    },
+    {
+      "from": "S1",
+      "to": "S4"
+    },
+    {
+      "from": "S2",
+      "to": "S4"
+    },
+    {
+      "from": "S4a",
+      "to": "S4b"
+    },
+    {
+      "from": "S4b",
+      "to": "S4c"
+    },
+    {
+      "from": "S4c",
+      "to": "S4d"
+    },
+    {
+      "from": "S4c",
+      "to": "S4e"
+    },
+    {
+      "from": "S3-tooling",
+      "to": "S3-annotation"
+    },
+    {
+      "from": "S3-annotation",
+      "to": "S5"
+    },
+    {
+      "from": "S4",
+      "to": "S5"
+    }
+  ],
+  "metrics": [
+    {
+      "scope": "S1-D1",
+      "name": "htr_under_segmented_rate",
+      "label": "HTR under-segmented session-days",
+      "value": "81.1%"
+    },
+    {
+      "scope": "S1-D1",
+      "name": "exact_count_rate",
+      "label": "Exact K_f == K_e session-days",
+      "value": "3.8%"
+    },
+    {
+      "scope": "S1-D1",
+      "name": "mean_entity_containment",
+      "label": "Mean entity containment",
+      "value": "0.295"
+    },
+    {
+      "scope": "S1-D1c",
+      "name": "tier1_kendall_tau",
+      "label": "Tier-1 Kendall tau",
+      "value": "0.638; 64.3% of pairs at tau >= 0.8"
+    },
+    {
+      "scope": "S1-D2",
+      "name": "llm_judge_precision",
+      "label": "LLM judge precision",
+      "value": "60.0% against 53.7% baseline"
+    },
+    {
+      "scope": "S1-D2b",
+      "name": "opening_formula_hit_rate",
+      "label": "Opening formula hit rate",
+      "value": "80.1%"
+    },
+    {
+      "scope": "S4",
+      "name": "resolution_baseline_coverage",
+      "label": "Flat-resolution entity-NW baseline coverage",
+      "value": "0 / 50 predicted"
+    },
+    {
+      "scope": "S4",
+      "name": "paragraph_axis_entity_coverage",
+      "label": "Paragraph-axis resolved entity coverage",
+      "value": "480 / 611 paragraphs; 87 unresolved annotation references"
+    },
+    {
+      "scope": "S5",
+      "name": "paragraph_axis_baseline",
+      "label": "Paragraph-axis entity-NW baseline",
+      "value": "coverage 5/21; micro F1 0.576 exact, 0.727 within 2 paragraphs"
+    },
+    {
+      "scope": "S4",
+      "name": "gold_cut_opening_signal",
+      "label": "Opening signal at manual cuts",
+      "value": "227/360 regex (63.1%); 225/360 S2 top-20 phrases (62.5%)"
+    },
+    {
+      "scope": "S4",
+      "name": "fuzzy_opening_coverage",
+      "label": "fuzzy_search opening coverage",
+      "value": "225/360 (62.5%), unchanged from exact top-20 phrase matching"
+    },
+    {
+      "scope": "S4",
+      "name": "heldout_opening_candidates",
+      "label": "Held-out opening phrase inventory",
+      "value": "271 candidates from 3,817 tier-1 flat records; excludes 50 gold dates"
+    },
+    {
+      "scope": "S4",
+      "name": "corpus_paragraph_axis",
+      "label": "Corpus paragraph axis",
+      "value": "21,519 paragraphs; 16,104 entity-bearing; 41,156 resolved attachments"
+    },
+    {
+      "scope": "S4",
+      "name": "corpus_baseline_coverage",
+      "label": "Corpus entity-NW baseline",
+      "value": "244/1,594 predicted; 815 insufficient anchors; 535 no same-day HTR assignment"
+    }
+  ],
+  "blockers": [],
+  "next_actions": [
+    "Complete S4a session-date inputs and manifest registration.",
+    "Build the S4b date-indexed ledger from trusted anchors and direct HTR dates.",
+    "Generate +/-1-day session candidates and the per-year status heatmap after ledger validation."
+  ]
+}

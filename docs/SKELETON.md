@@ -2,13 +2,17 @@
 
 Use this repo as the **source of truth** for `data_io`. New projects get `data_io` + `llm_archivist` via the bootstrap script.
 
-**Prerequisite:** clone [llm-archivist](../llm-archivist) as a sibling repo (`~/develop/llm-archivist`).
+**Start here:** [dighum_template/docs/NEW_REPO.md](../../dighum_template/docs/NEW_REPO.md) — step-by-step guide (canonical template repo).
+
+This file describes the skeleton model. Bootstrap commands now live in **dighum_template**.
+
+**Prerequisite:** clone [llm-archivist](../llm-archivist) and [dighum_template](../dighum_template) as sibling repos under `~/develop/`.
 
 ## Quick start
 
 ```bash
-cd republic_ner_matching
-./scripts/bootstrap_dh_project.sh ~/develop/GNBanalysis gnb-analysis
+cd dighum_template
+./scripts/bootstrap.sh ~/develop/GNBanalysis gnb-analysis
 cd ~/develop/GNBanalysis
 uv sync
 # Edit data_manifest.toml — tier roots + [datasets.*]
@@ -26,8 +30,8 @@ LLM_ARCHIVIST_SRC=~/develop/llm-archivist/src/llm_archivist ./scripts/bootstrap_
 
 | Source | Destination in new repo |
 |--------|-------------------------|
-| `template/dh_project/*` | AGENTS.md, PLAN.md, docs, pyproject.toml, `.cursorrules`, scripts |
-| `data_io/` (live) | `data_io/` |
+| `dighum_template/template/*` | AGENTS.md, PLAN.md, docs, pyproject.toml, `.cursorrules`, `.cursor/rules/`, `.vscode/`, `<package>.code-workspace`, scripts |
+| `dighum_template/packages/data_io/` | `data_io/` |
 | `../llm-archivist/src/llm_archivist/` | `llm_archivist/` |
 | `tests/test_data_io.py` | `tests/` |
 | `../llm-archivist/tests/test_scanners.py` | `tests/test_llm_archivist.py` |
@@ -60,9 +64,11 @@ flowchart LR
 ## LLM coding workflow
 
 1. **`AGENTS.md`** — path rules, `data_io` writes, when to `archive-scan`
-2. **`.cursorrules`** — Cursor auto-loads
-3. **`docs/DATA.md`** — tiers, phases, both tools
-4. **`PLAN.md`** — status + data-path table
+2. **`.cursor/rules/project-standards.mdc`** — uv, manifest, pandas conventions (always apply)
+3. **`.cursorrules`** — short manifest discipline (legacy auto-load)
+4. **`docs/DATA.md`** — tiers, phases, both tools
+5. **`PLAN.md`** — status + data-path table
+6. **`<package>.code-workspace`** — editor profile (interpreter, lint, test, excludes)
 
 ### Prompt pattern
 

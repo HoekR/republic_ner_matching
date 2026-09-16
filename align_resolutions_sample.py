@@ -18,11 +18,44 @@ from collections import defaultdict
 
 # Configuration
 DATADIR = Path("data")
-ENRICHED_FILE = "enriched_resolutions_1626_1630_complete.json"
-RESOLUTIONS_FILE = "resolutions_flat.parquet"
-LOC_ENTITIES_FILE = "LOC-entities.json"
-PER_ENTITIES_FILE = "PER-entities.json"
-ORG_ENTITIES_FILE = "ORG-entities.json"
+DATADIR_BAK = Path("data.bak")
+
+
+def resolve_data_file(*candidates: Path) -> Path:
+    """Return the first existing path among legacy, reorganized, and backup layouts."""
+    for path in candidates:
+        if path.exists():
+            return path
+    tried = "\n".join(f"  - {path}" for path in candidates)
+    raise FileNotFoundError(f"Required data file not found. Tried:\n{tried}")
+
+
+ENRICHED_FILE = resolve_data_file(
+    DATADIR / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR / "resolutions" / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR / "derived" / "enriched_resolutions_1626_1630_complete.json",
+    DATADIR_BAK / "enriched_resolutions_1626_1630_complete.json",
+)
+RESOLUTIONS_FILE = resolve_data_file(
+    DATADIR / "resolutions_flat.parquet",
+    DATADIR / "resolutions" / "resolutions_flat.parquet",
+    DATADIR_BAK / "resolutions_flat.parquet",
+)
+LOC_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "LOC-entities.json",
+    DATADIR / "reference" / "LOC-entities.json",
+    DATADIR_BAK / "LOC-entities.json",
+)
+PER_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "PER-entities.json",
+    DATADIR / "reference" / "PER-entities.json",
+    DATADIR_BAK / "PER-entities.json",
+)
+ORG_ENTITIES_FILE = resolve_data_file(
+    DATADIR / "ORG-entities.json",
+    DATADIR / "reference" / "ORG-entities.json",
+    DATADIR_BAK / "ORG-entities.json",
+)
 
 SAMPLE_SIZE = 500  # Test on 500 enriched resolutions
 
@@ -30,17 +63,40 @@ SAMPLE_SIZE = 500  # Test on 500 enriched resolutions
 def load_enriched_resolutions():
     """Load enriched resolutions with structured entity metadata."""
     print("Loading enriched resolutions...")
-    with open(DATADIR / ENRICHED_FILE) as f:
+    with open(ENRICHED_FILE, encoding="utf-8") as f:
         enriched = json.load(f)
     print(f"  Loaded {len(enriched)} enriched resolutions")
     return enriched
 
 
-def load_resolutions_flat():
-    """Load HTR corpus."""
+def load_resolutions_flat(enriched: list[dict] | None = None, window_buffer_days: int = 30) -> pd.DataFrame:
+    """Load HTR corpus, optionally confined to the enriched date window."""
     print("Loading resolutions_flat parquet...")
-    res_df = pd.read_parquet(DATADIR / RESOLUTIONS_FILE)
-    print(f"  Loaded {len(res_df)} resolutions")
+    res_df = pd.read_parquet(RESOLUTIONS_FILE)
+    initial_count = len(res_df)
+    print(f"  Loaded {initial_count} resolutions")
+
+    if enriched:
+        res_df["date_period"] = pd.PeriodIndex(res_df["date"].astype(str), freq="D")
+        enriched_dates: list[pd.Period] = []
+        for item in enriched:
+            raw = item.get("date")
+            if raw:
+                try:
+                    enriched_dates.append(pd.Period(str(raw)[:10], freq="D"))
+                except (TypeError, ValueError):
+                    pass
+
+        if enriched_dates:
+            min_date = min(enriched_dates) - window_buffer_days
+            max_date = max(enriched_dates) + window_buffer_days
+            mask = (res_df["date_period"] >= min_date) & (res_df["date_period"] <= max_date)
+            res_df = res_df[mask].copy().reset_index(drop=True)
+            print(
+                f"  Confined flat resolutions to enriched window [{min_date} .. {max_date}]: "
+                f"{len(res_df)} of {initial_count} retained"
+            )
+
     return res_df
 
 
@@ -56,7 +112,7 @@ def load_entity_names(entity_type):
         return {}
     
     try:
-        with open(DATADIR / file_map[entity_type]) as f:
+        with open(file_map[entity_type], encoding="utf-8") as f:
             entities = json.load(f)
     except FileNotFoundError:
         print(f"  Warning: {file_map[entity_type]} not found")
@@ -257,10 +313,10 @@ def test_date_tolerances(enriched_resolutions, resolutions_df, id_maps, entity_t
                 
                 # Compute date difference
                 try:
-                    ed = pd.Timestamp(enriched_date).date()
-                    rd = pd.Timestamp(res_date).date()
-                    best_date_diff = abs((ed - rd).days)
-                except:
+                    ed = pd.Period(str(enriched_date)[:10], freq="D")
+                    rd = pd.Period(str(res_date)[:10], freq="D")
+                    best_date_diff = abs(int((ed - rd).n))
+                except (TypeError, ValueError):
                     best_date_diff = None
         
         # Test each tolerance level
@@ -303,7 +359,7 @@ def main():
     # Load data
     print("[1/4] Loading data...")
     enriched = load_enriched_resolutions()
-    res_df = load_resolutions_flat()
+    res_df = load_resolutions_flat(enriched=enriched)
     print()
     
     # Load entity names

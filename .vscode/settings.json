@@ -24,9 +24,5 @@
     "**/data/*.pkl": true,
     "**/data/*.npz": true,
     "**/output": true
-  },
-  "cursorpyright.analysis.extraPaths": [
-    "${workspaceFolder}"
-  ],
-  "cursorpyright.analysis.typeCheckingMode": "basic"
+  }
 }

@@ -27,6 +27,7 @@ from build_alignment_new import (
     OUTPUT_DIR,
     PLACE_OVERLAP_FILE,
     build_paragraph_to_resolution_map,
+    paragraph_mapping_annotation_files,
     load_json,
 )
 
@@ -58,7 +59,7 @@ def load_pin_resolution_context() -> tuple[dict[str, str], pd.DataFrame, pd.Data
                 paragraph_ids.add(str(paragraph_id).strip())
 
     paragraph_to_resolution = build_paragraph_to_resolution_map(
-        [LOC_ANNOTATIONS_FILE, ORG_ANNOTATIONS_FILE],
+        paragraph_mapping_annotation_files(),
         paragraph_ids,
     )
     return paragraph_to_resolution, places_df, orgs_df

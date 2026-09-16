@@ -119,6 +119,7 @@ No blockers recorded.
 - mcp_enabled: true
 - mcp_server_path: /Users/rikhoekstra/develop/dighum_template/packages/workflow_mcp
 - last_mcp_check: 2026-09-01T00:00:00Z
+- current_step: 4a
 
 ## Dashboard
 - docs/dashboard.md

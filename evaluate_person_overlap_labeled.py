@@ -27,6 +27,7 @@ from build_alignment_new import (
     PERSON_SIGNAL_SCALE,
     build_overlap_lookups,
     build_paragraph_to_resolution_map,
+    paragraph_mapping_annotation_files,
     calculate_idf_weights,
 )
 
@@ -65,7 +66,7 @@ def main() -> None:
         if str(paragraph_id).strip()
     }
     paragraph_to_resolution = build_paragraph_to_resolution_map(
-        [LOC_ANNOTATIONS_FILE, ORG_ANNOTATIONS_FILE],
+        paragraph_mapping_annotation_files(),
         paragraph_ids,
     )
     place_lookup, org_lookup, person_lookup, combined_lookup = build_overlap_lookups(
