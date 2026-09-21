@@ -25,8 +25,8 @@ import numpy as np
 import pandas as pd
 
 from alignment_embeddings import AlignmentEmbedder, EmbeddingBackend
-from alignment_llm_judge import check_ollama_available, evaluate_pair
-from data_io import save_parquet
+from alignment_llm_judge import check_llm_available, evaluate_pair, DEFAULT_MODEL
+from data_io import load, resolve, save_parquet
 from generate_alignment.build_alignment_artifacts import write_verification_html
 
 
@@ -159,6 +159,18 @@ def load_entity_names(path: Path) -> dict[str, str]:
     }
 
 
+def load_institution_names() -> dict[str, str]:
+    """Map enriched resolutions' 'institutions' id-references (ID_instelling,
+    a small-integer id space distinct from ORG-entities.json's O0000002-style
+    ids) to institution names."""
+    df = pd.read_csv(resolve("instituten_lookup_cleaned"))
+    return {
+        str(int(row["ID_instelling"])): str(row["naam"])
+        for _, row in df.iterrows()
+        if pd.notna(row.get("ID_instelling")) and pd.notna(row.get("naam"))
+    }
+
+
 def load_data(
     window_buffer_days: int = 30,
 ) -> tuple[list[dict[str, Any]], pd.DataFrame, pd.DataFrame, pd.DataFrame, dict, dict, dict]:
@@ -207,7 +219,7 @@ def load_data(
     print(f"✓ Loaded {len(enriched_all)} enriched resolutions")
     print(f"✓ Loaded {len(res_df)} flat resolutions")
     print(f"✓ Loaded {len(places_df)} place overlaps, {len(orgs_df)} org overlaps, {len(persons_df)} person overlaps")
-    
+
     return enriched_all, res_df, places_df, orgs_df, loc_names, per_names, org_names, persons_df
 
 
@@ -334,6 +346,7 @@ def resolve_enriched_entities(
     org_names: dict[str, str],
     persons_info: dict[str, dict[str, str]] | None = None,
     surfaces_by_volgnr: dict[str, list[str]] | None = None,
+    institution_names: dict[str, str] | None = None,
 ) -> dict[str, list[str]]:
     places = [loc_names.get(str(item), str(item)) for item in enriched.get("places", []) if item]
     persons_canonical: list[str] = []
@@ -345,7 +358,18 @@ def resolve_enriched_entities(
         else:
             persons_canonical.append(per_names.get(person_id, person_id))
     orgs_raw = enriched.get("organizations") or enriched.get("institutions") or []
-    orgs = [org_names.get(str(item), str(item)) for item in orgs_raw if item]
+    # "institutions" ids are ID_instelling values (instituten_lookup_cleaned),
+    # a different id space from ORG-entities.json's O0000002-style ids that
+    # org_names is keyed by -- resolve institutions against institution_names
+    # first and only fall back to org_names for genuine "organizations" ids.
+    if institution_names:
+        orgs = [
+            institution_names.get(str(item)) or org_names.get(str(item), str(item))
+            for item in orgs_raw
+            if item
+        ]
+    else:
+        orgs = [org_names.get(str(item), str(item)) for item in orgs_raw if item]
     volgnr = enriched_volgnr(enriched) or ""
     persons_surface = list(surfaces_by_volgnr.get(volgnr, [])) if surfaces_by_volgnr else []
     return {
@@ -357,8 +381,34 @@ def resolve_enriched_entities(
     }
 
 
-def matched_entity_names(names: list[str], flat_text: str) -> list[str]:
+def load_entity_surface_cache() -> dict[str, set[str]]:
+    """resolution_id -> set(canonical LOC/PER name) confirmed present in that
+    flat resolution's text (1626-1630 only; built once by
+    build_entity_surface_matches.py from an annotation-derived candidate
+    shortlist, confirmed by exact substring or fuzzy fallback -- see that
+    script's docstring). Missing/outside-window resolutions are simply
+    absent, and matched_entity_names falls back to literal substring for
+    those, so this is purely additive."""
+    try:
+        df = load("entity_surface_matches_1626_1630")
+    except FileNotFoundError:
+        return {}
+    cache: dict[str, set[str]] = defaultdict(set)
+    for resolution_id, name in zip(df["resolution_id"], df["canonical_name"]):
+        cache[resolution_id].add(name)
+    return dict(cache)
+
+
+def matched_entity_names(
+    names: list[str],
+    flat_text: str,
+    resolution_id: str | None = None,
+    surface_cache: dict[str, set[str]] | None = None,
+) -> list[str]:
     flat_text_lower = flat_text.lower()
+    confirmed = surface_cache.get(resolution_id) if surface_cache and resolution_id else None
+    if confirmed:
+        return [name for name in names if name and (name in confirmed or name.lower() in flat_text_lower)]
     return [name for name in names if name and name.lower() in flat_text_lower]
 
 
@@ -654,6 +704,9 @@ def resolve_shared_entities(
     per_names: dict[str, str],
     org_names: dict[str, str],
     date_window_days: int,
+    institution_names: dict[str, str] | None = None,
+    persons_info: dict[str, dict[str, str]] | None = None,
+    surface_cache: dict[str, set[str]] | None = None,
 ) -> dict[str, Any]:
     e_id, f_id = pair_key
     stitched_ids = flat_record.get("stitched_ids")
@@ -667,10 +720,12 @@ def resolve_shared_entities(
         shared_places_excel = set(place_lookup.get(pair_key, set()))
         shared_orgs_excel = set(org_lookup.get(pair_key, set()))
     flat_text = candidate_text(flat_record)
-    resolved = resolve_enriched_entities(enriched, loc_names, per_names, org_names)
+    resolved = resolve_enriched_entities(
+        enriched, loc_names, per_names, org_names, persons_info=persons_info, institution_names=institution_names
+    )
 
-    shared_places_text = set(matched_entity_names(resolved["places"], flat_text))
-    shared_orgs_text = set(matched_entity_names(resolved["orgs"], flat_text))
+    shared_places_text = set(matched_entity_names(resolved["places"], flat_text, f_id, surface_cache))
+    shared_orgs_text = set(matched_entity_names(resolved["orgs"], flat_text, f_id, surface_cache))
 
     enriched_period = period_from_date(enriched.get("date"))
     flat_period = period_from_date(flat_record.get("date_str") or flat_record.get("date"))
@@ -1192,7 +1247,7 @@ def run(
     semantic_weight: float = 2.0,
     min_semantic_threshold: float = 0.35,
     use_llm_judge: bool = False,
-    llm_model: str = "llama3",
+    llm_model: str = DEFAULT_MODEL,
     llm_sample_size: int = 25,
     dates: list[str] | None = None,
     max_dates: int | None = None,
@@ -1200,6 +1255,9 @@ def run(
     
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     enriched_all, res_df, places_df, orgs_df, loc_names, per_names, org_names, persons_df = load_data()
+    institution_names = load_institution_names()
+    persons_info = load_persons_info_lookup()
+    surface_cache = load_entity_surface_cache()
     res_df["date_period"] = pd.PeriodIndex(res_df["date_str"], freq="D")
 
     # 1. Normalize and merge the Excel overlap data
@@ -1252,7 +1310,9 @@ def run(
         date_raw = str(enriched.get("date", ""))[:10]
         enriched["date_str"] = date_raw if len(date_raw) == 10 else None
         
-        resolved = resolve_enriched_entities(enriched, loc_names, per_names, org_names)
+        resolved = resolve_enriched_entities(
+            enriched, loc_names, per_names, org_names, persons_info=persons_info, institution_names=institution_names
+        )
         enriched["entity_set"] = set(resolved["places"] + resolved["orgs"])
         
         if enriched["date_str"]:
@@ -1349,6 +1409,9 @@ def run(
                 per_names,
                 org_names,
                 date_window_days=date_window_days,
+                institution_names=institution_names,
+                persons_info=persons_info,
+                surface_cache=surface_cache,
             )
             overlap_score = sum(idf_weights.get(entity, 1.0) for entity in entity_info["shared_entities"])
             sem_sim = float(similarity_matrix[e_idx, f_idx]) if similarity_matrix is not None else 0.0
@@ -1425,7 +1488,7 @@ def run(
 
         # 6. Optional: LLM verification judge on stratified sample
         if use_llm_judge:
-            if check_ollama_available():
+            if check_llm_available():
                 print(f"Running LLM verification judge (model={llm_model}) on up to {llm_sample_size} samples...")
                 judged_count = 0
                 for item in stratified_alignments:
@@ -1440,7 +1503,7 @@ def run(
                     judged_count += 1
                 print(f"✓ Completed LLM judging on {judged_count} samples.")
             else:
-                print("⚠ Ollama daemon not reachable at localhost:11434; skipping LLM judge.")
+                print("⚠ Local LLM model not available; skipping LLM judge.")
 
         ground_truth = export_ground_truth_records(stratified_alignments, OUTPUT_DIR)
         write_verification_html(
@@ -1552,13 +1615,13 @@ if __name__ == "__main__":
         "--use-llm-judge",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="Enable local Ollama LLM verification judge on ambiguous/stratified pairs (Option B).",
+        help="Enable local LLM verification judge on ambiguous/stratified pairs (Option B).",
     )
     parser.add_argument(
         "--llm-model",
         type=str,
-        default="llama3",
-        help="Ollama model identifier for LLM verification (default: llama3).",
+        default=DEFAULT_MODEL,
+        help=f"Local LLM model identifier for verification (default: {DEFAULT_MODEL}).",
     )
     parser.add_argument(
         "--llm-sample-size",

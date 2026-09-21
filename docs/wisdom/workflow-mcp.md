@@ -1,7 +1,7 @@
 # workflow MCP server
 
 **Status:** stable (v1)  
-**Applies to:** multi-step DH projects with `PLAN.md` + `docs/steps/`  
+**Applies to:** multi-step DH projects with `PLAN.md` + `plans/steps/`  
 **Portable:** yes (server in `dighum_template/packages/workflow_mcp`)
 
 ## Rule
@@ -14,7 +14,7 @@ Use the **workflow MCP** at session start and when the user says **start/guide s
 |------|---------|
 | `get_plan_status()` | Parsed `PLAN.md` checklist |
 | `get_current_step()` | First incomplete step |
-| `list_steps()` | Index of `docs/steps/STEP*.md` |
+| `list_steps()` | Index of `plans/steps/STEP*.md` (fallback: `docs/steps/`) |
 | `get_step_guide(step_id)` | Single step markdown |
 | `get_workflow_rules()` | `docs/wisdom/cost-sensitive-agent-workflow.md` if present |
 
@@ -35,9 +35,8 @@ Agents load entire plans, skip step boundaries, and run multi-step shell loops. 
 
 ## Not in v1
 
-- Writing/ticking `PLAN.md` via MCP
 - Running terminal commands
-- Cross-project step templates (steps stay in each repo's `docs/steps/`)
+- Cross-project step templates (steps stay in each repo's `plans/steps/`, created on demand)
 
 ## Related
 

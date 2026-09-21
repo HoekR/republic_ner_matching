@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 import pandas as pd
 
-from alignment_llm_judge import check_ollama_available, evaluate_pair
+from alignment_llm_judge import DEFAULT_MODEL, check_llm_available, evaluate_pair
 from build_alignment_new import (
     OUTPUT_DIR,
     load_data,
@@ -45,10 +45,10 @@ def main() -> None:
         for item in strat_list
     }
 
-    ollama_ok = check_ollama_available()
-    print(f"Ollama daemon available: {ollama_ok}")
-    if not ollama_ok:
-        print("⚠ Please start Ollama before running this benchmark.")
+    llm_ok = check_llm_available()
+    print(f"Local LLM model available: {llm_ok}")
+    if not llm_ok:
+        print("⚠ Local LLM model not available; skipping LLM judge.")
         return
 
     enriched_all, res_df, places_df, orgs_df, loc_names, per_names, org_names, persons_df = load_data()
@@ -114,7 +114,7 @@ def main() -> None:
             enr_t = enriched_text(enr_record) if enr_record else ""
             flat_t = candidate_text(flat_record) if flat_record else ""
 
-            judgement = evaluate_pair(enr_t, flat_t, model="llama3.2:latest")
+            judgement = evaluate_pair(enr_t, flat_t, model=DEFAULT_MODEL)
             llm_decision = judgement.decision
             confidence = judgement.confidence
             reason = judgement.reason

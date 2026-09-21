@@ -2,7 +2,7 @@
 """Batch LLM judge for Tier 3 boundary/unanchored candidate resolutions.
 
 Takes unanchored opening templates (tier3_head_template) and tail resolutions (tier3_tail)
-from the frozen alignment dataset and routes them through local Ollama (llama3.2:latest)
+from the frozen alignment dataset and routes them through local mlx-lm
 to verify matches vs unrecorded resolutions.
 
 Usage:
@@ -18,7 +18,7 @@ from pathlib import Path
 from tqdm import tqdm
 import pandas as pd
 
-from alignment_llm_judge import check_ollama_available, evaluate_pair
+from alignment_llm_judge import DEFAULT_MODEL, check_llm_available, evaluate_pair
 from data_io import load, resolve, save_semi_structured
 
 ROOT = Path(__file__).resolve().parent
@@ -45,14 +45,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Batch judge Tier 3 alignment candidates with local LLM.")
     parser.add_argument("--limit", type=int, default=50, help="Maximum unjudged pairs to process (0 = all)")
     parser.add_argument("--all", action="store_true", help="Process all Tier 3 candidates")
-    parser.add_argument("--model", type=str, default="llama3.2:latest", help="Ollama model name")
+    parser.add_argument("--model", type=str, default=DEFAULT_MODEL, help="Local LLM model identifier (mlx-lm)")
     parser.add_argument("--tier", type=str, default="all", choices=["all", "tier3_head_template", "tier3_tail"], help="Filter by specific tier")
     args = parser.parse_args()
 
-    if not check_ollama_available():
-        print("⚠ Local Ollama daemon is not running at http://localhost:11434.")
-        print("  Please start Ollama (e.g. `ollama serve`) and ensure the model is pulled:")
-        print(f"  `ollama pull {args.model}`")
+    if not check_llm_available():
+        print("⚠ Local LLM model not available; skipping LLM judge.")
         return
 
     print("Loading frozen alignment dataset...")

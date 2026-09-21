@@ -93,6 +93,22 @@ The absence of a fit-for-purpose metric is what allowed the circling.
 
 **Always report:** coverage alongside precision, with explicit abstention.
 
+### 4.1 Diagnostics must run through the real pipeline, not a shortcut of it
+
+*(Added 2026-09-18, after a concrete miss — see PLAN.md S4 session log and
+[docs/S4_ITERATION_REVIEW.md](S4_ITERATION_REVIEW.md).)* A hit-rate diagnostic that
+measures a signal directly at true gold positions (e.g. "does this phrase list match
+at the known cut point?") answers a different question than "does this signal survive
+the actual prediction pipeline" — the pipeline's own combination/revert logic can
+silently discard most of what the diagnostic found. Concretely: an opening-phrase
+inventory scored 73.6% exact / 76.4% fuzzy hit rate when checked directly against 360
+gold cut points, but only reached 1 of 5 predicted days once run through
+`s4_paragraph_axis_baseline.py`'s snap-then-revert step, because that step discarded
+an entire day's snaps on a single collision. The diagnostic wasn't wrong, but it
+wasn't sufficient either — **always additionally check the signal's effect after it
+passes through the full candidate pipeline** (e.g. inspect the `source` field on
+actual predictions, not just the isolated hit-rate), not only the isolated hit rate.
+
 ---
 
 ## 5. Diagnostics — zero annotation, all data already on disk
@@ -245,14 +261,36 @@ inventory before relying on it as a snapping prior.
 **Unit choice.** Paragraphs first. If `K_p < K_e` on a meaningful share of days, paragraphs are also
 too coarse and cut points must be sought at **line** level.
 
-**Supervision already available upstream** (`~/develop/republicgit`):
+**Supervision upstream (`~/develop/republicgit`) — verified 2026-09-18, not as available as this
+section previously claimed:**
 
 - `republic/classification/line_classification.py` — `NeuralLineClassifier` (GysBERT) predicting
-  `para_start` / `para_mid` / `para_end` / `date` / `attendance` / `marginalia`
-- `ground_truth/line_classification/htr_classified_lines.csv` — 7,000+ labelled lines, dual
-  annotators, `checked` flag
-- `ground_truth/resolutions/res_start/*.jsonl` — 245 hand-validated resolution openings
-- `republic/model/resolution_phrase_model.py` — period-scoped opening phrases
+  `para_start` / `para_mid` / `para_end` / `date` / `attendance` / `marginalia`. No trained
+  checkpoint confirmed present; would need training/fine-tuning, not just loading.
+- `ground_truth/line_classification/htr_classified_lines.csv` (14,324 rows, the canonical/merged
+  file) — **zero rows** fall in target inventories 3185–3189 (checked directly by inventory
+  number extracted from `page_id`). Skewed to inventory 3156 and ~176 other inventories instead.
+- `ground_truth/line_classification/htr_classified_lines_marijn.csv` (one of three per-annotator
+  variants) — does have 1,294 `checked=1` rows across all five target inventories (121
+  `para_start`, 123 `para_end`), but scattered across only 2–9 sampled scan pages per inventory
+  out of hundreds — spot-check density, not comprehensive coverage. Unmapped to calendar dates;
+  overlap with the 12 structurally-abstaining gold days (§ below) is unverified and, given the
+  sparsity, unlikely to be complete.
+- `ground_truth/resolutions/res_start/*.jsonl` — 245 hand-validated resolution openings; **zero
+  overlap** with inventories 3186–3189 (already noted in PLAN.md).
+- `republic/model/resolution_phrase_model.py` — period-scoped opening phrases.
+
+**Implication:** treat line-level segmentation as needing new ground truth (targeted annotation of
+the marijn-variant pages that *do* land on the 12 gold days, or fresh sampling) before any DP/
+classifier work, not as a drop-in reuse of existing supervision. Before committing engineering
+effort: map the 1,294 marijn-variant rows' `page_id`s to calendar dates and check how many of the
+12 gold days they actually touch. **Correction, 2026-09-18: this join is not cheap.** No dataset in
+`data_manifest.toml` maps (inventory, scan/page) to date for these inventories —
+`session_index_all.parquet` and `session_date_status_1626_1630` are both session-level
+(`inventory_id`/`session_num`), not scan/page-level. The join needs a new extraction step over the
+unextracted 10 GB `sessions_json-2026-02-27.tar.gz` to read per-session page ranges first. Scope
+that extraction as its own step (register it in `data_manifest.toml`) before attempting the
+overlap check; see docs/DECISIONS.md 2026-09-18.
 
 **Algorithm.** Monotone DP over cut points, `O(N²K)`; with N ≈ 10 units and K ≈ 5 this is trivial.
 Score a candidate segment against enriched resolution *i* by typed entity overlap + IDF (existing
@@ -326,3 +364,5 @@ genuine 1:1 ordered correspondence — at which point mutual exclusivity and mon
 - Define the metric before the method.
 - Precision first, with coverage reported; abstention is a valid output.
 - Prefer deriving inventories from trusted anchors over hand-writing taxonomies.
+- A signal's hit rate measured in isolation (directly at gold positions) is not
+  its effect once it passes through the real pipeline — check both (§4.1).

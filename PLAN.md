@@ -3,6 +3,11 @@
 Fine-tune GysBERT for multi-class NER on 1626-1630 Dutch Republic resolutions.
 Recognize both place names (LOC-annotations) and delegate names (PER-annotations).
 
+**Multiple tracks below compete for the same session budget.** Before picking one up, run
+`uv run python scripts/svz.py review` (or read [docs/STATE.md](docs/STATE.md)) and follow
+[docs/ITERATION_POLICY.md](docs/ITERATION_POLICY.md) to decide what to continue, switch to, or
+close out. Durable stop/continue decisions are logged in [docs/DECISIONS.md](docs/DECISIONS.md).
+
 ---
 
 ## Workspace Standard Alignment & Organization (Completed)
@@ -26,13 +31,13 @@ Aligned with `dighum_template` guidelines via sync tool:
 
 ### Session-Date Ledger Steps
 
-| Step | Guide | Done when | Status |
-|---|---|---|---|
-| **4a** | [STEP4a_session_date_inputs.md](docs/steps/STEP4a_session_date_inputs.md) | Define the inventory-aware session-date key and register outputs. | [x] |
-| **4b** | [STEP4b_session_date_ledger.md](docs/steps/STEP4b_session_date_ledger.md) | Build the date-indexed known/unknown session ledger. | [x] |
-| **4c** | [STEP4c_nearby_session_candidates.md](docs/steps/STEP4c_nearby_session_candidates.md) | Add auditable `+/-1` day candidates without auto-assignment. | [x] |
-| **4d** | [STEP4d_session_status_heatmap.md](docs/steps/STEP4d_session_status_heatmap.md) | Render per-inventory-year calendar heatmaps. | [x] |
-| **4e** | [STEP4e_session_key_consumers.md](docs/steps/STEP4e_session_key_consumers.md) | Produce review exports and a separate mapping-aware S4 consumer. | [x] |
+| Step         | Guide                                                                                | Done when                                                         | Status |
+| ------------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ------ |
+| **4a** | [STEP4a_session_date_inputs.md](docs/steps/STEP4a_session_date_inputs.md)             | Define the inventory-aware session-date key and register outputs. | [x]    |
+| **4b** | [STEP4b_session_date_ledger.md](docs/steps/STEP4b_session_date_ledger.md)             | Build the date-indexed known/unknown session ledger.              | [x]    |
+| **4c** | [STEP4c_nearby_session_candidates.md](docs/steps/STEP4c_nearby_session_candidates.md) | Add auditable`+/-1` day candidates without auto-assignment.     | [x]    |
+| **4d** | [STEP4d_session_status_heatmap.md](docs/steps/STEP4d_session_status_heatmap.md)       | Render per-inventory-year calendar heatmaps.                      | [x]    |
+| **4e** | [STEP4e_session_key_consumers.md](docs/steps/STEP4e_session_key_consumers.md)         | Produce review exports and a separate mapping-aware S4 consumer.  | [x]    |
 
 **Hypothesis.** The enriched edition is normative — resolution count and order per sitting are
 hand-edited and checked — so `K_e` is ground truth for how many resolutions a sitting contains. The
@@ -101,14 +106,814 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   `fuzzy_search` spelling-variant matching at 0.85 similarity adds no hits beyond the 62.5%
   exact top-20 baseline, so missing phrase families rather than orthographic variation are the
   immediate coverage gap. A held-out tier-1 inventory (excluding all 50 gold dates) now has
-  271 recurring candidates from 3,817 unique flat records, independently confirming `opde
-  requeste`, `is ter vergaderinge`, and `in deliberatie geleyt`; integrate these as positional
+  271 recurring candidates from 3,817 unique flat records, independently confirming `opde requeste`, `is ter vergaderinge`, and `in deliberatie geleyt`; integrate these as positional
   priors in the next S4 iteration.
   *(S1, S2)*
-- [ ] **S5** — evaluation adapter completed: it excludes C/M days from quality denominators,
-  reports coverage separately, and writes `output/s5_paragraph_axis_evaluation.jsonl`.
-  Route the 18 insufficient-anchor abstentions to [sequence_review_ui.py](sequence_review_ui.py)
-  after the next S4 iteration. *(S0, S3, S4)*
+
+  **Session 2026-09-18.** Correction to the note above: the 271-candidate held-out
+  inventory was already wired into `s4_paragraph_axis_baseline.py`'s phrase-snapping
+  step at the same commit that produced the "5/21 eligible days" result -- the
+  "integrate as positional priors" framing was chronologically backwards (the cut-rate
+  diagnostics in `s4_opening_phrase_cut_evaluation[_full].jsonl` ran *after* the
+  baseline, measuring hit rate directly at true gold cuts, never through the actual
+  interpolate-snap-revert pipeline; see docs/SEGMENTATION_TRANSFER.md section 4.1 for the
+  general lesson this forced). Root-caused all 16 `insufficient_entity_anchors`
+  abstentions: **12/16 (75%) are structural** -- the paragraph axis has fewer
+  paragraphs than `K_e` requires, either globally (`axis_count < k_e`) or locally
+  between two entity anchors (`gap_violation`) -- confirming
+  docs/SEGMENTATION_TRANSFER.md section 9's predicted line-level fallback trigger; **2/16
+  were a code bug** (`interpolate_positions` required >=1 entity anchor even for
+  `k_e == 1` days that need zero cut points); **2/16 were a data gap**
+  (`boundary_gold_paragraph_axis` has no records for those 2 gold dates at all).
+  Separately traced why phrase-snapping only reached 1 of the 5 predicted days
+  (6/32 boundaries snapped): `predict_day`'s revert was **all-or-nothing per day**
+  -- any single collision (two interpolated positions snapping to the same nearby
+  paragraph, e.g. `1627-12-07` raw `[1,2,3,4,5,6]` -> snapped `[1,2,3,4,4,4]`)
+  discarded every snap for that day, including the valid ones; widening the snap
+  radius/threshold was tested and made no difference (every raw position already
+  finds a phrase hit within radius 2).
+
+  Fixed both in `scripts/s4_paragraph_axis_baseline.py`: `interpolate_positions`
+  now short-circuits to `[]` for `k_e <= 1` (no anchors needed when no cuts are
+  needed), and a new `snap_boundaries` replaces the all-or-nothing revert with a
+  per-boundary, order-preserving greedy assignment (4 new tests in
+  `tests/test_s4_paragraph_axis_baseline.py`, 9/9 passing). Re-run: predicted days
+  5->9/21 (coverage 0.238->0.429) and phrase-snapped boundaries 6/32->26/32.
+  **Caveat -- read the coverage gain correctly:** all 4 newly-predicted days are
+  `k_e == 1` trivial zero-boundary days (2 of them have zero paragraph-axis records
+  at all), so they add no real segmentation signal, only correctly avoid a spurious
+  abstention. On the 5 original multi-boundary days, boundary-level F1 is
+  **unchanged** (micro F1 0.576 exact / 0.727 within-2 tolerance, matching the
+  pre-fix run to 3 decimal places) despite most boundaries switching from raw
+  interpolation to phrase-snapped positions -- flagged as an open question, not yet
+  explained (needs a per-boundary gold-vs-predicted comparison, not attempted this
+  session). Neither the 12 structural `K_p < K_e` abstentions nor the 2
+  missing-axis-record dates were addressed; both are candidates for the next S4
+  session (line-level cut points per S9, and a `boundary_gold_paragraph_axis`
+  data-completeness check, respectively). Full session narrative:
+  [docs/S4_ITERATION_REVIEW.md](docs/S4_ITERATION_REVIEW.md).
+
+  **Session 2026-09-18 (continued).** Explained the flagged open question above
+  by decomposing TP/FP/FN per boundary on the 5 multi-boundary predicted days
+  (reused existing `s4_paragraph_axis_predictions.jsonl` +
+  `boundary_gold_paragraph_axis`, no rerun needed): gold's own `boundaries`
+  annotations repeat the identical `paragraph_stream_index` for multiple
+  distinct cut points whenever the paragraph axis is coarser than `K_e` --
+  e.g. `1626-02-28` has 6 boundary slots but only 1 distinct axis position
+  (`axis_count=8` for `k_e=7`). 16/17 eligible gold days with any boundary
+  have at least one such collision; 41/179 boundary slots (22.9%)
+  corpus-wide share a position with another slot the same day.
+  `compute_boundary_prf` can award at most one hyp match per distinct ref
+  value, and predicted positions are always strictly increasing (never
+  repeat), so duplicate-valued gold slots impose a hard recall ceiling
+  independent of predictor quality: max reachable TP = count of distinct ref
+  values, not `len(ref)`. On the 5-day subset this ceiling is 24 distinct
+  values out of 34 ref slots; tol0 TP (19) already reaches 79% of it and
+  tol2 TP (24) reaches **exactly 100%** -- the snap-collision fix improved
+  individual boundary position accuracy, but the metric was already
+  saturated against the axis-granularity ceiling both before and after,
+  which is why F1 didn't move. Recorded as a structural-ceiling decision in
+  `docs/DECISIONS.md` (2026-09-18): `boundary_f1_tolerance0`/`tolerance2`
+  are closed to further interpolation/snapping work; any further F1 gain
+  needs finer-than-paragraph granularity, i.e. the already-scoped but
+  `blocked` line-level-segmentation track. S4's other metrics (predicted-day
+  coverage, corpus baseline coverage) are unaffected and remain open.
+
+  **Session 2026-09-18 (entity-density diagnostic).** Explored a way around
+  the paragraph-granularity ceiling above that doesn't depend on the blocked
+  line-level track: does a paragraph's entity density (LOC+PER+ORG mention
+  count) signal that it bundles multiple resolutions? Two prerequisite
+  concerns were checked first and resolved: (1) entity offsets are not as
+  unreliable as repo lore claimed -- the "~50% wrong" figure traces to no
+  actual measurement; reproducing it gives ~18-22% character-level noise,
+  always within the correct paragraph, largely a fixable reference-frame bug,
+  and irrelevant here since the count used doesn't touch offsets. (2)
+  `LOC-/PER-/ORG-annotations.json` come from an upstream GysBERT/Flair tagger
+  with ~50-55% corpus-wide recall (never measured for 1626-1630
+  specifically); this project's planned GysBERT fine-tuning would train on
+  spans from that same layer and so cannot close its recall gap -- a
+  dictionary/fuzzy surface-form lookup against known reference lists,
+  scoped to flagged paragraphs, is the viable route instead (deferred, see
+  below).
+
+  Built `scripts/s4_entity_density_split_diagnostic.py` (+
+  `tests/test_s4_entity_density_split_diagnostic.py`, 7/7 passing) to test the
+  hypothesis directly against gold: paragraphs gold marks as "bundled" (2+
+  boundary slots collapse onto one `paragraph_stream_index`, excluding gold's
+  `out_of_range` fallback marker, which reflects missing HTR content, not
+  entity density) vs. paragraphs gold marks as a single clean resolution
+  boundary. Real-corpus result (16 eligible gold days, registered as
+  `s4_entity_density_split_diagnostic`, parent `boundary_gold_paragraph_axis`):
+  **bundled paragraphs (n=22) have median entity_annotation_count 4 vs. 1 for
+  clean paragraphs (n=112); common-language effect size 0.77** (a random
+  bundled paragraph beats a random clean paragraph's count 77% of the time),
+  77% of bundled paragraphs at/above the clean group's 75th percentile.
+  Recorded via `svz.py metric S4 entity_density_bundled_clean_effect_size
+  0.770`. Verdict: the signal separates well enough to be worth pursuing
+  further.
+
+  **Next candidates (not started):** (1) fuzzy-surface-form-lookup
+  augmentation of entity counts, scoped to paragraphs this diagnostic flags,
+  against `LOC-entities.json`/`PER-entities.json`/`delegates_reference.parquet`/
+  `abbrd_minimal.parquet` -- to recover entities the upstream tagger missed
+  (avoids the previously-benchmarked `FuzzyTokenSearcher` full-dictionary
+  scaling wall by staying scoped, not corpus-wide); (2) actual split-point
+  placement within a flagged bundled paragraph, using freshly `.find()`-computed
+  in-text character positions (not the stored annotation `offset` field) to
+  locate entities and infer where to cut -- 2/22 bundled paragraphs have zero
+  entities and would need a different signal or fall back to abstention.
+
+  **Session 2026-09-18 (split-point POC).** Built
+  [scripts/s4_bundled_split_poc.py](scripts/s4_bundled_split_poc.py) (+
+  `tests/test_s4_bundled_split_poc.py`, 14/14 passing) to test candidate (2)
+  directly, using candidate (1) as the lever to measure its own marginal
+  value on the same batch, per this session's plan. Gold `mid_paragraph`
+  boundary annotations carry an exact in-text `char_offset` -- all 22 bundled
+  positions have real character-level ground truth (27 interior cuts total),
+  not just paragraph-index-only labels. Method: locate entity spans via
+  freshly `.find()`-computed positions (whitespace-flexible fallback), split
+  them into `k+1` contiguous groups, predict a cut at each group gap's
+  midpoint; abstain if fewer than `k+1` spans are found.
+
+  Real-corpus result (registered as `S4`
+  `bundled_split_poc_stage{1,2}_recall_tol{50,150}`): stage 1 (existing
+  LOC-/ORG-/PER-annotations only) attempts 17/22 positions, recovers **0/27
+  (0%) at tol=50 chars** and **9/27 (33.3%) at tol=150 chars**. Stage 2 (stage
+  1 spans plus a scoped dictionary lookup against
+  `entity_surface_matches_1626_1630` canonical LOC/PER names, restricted to
+  these flagged paragraphs) attempts 18/22, recovers **3/27 (11.1%) at
+  tol=50** and **11/27 (40.7%) at tol=150**.
+
+  **Reading the result:** the even-split-of-entity-spans heuristic itself is
+  the dominant limitation, not entity recall -- it is essentially unusable at
+  a tight tolerance (0% at 50 chars) and only moderately useful at a loose
+  one (33%). Dictionary augmentation gives a real but modest lift (+1
+  abstention resolved, +2 hits at tol150, +3 at tol50), consistent with the
+  entity-density diagnostic's hypothesis, but confirms it is not sufficient
+  on its own to make split-point placement viable -- the placement heuristic
+  needs a smarter signal than "midpoint of the gap between evenly-sized
+  entity groups" (e.g. phrase-boundary snapping near the predicted gap,
+  similar to S4's existing opening-phrase snap step, or per-entity role/type
+  weighting) before this is worth wiring into the main baseline. Not yet
+  attempted this session; next candidate action if this track continues.
+
+  **Session 2026-09-18 (phrase-boundary snap).** Attempted the phrase-snap
+  candidate above: added `phrase_offsets`/`snap_cut_to_phrase`/
+  `snap_predicted_cuts` to `scripts/s4_bundled_split_poc.py`, reusing the same
+  `s4_opening_phrase_candidates` inventory and per-cut order-preserving snap
+  logic as `s4_paragraph_axis_baseline.snap_boundaries`, applied to raw char
+  offsets instead of paragraph indices (4 new tests, 18/18 passing). Snaps
+  each stage's midpoint cut to the nearest opening-phrase match within 150
+  chars, independently per cut, falling back to the raw midpoint on collision
+  or when no phrase is nearby.
+
+  Real-corpus result (registered as `S4`
+  `bundled_split_poc_stage{1,2}_phrase_snapped_recall_tol{50,150}`), same
+  17/22 and 18/22 attempted (snapping doesn't change abstentions): stage 1
+  moves **0/27 -> 2/27 (7.4%) at tol=50** and is unchanged at **9/27 (33.3%)
+  at tol=150**; stage 2 moves **3/27 -> 4/27 (14.8%) at tol=50** and is
+  unchanged at **11/27 (40.7%) at tol=150**. Reading the result: snapping
+  gives a small but real lift at the tight tolerance in both stages (the
+  cuts it moves were already within 150 chars of gold and land closer, not
+  pulled in from outside that window) but zero lift at the loose tolerance
+  -- it sharpens already-close cuts rather than rescuing wrong ones. Confirms
+  the even-split heuristic itself, not phrase availability, remains the
+  dominant limitation; per-entity role/type weighting (the other candidate
+  named alongside phrase-snapping) is the next thing to try if this track
+  continues, otherwise S4 split-point placement is likely near its ceiling
+  without the blocked line-level track.
+
+  **Session 2026-09-18 (open-items closeout).** Worked the two remaining open
+  items from [docs/S4_ITERATION_REVIEW.md](docs/S4_ITERATION_REVIEW.md), both
+  resolved with data already on disk (no rerun, no heavy compute):
+  (1) the 2 `boundary_gold_paragraph_axis` missing-record dates (1626-05-17,
+  1627-04-11) are not a pipeline bug -- `boundary_gold_sample.json` shows both
+  are `k_e=1, k_f=0, flat_ids=[]`, i.e. the same `missing_htr` structural
+  ceiling already closed for `resolution_concordance_1626_1630`, surfacing
+  here as an empty paragraph axis instead; both are trivial zero-boundary
+  days so no segmentation signal is lost. (2) Re-checked the line-level-
+  segmentation blocker's stated next action ("map marijn-variant page_ids to
+  dates, a cheap join") and found it isn't cheap: no dataset in
+  `data_manifest.toml` maps (inventory, scan/page) to date --
+  `session_index_all.parquet` and `session_date_status_1626_1630` are both
+  session-level only -- so the join needs a new extraction step over the
+  unextracted 10 GB `sessions_json-2026-02-27.tar.gz`. Corrected the "cheap"
+  claim in `docs/SEGMENTATION_TRANSFER.md` §9 and the task note in
+  `docs/state.json`; track stays `blocked`, now on a properly-scoped
+  extraction step rather than a quick lookup. Both findings recorded in
+  `docs/DECISIONS.md` (2026-09-18). With these closed, S4 has no more cheap
+  already-scoped diagnostic work on hand -- next session should either scope
+  the sessions_json page-range extraction as its own step, or switch tracks
+  per `svz.py review`.
+
+  **Session 2026-09-19 (batch candidates: corrected fuzzy-scaling claim +
+  LLM split POC).** User asked for weekend-scale batch work. First corrected
+  a wrong recommendation (GysBERT fine-tuning) using an already-documented
+  finding a few lines above: `LOC-/PER-/ORG-annotations.json` come from the
+  same noisy upstream tagger fine-tuning would train on, so it can't close
+  its own recall gap (docs/DECISIONS.md 2026-09-18 already said this).
+  Re-benchmarked the "`FuzzyTokenSearcher` full-dictionary scaling wall"
+  claim (`build_entity_surface_matches.py` docstring, >4.5min/3.7GB without
+  finishing on the full ~10,876-name dict): that number was measured at the
+  default `index_vocabulary_pairs=True`. With it set `False`, full LOC
+  (2,459 names) drops from 60s/3.7GB to 12s/1.2GB, full PER (8,076 names)
+  completes in 185s/6.3GB (though a later end-to-end run saw PER indexing
+  take 1,015s under system load -- real variance, not a fixed number). Also
+  found the default `levenshtein_threshold=0.6` produces mostly garbage
+  (common words like "ende"/"heeren" matching short place/person names at
+  0.6-0.8 similarity); raised to 0.85 + a 4-char minimum match length
+  (matching this codebase's existing `FuzzyPhraseSearcher` convention). Built
+  [scripts/s4_fuzzy_surface_form_scan.py](scripts/s4_fuzzy_surface_form_scan.py)
+  (+ 6/6 tests) -- full-dictionary LOC/PER/ORG scan over every 1626-1630
+  paragraph (not just annotation-linked candidates, unlike
+  `entity_surface_matches_1626_1630`), flagging `already_known` vs
+  `newly_recovered`. Checkpointed (resumable), estimated 7-9h total
+  (LOC ~1.8h, PER ~5.3h at clean-system rates). Smoke-tested end to end (8
+  real matches written); LOC matches are clean (Amsterdam, Engelant->
+  Engeland), PER matches are noisier (common words again: "Staten"/
+  "Nederlanden"/"heer" collide with actual PER-dictionary surnames) --
+  treat PER output as needing heavier review than LOC.
+
+  Separately, explored few-shot local-LLM split-point prediction as an
+  alternative to GysBERT fine-tuning for the still-open "next candidate (2)"
+  above (actual split-point placement): reuses `s4_bundled_split_poc.py`'s
+  exact 22-position gold set and tol50/150 scoring harness unchanged, swaps
+  in a new stage that few-shot prompts a local Ollama model (`qwen32b:latest`,
+  already pulled locally) with other gold positions' (text -> interior cut
+  offsets) as in-context examples, no fine-tuning involved. Built
+  [scripts/s4_llm_split_poc.py](scripts/s4_llm_split_poc.py) (+ 10/10 tests
+  on the parseable logic; the Ollama call itself is untested by design).
+  Checkpointed/resumable given 22 sequential local-LLM calls. Registered
+  `s4_fuzzy_surface_form_scan`, `s4_llm_split_poc`, `loc_entities`,
+  `per_entities`, `org_entities` in `data_manifest.toml` (the entity
+  dictionaries as local `data.bak/` copies -- not confirmed against a
+  canonical warm-tier path, see manifest description). Both scripts handed
+  off for the user to run; results not yet in hand.
+- [X] **S5** — evaluation adapter completed: [scripts/evaluate_s4_paragraph_axis.py](scripts/evaluate_s4_paragraph_axis.py)
+  excludes C/M days from quality denominators, reports coverage separately, and writes
+  `output/s5_paragraph_axis_evaluation.jsonl` (verified via
+  [tests/test_evaluate_s4_paragraph_axis.py](tests/test_evaluate_s4_paragraph_axis.py); current
+  run: 21 eligible days, 5 predicted, coverage 0.238, 16 `insufficient_entity_anchors`
+  abstentions). Routing those abstentions to
+  [sequence_review_ui.py](sequence_review_ui.py) is deferred — it depends on the next S4
+  iteration (expanded phrase inventory) changing the abstention set, so wiring the UI now would
+  be rework. *(S0, S3, S4)*
+- [ ] **S6** — **multi-channel anchor chaining at character coordinates.** Guide:
+  [docs/steps/STEP_S6_anchor_chain_alignment.md](docs/steps/STEP_S6_anchor_chain_alignment.md).
+  Corrects a coordinate drift, not the alignment idea: §6.3 of
+  [docs/SEGMENTATION_TRANSFER.md](docs/SEGMENTATION_TRANSFER.md) already specified that cut points
+  land at **character** positions, but
+  [scripts/s4_paragraph_axis_baseline.py](scripts/s4_paragraph_axis_baseline.py) emits
+  `paragraph_stream_index`, with `char_offset` only as a phrase-snap byproduct. Measured on all 50
+  gold days: 109/352 cut slots (31.0%, 25 days) share a paragraph index, and the hard recall bound
+  **at tolerance 0** rises **79.5% → 90.9%** (280 → 320 distinct reachable positions) under
+  `(paragraph_stream_index, char_offset)`; the 32 residual slots have `char_offset: null`, an
+  annotation gap rather than a coordinate limit. (That bound is rigorous at tolerance 0 only — see
+  the 2026-09-20 correction in [docs/DECISIONS.md](docs/DECISIONS.md).) Three changes: character coordinates on one
+  per-inventory axis; **all** anchor inventories scoring into one chaining comparison, weighted per
+  provenance group (tagger entity layer / dictionary+fuzzy surface / formulaic text /
+  structural+temporal) so the shared tagger is not counted three times; and **session starts as
+  anchors rather than partitions**, which turns the 7 cross-day-shift days and some of the 535
+  no-same-day-HTR days from exclusions into scoreable regions. Algorithm is colinear anchor chaining
+  (seed–chain–extend, banded by D1c's transposition width), not global NW over a dense alphabet and
+  not an off-the-shelf bioinformatics library. **S6a (the character-coordinate harness) must come
+  first** — until scoring runs on that axis, every S6 result is invisible to the tracked metrics.
+  Reopens `boundary_f1_tolerance0/2`, closed 2026-09-18, on a new axis. *(S0, S3, S4, S5)*
+
+  **Session 2026-09-20 (S6a done).** Built
+  [scripts/s6a_char_axis_evaluation.py](scripts/s6a_char_axis_evaluation.py)
+  (+ `tests/test_s6a_char_axis_evaluation.py`, 14/14 passing; output registered as
+  `s6a_char_axis_evaluation`). This also closes the separately-registered
+  `interior-cut-evaluation-harness` track — they were the same piece of work.
+  Composition is **pure concatenation, no separator**: gold `paragraph_boundary`
+  cuts carry `char_offset == len(paragraph_text)` (verified on 1626-01-08, where
+  paragraph 0 has length 424 and its boundary cut sits at 424), so a paragraph-final
+  cut composes to exactly the next paragraph's start and the two descriptions of that
+  point share one coordinate. `compute_boundary_prf` is unit-agnostic and needed no
+  change — only this adapter.
+
+  **Re-scored baseline, predictions unchanged** (the 2026-09-18
+  `s4_paragraph_axis_predictions` composed onto the new axis): micro F1 **0.467**
+  (tol 0 chars) / **0.500** (tol 50) / **0.567** (tol 150); coverage 7 / 19 scoreable
+  days. These are *not* comparable to the 0.576 / 0.727 paragraph figures — different
+  unit, and tol 0 characters is a far harder target than tol 0 paragraphs. The point
+  is the headroom: 0.467 against a 0.889 ceiling, where the paragraph metric was
+  saturated against its own.
+
+  **Ceiling corrected: 313/352 = 0.889, not 320/352 = 0.909** (recorded in
+  `docs/DECISIONS.md`, and the step guide's table amended). 39 cut slots carry
+  `char_offset: null` and fall into 7 distinct `(date, paragraph_index)` groups; the
+  320 figure added those 7 groups to the 313 genuinely distinct character positions.
+  A slot with no offset has no character coordinate. Strict composition confirms all
+  313 offset-bearing cuts land on 313 distinct positions, with 0 off-axis cuts and 0
+  cuts on axis-less days — no residual collisions at all. The character axis still
+  wins by a real margin; the gain is +9.4 points rather than +11.4.
+
+  **Folded-anchor structure** is emitted per day as requested: 24 folded groups
+  across 16 days, of which 22 (91.7%) gain distinct character coordinates under
+  composition. The 2 that stay folded contain only `char_offset: null` slots.
+
+  **Scoring denominator clarified.** Only 35 of the 50 gold days have any
+  `boundary_gold_paragraph_axis` records; the other 15 all have `k_f == 0` and
+  `flat_ids == []` — the accepted `missing_htr` ceiling (13 carry review code `M`;
+  1626-05-17 and 1627-04-11 are the two uncoded `k_e == 1` days already noted). A day
+  with no text has no character axis, so 19 of the 21 eligible days are scoreable.
+
+  **Session 2026-09-20 (S6 Step 1: which constraint binds?).** Before building S6c's
+  chaining DP, measured whether anchor *selection* is the bottleneck at all. Chaining
+  changes which anchors are trusted; it does not change what happens between chosen
+  anchors, nor the coordinate emitted. So an oracle-anchor run is an **upper bound on
+  what any anchor-selection improvement, chaining included, can reach**. Built
+  [scripts/s6_oracle_anchor_diagnostic.py](scripts/s6_oracle_anchor_diagnostic.py)
+  (+ 18 tests; output `s6_oracle_anchor_diagnostic`), handing the *unmodified*
+  `interpolate_positions` + `snap_boundaries` a perfect gold-derived anchor set and
+  scoring on the S6a character axis.
+
+  | anchors | days predicted | tol 0 | tol 50 | tol 150 |
+  | --- | --- | --- | --- | --- |
+  | real (S6a baseline) | 7 / 19 | 0.467 | 0.500 | 0.567 |
+  | oracle, all | 5 / 19 | 0.727 | 0.788 | 0.788 |
+  | oracle, endpoints only | 11 / 19 | 0.546 | 0.579 | 0.645 |
+
+  **The decisive number is coverage, not F1.** With a perfect anchor set the model
+  predicts only **5 of 19** days (0.263): 9 abstain `folded_anchors_non_monotone`,
+  5 `axis_shorter_than_k_e`. Chaining cannot help a model that discards perfect
+  anchors on three days out of four. Oracle F1 also caps at 0.788 rather than near
+  1.0 because the model emits `(paragraph index, snap offset)`, leaving 33 of 177
+  gold cuts (18.6%, `mid_paragraph`) largely unreachable at tight tolerance.
+  Recorded in `docs/DECISIONS.md` (2026-09-20).
+
+  *Caveat:* the `all` (5 days) and `endpoints` (11 days) rows cover **different day
+  sets** — thinning to two anchors dodges the non-monotone check — so 0.788 vs 0.645
+  is not a density effect.
+
+  **Lumped baseline (added on request).** To get one baseline population rather than a
+  reachable/unreachable split, `s6a_char_axis_evaluation.py` now also scores with gold
+  cuts collapsed onto the paragraph they open (interior cuts credited at their paragraph
+  start, de-duplicated) and model output collapsed the same way:
+
+  | scoring | tol 0 | tol 50 | tol 150 |
+  | --- | --- | --- | --- |
+  | strict (character precision) | 0.467 | 0.500 | 0.567 |
+  | lumped (paragraph granularity) | 0.828 | 0.828 | 0.828 |
+
+  Lumped is flat across tolerances because once both sides sit on paragraph starts the
+  candidates are far apart, so slack changes nothing. Read together: **the model picks
+  the right paragraph ~83% of the time, and essentially all of the drop to 0.467 is
+  sub-paragraph precision** — which is the error a character-granular segmentation DP
+  would target. Recorded as `char_axis_boundary_f1_lumped`; the strict metrics keep
+  their own history and are unchanged.
+
+  **Next: S6b** — anchor harvest into one `(inventory, char position, channel, group,
+  weight, payload)` table across provenance groups A–D (useful under any algorithm),
+  then a **count-constrained segmentation DP** at character granularity in place of
+  S6c's chaining DP.
+
+  **Session 2026-09-20/21 (S6b constraint baseline, partial).** Built
+  [scripts/s6b_known_point_ledger.py](scripts/s6b_known_point_ledger.py) +
+  [scripts/s6b_constraint_baseline_report.py](scripts/s6b_constraint_baseline_report.py)
+  (registered `s6b_known_point_ledger`) to test SEGMENTATION_TRANSFER.md §7's claim that
+  unanchored gaps are short and locally constrained. Chains typed known points (session
+  start/end sentinels, tier-1 entity anchors, hand-annotated gold boundaries — groups A and
+  D only, not the full B/C anchor set S6b's guide calls for) at character coordinates and
+  counts how many resolutions must fall in each gap.
+
+  Run on a contiguous window (1626 H1) first: of 495 gaps, 81.2% are determined-or-nearly by
+  *count* but hold only 24.8% of unplaced resolutions — the 93 open gaps (>2 unplaced) hold
+  75.2% of the work (recorded in `docs/DECISIONS.md`, 2026-09-20). Then run on the full
+  1626–1630 period ([docs/S6B_CONSTRAINT_BASELINE.md](docs/S6B_CONSTRAINT_BASELINE.md)): 5,111
+  of 13,530 enriched resolutions (37.8%) are pinned by a known point; 947 open gaps (15.7% of
+  gaps by count) hold 5,302 of 7,504 unplaced resolutions (70.7%), spanning 3.13M characters,
+  up to 25 resolutions long. Inventory 4562 is anchor-starved (7.6% pinned vs 18.9% corpus
+  average) and should not be pooled when fitting weights.
+
+  **This is not yet S6b's exit criterion.** The guide asks for all four provenance groups and
+  a measurement of how far the anchor set closes the 815 corpus-wide
+  `insufficient_entity_anchors` abstentions; what's built only uses groups A (tier-1) and D
+  (session sentinels) plus gold boundaries, with no group B (`entity_surface_matches_1626_1630`,
+  `s4_fuzzy_surface_form_scan`) or group C (`s2_anchor_phrase_inventory`,
+  `s4_opening_phrase_candidates`) anchors, and no per-channel weight/payload columns. It's a
+  valid standalone finding (the open-work is concentrated in 947 long gaps, not diffuse — a
+  much better-specified target than corpus-wide boundary F1), not yet the harvest table itself.
+  **Next S6b action:** add groups B and C to the ledger and re-measure whether the 70.7%
+  open-gap share falls.
+
+  **Session 2026-09-21 (anchor harvest table).** Built
+  [scripts/s6b_anchor_harvest.py](scripts/s6b_anchor_harvest.py) (+
+  `tests/test_s6b_anchor_harvest.py`, 9/9 passing) — the literal `(date, inventory,
+  char_position, channel, group, weight, payload)` table §2.2 asks for, across all four groups:
+  **A** `tier1_entity_nw` (reused from the existing alignment table); **B**
+  `entity_surface_matches_1626_1630` (flat-id/paragraph-start granularity) and
+  `s4_fuzzy_surface_form_scan` (true char-offset granularity — its full corpus run had actually
+  completed: 189,764 rows on disk, not just the smoke test the earlier note above described);
+  **C** `s2_anchor_phrase_inventory` (top-20) and `s4_opening_phrase_candidates` (271 phrases),
+  both scanned per paragraph with one `FuzzyPhraseSearcher` built once and reused across the
+  whole window; **D** session start/end sentinels only — DAT date hooks and `para_start` are
+  still not wired in, no dataset maps them onto this axis yet. Registered `s6b_anchor_harvest`
+  in `data_manifest.toml`; `data_io.check` passes.
+
+  Smoke-tested on 1626-01-01..03-01 (36 days, 6,857 rows, ~106s) to validate correctness before
+  committing to the full run: group A 149 anchors/32 days; group B 617 + 5,007 anchors/36 days;
+  group C 465 + 547 anchors/36 days. Of 26 `insufficient_entity_anchors` abstentions in this
+  window, 3 had zero group-A anchors at all, and all 3 gain a non-A anchor once B/C are
+  harvested — an anchor-**supply** signal only, not a placement guarantee (the S6 Step 1 oracle
+  diagnostic already showed the placement model, not anchor supply, is often what binds).
+
+  **Not run corpus-wide this session.** Extrapolating the smoke window's ~3s/day gives an
+  estimated 80–90 minutes for the full 1626–1630 period — heavy enough to hand to the user
+  rather than run inline. **Next S6b action:** run
+  `uv run python -m scripts.s6b_anchor_harvest` (full period, no args needed) and read
+  `density_by_channel` / `insufficient_entity_anchors_supply_gain` off the output summary row
+  for the real corpus-wide numbers, then decide whether S6c (a chaining DP that resolves a raw
+  B/C position to an enriched index) is worth building from those.
+
+  **Session 2026-09-21 (full-corpus run — decisive finding, closes S6b).** User ran the harvest
+  corpus-wide: 247,871 anchor rows over 1,240 days-with-axis. Of the 815 corpus-wide
+  `insufficient_entity_anchors` abstentions, only **59 (7.2%) had zero group-A anchors at all**
+  — the other 756 (92.8%) already had ≥1 group-A anchor and abstained anyway, because
+  `interpolate_positions`'s monotonicity/axis-length requirements reject them, not because
+  anchors were scarce. Of the 59 zero-anchor days, 57 (96.6%) gain a non-A anchor from groups
+  B/C — but that's only 57/815 = **7.0% of all abstentions**, despite group B/C anchor volume
+  being enormous (`fuzzy_surface_scan` alone touches 162,307 distinct character positions
+  across 1,238 of 1,240 days). Recorded in `docs/DECISIONS.md` (2026-09-21).
+
+  **This confirms the S6 Step 1 oracle diagnostic at full corpus scale, from the supply side
+  this time.** The oracle diagnostic (perfect anchors, still only 5/19 gold days placeable)
+  showed the placement model binds; this harvest (real B/C anchors, only ~7% of abstentions
+  affected) shows the same thing from the other direction. Two independent measurements now
+  agree: **do not build S6c as a chaining step that resolves more anchors for the existing
+  rigid `interpolate_positions`.** S6b's exit criterion (anchor density + abstention-closing
+  measurement) is answered, and the answer is "anchor supply isn't it" — but see the caveat
+  immediately below before treating that as settled.
+
+  **CAVEAT (2026-09-21, RESOLVED same day) — this 815/59/57 result was measured on stale
+  inputs.** `alignment_1626_1630.parquet` (every group-A anchor's source) was last built
+  2026-08-28 and `s4_corpus_paragraph_predictions.jsonl` (the 815-abstention list's source)
+  2026-08-31 — both **before** the place/org overlap rebuild (2026-09-19) and the PER overlap
+  rebuild (2026-09-21). Neither had been regenerated against the now-fully-swapped overlap
+  tables. Recorded in `docs/DECISIONS.md` (2026-09-21, "Caveat on the S6b anchor-supply
+  finding"). The placement-model ceiling is an algorithmic property and likely survives a
+  refresh, but that's an expectation, not a measurement.
+
+  **Session 2026-09-21 (re-run on refreshed inputs — caveat resolved).** Re-ran
+  `build_alignment_new.py` (11:43) then `scripts.s4_corpus_paragraph_predictions` (11:44)
+  against the swapped overlap tables, closing `adopt-windowed-overlap-rebuild`'s own pending
+  downstream-re-run action. Before re-running the anchor harvest, parallelized and
+  checkpointed [scripts/s6b_anchor_harvest.py](../../scripts/s6b_anchor_harvest.py) (fork-based
+  `ProcessPoolExecutor`, one task per day, shared read-only lookups/searchers inherited via
+  copy-on-write; `.checkpoint.jsonl` scratch file + `--resume` following the same pattern as
+  `s4_fuzzy_surface_form_scan.py`; 4 new tests in `tests/test_s6b_anchor_harvest.py`, 13/13
+  passing) — smoke-tested at 13/36/75-day windows first (steady-state ~1.3s/day at 12 workers
+  vs. the prior single-process ~3s/day), then ran the full 1626-1630 corpus in the background:
+  1240 days, 247,914 anchor rows in ~32 minutes (vs. the ~85-90 min serial estimate — a real
+  but sub-linear ~3x speedup, capped by fixed data-loading overhead and per-day load
+  imbalance, not the ~12x core count).
+
+  **The split survives the refresh, and is now more lopsided in the same direction.**
+  Corpus-wide `insufficient_entity_anchors` abstentions dropped 815 → **777**; of those, only
+  **19 (2.4%, was 59/7.2%)** have zero group-A anchors, and only **18 (2.3% of all
+  abstentions, was 57/7.0%)** gain a non-A anchor from groups B/C. **758/777 = 97.6%** of
+  abstentions (was 92.8%) already had a group-A anchor and abstained anyway. Recorded in
+  `docs/DECISIONS.md` (2026-09-21, "S6b anchor-supply finding re-confirmed on refreshed
+  inputs").
+
+  **Decision, now on measured (not stale) data: do not build S6c as a chaining step that
+  resolves more anchors for the existing rigid `interpolate_positions`.** S6c should instead
+  be a count-constrained segmentation DP working directly inside each gap from
+  `s6b_known_point_ledger.py`'s chain (947 open corpus-wide gaps hold 70.7% of unplaced
+  resolutions), using B/C raw positions as soft in-gap evidence rather than pre-resolved,
+  index-pinned anchors.
+
+  **Session 2026-09-21 (S6c target metric rescoped — paragraph-level, not char-exact).**
+  Before building S6c, checked whether any downstream consumer actually needs
+  character-exact cut points. It does not: `s4_resolution_concordance.py` (the one real
+  downstream assembly step) treats paragraph attribution as explicitly optional best-effort,
+  not required per row; `build_alignment_new.py` (the live entity-matching pipeline) works
+  entirely on `paragraph_id → resolution_id` and never reads character offsets; NER training
+  pairs get their offsets from the separate `LOC-/PER-annotations.json` layer, unrelated to
+  this track's output; `resolution_concordance_1626_1630` has zero downstream readers today.
+  The char-axis push (S6/S6a/S6b) was motivated by defeating a self-imposed plateau on
+  `boundary_f1_tolerance0` (`docs/DECISIONS.md` 2026-09-20), not a named consumer's need.
+  Recorded in `docs/DECISIONS.md` (2026-09-21, "S6c target metric rescoped").
+
+  **Consequence: S6c should target coverage and paragraph-level (`lumped`) accuracy, not
+  tol0/tol50 character precision.** This also sidesteps a real risk — S6c's originally-scoped
+  in-gap character placement (B/C anchors as soft evidence for an exact cut) would likely
+  have inherited `s4_bundled_split_poc.py`'s already-measured weak precision (0-15% recall at
+  tol50). Scoped to paragraph granularity instead, S6c's job narrows to fixing
+  `interpolate_positions`'s over-eager abstention (only 5/19 days predicted even with
+  oracle-perfect anchors, S6 Step 1 diagnostic) while keeping today's paragraph-level
+  placement quality (0.828 lumped) — a smaller, better-evidenced target than the original
+  scope. **Next S6c action:** build the in-gap DP against the `lumped` paragraph-level score
+  and predicted-day coverage as the primary metrics; treat any tol0/tol50 gain as a bonus,
+  not the target. If lumped/coverage still doesn't move, the next escalation is the
+  already-scoped-but-`blocked` line-level-segmentation track (needs a `sessions_json`
+  page-to-date extraction, `docs/DECISIONS.md` 2026-09-18), not a fresh approach.
+
+  **Session 2026-09-21 (closed `adopt-windowed-overlap-rebuild`; step guide corrected).**
+  `svz.py review` kept resurfacing `adopt-windowed-overlap-rebuild` as unjudgeable even
+  though the downstream re-run had already happened (as part of the S6b caveat-resolution
+  session above) — its own goal ("check whether headline tier/confidence stats move") had
+  never actually been checked against `build_alignment_new.py`'s own output. Loaded
+  `alignment_1626_1630.parquet` (13,342 rows, unchanged total) and compared
+  `confidence_tier` counts to the pre-swap figures already documented above: `tier1_anchor`
+  5,725→5,730, `tier2_*` 4,734→4,708, `tier3_*` 2,883→2,904 — largest single-tier delta 26
+  rows (0.19pp). Headline tier composition barely moved; the swap's real effect surfaced in
+  S6b's anchor-supply numbers instead (815→777 abstentions), not here. Recorded via
+  `svz.py metric`/`svz.py decision` and closed the track `done` (`docs/DECISIONS.md`
+  2026-09-21). Also found `docs/state.json`'s `s6-anchor-chain-alignment` entry and
+  [docs/steps/STEP_S6_anchor_chain_alignment.md](docs/steps/STEP_S6_anchor_chain_alignment.md)'s
+  S6c row still described the pre-rescope plan (re-run as a pending action; S6c as a
+  chaining DP scored at char tol 50/150) — both now updated to match the rescoped S6c
+  target above, so `svz.py review`'s recommendation and the step guide agree.
+  **Next: S6c** — build the count-constrained segmentation DP inside
+  `s6b_known_point_ledger.py`'s gaps, per the rescoped target two paragraphs up. Not
+  started this session (design/implementation work, out of scope for a bookkeeping pass).
+
+  **Session 2026-09-21 (S6c built and validated on the 50 gold days).** Built
+  [scripts/s6c_gap_segmentation.py](../../scripts/s6c_gap_segmentation.py)
+  (`segment_gap` / `segment_day`, 11/11 tests) and swapped it in for
+  `interpolate_positions` inside `predict_day`
+  ([scripts/s4_paragraph_axis_baseline.py](../../scripts/s4_paragraph_axis_baseline.py))
+  and `predict` ([scripts/s4_corpus_paragraph_predictions.py](../../scripts/s4_corpus_paragraph_predictions.py)).
+  `interpolate_positions` itself is untouched — `s6_oracle_anchor_diagnostic.py`
+  deliberately keeps pinning to the unmodified model.
+
+  The DP never abstains: a non-decreasing anchor backbone is always bounded by the
+  structural session start/end sentinels `(0, 0)` / `(k_e, axis_count)` (STEP_S6 §2.2
+  group D, matching `s6b_known_point_ledger.py`'s chain convention rather than letting a
+  stray NW match at enriched index 0 shift the origin); an anchor that would go backwards
+  is clipped forward instead of aborting the day; and a gap narrower than the resolutions
+  it must hold gets repeated paragraph assignments instead of `None` — exactly what lumped
+  paragraph-level scoring already tolerates. Inside each gap it chooses `count`
+  non-decreasing positions maximizing an even-split-vs-phrase-hit tradeoff (group-C
+  evidence, reusing the existing gold-day `phrase_hits`), falling back to plain
+  interpolation with no evidence.
+
+  **Real gold-day result** (re-ran `s4_paragraph_axis_baseline.py` →
+  `evaluate_s4_paragraph_axis.py` / `s6a_char_axis_evaluation.py`, no other inputs
+  changed): predicted-day coverage **9/21 → 19/21** eligible (**7/19 → 19/19** scoreable —
+  every day with an axis now gets a prediction). Lumped paragraph-level F1 held flat:
+  **0.828 → 0.826** at tol50/150 (0.806 at tol0). Strict character F1 was roughly flat at
+  tol50 (**0.500 → 0.503**) and dipped slightly at tol0/150 (0.467→0.432, 0.567→0.538)
+  despite predicting on **nearly 3× as many days**, including the harder ones the old
+  model used to refuse outright. Recorded via `svz.py metric`
+  (`s6c_gold_day_coverage=0.905`, `char_axis_boundary_f1_lumped_tol150=0.826`,
+  `char_axis_boundary_f1_tol50=0.503`) and `svz.py decision` (2026-09-21). This is exactly
+  the coverage win the rescoped S6c target asked for — obtained without a corpus-wide run.
+
+  **Deferred, not overlooked:** group B (`entity_surface_matches_1626_1630`,
+  `s4_fuzzy_surface_form_scan`) is not wired into `position_scores` yet, and the corpus
+  predictor (`s4_corpus_paragraph_predictions.py`) currently gets no phrase-hit evidence
+  at all — adding either means a per-day `FuzzyPhraseSearcher`/lookup pass over the full
+  1626-1630 corpus, the kind of run `s6b_anchor_harvest.py` needed ~32 minutes
+  (parallelized) for, which this session did not run. **Next S6c action:** hand
+  `uv run python -m scripts.s4_corpus_paragraph_predictions` to the user for a corpus-wide
+  re-run (cheap — no phrase search, same cost as before) and read the new
+  `insufficient_entity_anchors` count off it (expected to collapse from 777 toward ~0);
+  if the coverage/lumped gain holds at corpus scale, decide whether group-B/C evidence at
+  corpus scale is worth its runtime before declaring S6c done.
+
+  **Session 2026-09-21 (corpus-wide re-run — insufficient_entity_anchors eliminated).**
+  User ran `uv run python -m scripts.s4_corpus_paragraph_predictions` (no code changes
+  since the note above). Result: **1,059 predicted / 535 abstained**, and the abstained
+  set is now `missing_htr` only — **`insufficient_entity_anchors` is exactly 0** (was
+  777). 1,059 = 282 (pre-existing predictions) + 777 (every previously-abstained day now
+  predicts) — an exact match confirming the mechanism, not a coincidence. **100% of days
+  with any paragraph axis now receive a prediction.**
+
+  **Quality caveat, quantified directly from the output** (no gold labels exist
+  corpus-wide, so this substitutes for an F1 check): of the 1,059 predicted days, 48 are
+  trivial (`k_e <= 1`, no cuts needed), 302 are clean (no repeated paragraph index), 516
+  have a minor 2–3-way collapse, 114 have 4–6, and **79 (7.5%) have 7+ resolutions
+  collapsed onto one paragraph** (max 24) — these are low-localization coverage wins, not
+  real segmentation, an expected and disclosed consequence of allowing repeats rather than
+  a bug. Recorded via `svz.py metric`
+  (`corpus_insufficient_entity_anchors_abstentions=0`,
+  `corpus_coverage_of_days_with_axis=1.0`, `corpus_severe_collapse_share=0.075`) and
+  `svz.py decision` (2026-09-21).
+
+  **S6c's rescoped exit criterion (coverage + gold-day lumped F1, not char precision) is
+  met.** Group-B evidence and corpus-scale phrase-hit wiring remain deferred, scoped as
+  the next increment only if the severe-collapse share needs improving — not required to
+  call S6c done.
+
+  **Session 2026-09-21 (S6d pivoted: wire the corpus predictor to
+  `resolution_concordance_1626_1630` instead of building session-as-anchor chaining).**
+  Before implementing STEP_S6's original S6d design (drop the per-day partition, run per
+  inventory with session starts as group-D anchors), a sizing check on the 79 severe-
+  collapse S6c days led to a bigger discovery: a separate, already-"accepted final" track
+  (S4a-g: `session_date_status_1626_1630` → `s4_day_status_resolution` →
+  `resolution_concordance_1626_1630`, [docs/CANDIDATE_SCORING_AND_CONCORDANCE.md](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md))
+  already resolves session/day mapping per enriched resolution — including confident
+  entity-overlap candidate scoring over ambiguous ledger `-1`/`+1`/`?` rows — and
+  `s4_corpus_paragraph_predictions.py` never consulted it, grouping paragraphs by raw
+  calendar date only. Exactly the orphan pattern STEP_S6 section 1(b) warned about.
+
+  Considered and rejected auto-selecting ledger `-1`/`+1` candidates directly as a
+  cheaper alternative: [docs/SESSION_DATE_MAPPING_REVIEW.md](docs/SESSION_DATE_MAPPING_REVIEW.md)
+  already decided those need human review with a mandatory note, and a quick check showed
+  why — 348/365 (95%) of unique `-1`/`+1` candidates are *also* their true neighbor day's
+  own trusted/exact match, so whether that's genuine shared-session content or a dating
+  mismatch needs a human reading the actual text, not a blanket policy.
+
+  Instead wired `scripts/s4_corpus_paragraph_predictions.py` to fall back to
+  `resolution_concordance_1626_1630`'s `resolved_session_id` (`day_status ==
+  "resolved_auto"`) when a date has no same-calendar-day axis, via two new pure functions
+  (`session_of`, `axis_for_date`, 4 new tests) — a data-source wiring fix, not new
+  alignment logic, per the "replace, don't accrete" guardrail. Re-ran the corpus
+  predictor (no other changes, ~2.5s): predicted 1,059 → **1,140**, `missing_htr`
+  abstentions 535 → **454** — 81 days recovered for free from work already done and
+  accepted by a separate track. Full test suite (354 passed) and `data_io.check` clean.
+  Recorded via `svz.py metric` (`corpus_missing_htr_after_concordance_wiring=454`) and
+  `svz.py decision` (2026-09-21).
+
+  **Remaining gaps, explicitly out of scope this session:** the 365 `-1`/`+1` ledger rows
+  still need the pending human-review workflow before they can resolve further; the 7
+  gold cross-day-shift days (trailing contaminated text on a day that *does* have its own
+  axis) are a different failure mode this wiring does not touch, and neither does
+  STEP_S6's original session-as-anchor design fully solve them without the same
+  representational problem noted above (a boundary that legitimately belongs to a
+  neighboring day has no slot in the current per-day scoring schema). **Next:** either (a)
+  run the S4f human-review UI (`build_session_date_mapping_review_ui.py` /
+  `merge_session_date_mapping_decisions.py`) to close out the long-pending `-1`/`+1`
+  queue — a review task, not a coding one — or (b) pick a different track per `svz.py
+  review`. STEP_S6's S6d (session-as-anchor chaining) is superseded by this wiring for
+  its stated success criterion and is not planned to be built as originally scoped.
+
+  **Session 2026-09-21 (S4f review started; found `resolutions_flat` session-numbering
+  drift instead — bigger than the queue itself).** Took option (a): scoped
+  `build_session_date_mapping_review_ui.py` to just the `-1`/`+1` rows via a new
+  `--status` filter (365 rows), then added `drop_nihil_actum_rows`/`enriched_text_by_date`
+  to exclude the 64 rows whose enriched date is a pure "Nihil Actum" entry (already
+  auto-resolved ahead of human review by `s4_day_status_resolution.py`'s precedence) —
+  301 rows left, 5/5 new tests passing. User hand-reviewed ~10 and exported decisions
+  (`data/import/s4_session_date_mapping_decisions.json`): 4/9 approvals confirmed a
+  real signal (a "President de Heer X, Present de \<weekday\> den \<date\>" session-start
+  formula appearing *mid-session*, i.e. two real sessions merged into one HTR-parsed
+  block), which a new lenient diagnostic (`scripts/s4_session_start_scan.py`, prefix-stem
+  regex on `presid`/`presen` stems, deliberately recall-favoring) reproduced at scale:
+  210 candidate mid-text starts across 167/1,511 sessions (11.1%) in ~2s.
+
+  But 3/9 no-match decisions cited true dates 2-3 days outside the ledger's ±1-day
+  candidate window (found via `app.goetgevonden.nl`'s per-resolution-URN dates) —
+  investigating those revealed those "external" dates are just `resolutions_flat`'s own
+  per-session date restated, not independent ground truth. Chasing why led to pulling
+  raw `sessions_json_source` JSON directly (new warm-tier cache
+  `s4_session_date_region_scan`, 51,677 text_regions across all 1,690 sessions in the
+  ledger's 6 covered inventories — 179 more sessions than `resolutions_flat` sees at all,
+  since it holds zero rows for nihil-actum/empty sessions). That surfaced the real,
+  bigger finding: **`resolutions_flat`'s session numbering has drifted from the current
+  archive**. Confirmed by matching a 150-char content fingerprint from each
+  `resolutions_flat` session against its own inventory's raw sessions: 1,128/1,511
+  (75%) matched a unique raw session, 0 ambiguous, 383 unmatched. Per-inventory drift
+  shape varies: `3185`/`3186`/`3189` accumulate a monotonic +1-at-a-time staircase
+  (reaching +9/+13/+8), `3187` is mild (0 for ~240 sessions, then +1, +2), `3188` is
+  bidirectional (starts at −2, ends at +8), and `4562` oscillates between 0/+1/+2
+  dozens of times rather than accumulating — likely a structurally different case
+  (interleaved series?) worth checking before assuming it behaves like the others.
+  Every step changes by exactly ±1, consistent with one session being inserted/removed
+  at a time as the archive was re-segmented since `resolutions_flat` was built, not
+  wholesale renumbering.
+
+  Practical upshot: a real chunk of `-1`/`+1` (and likely `A`/`X`/`N`) rows reflect
+  numbering drift, not genuine nearby-day ambiguity — the candidate session id is
+  simply mislabeled relative to its actual content. Fixing the *ledger* is a bigger job
+  (per-inventory realignment against `sessions_json_source`) than reviewing the queue as
+  currently framed. **Next:** add two new Group-D channels to `s6b_anchor_harvest.py`
+  (`CHANNEL_GROUP`/`harvest_row`, alongside the existing `session_boundary` sentinel),
+  per STEP_S6 section 2.2 ("structural/temporal", chained with the other groups, not
+  summed): (1) `session_day_find` — direct date-phrase hits from raw `text_regions`
+  (the `President de Heer X, Present de <weekday> den <date>` / `Praeside et
+  Praesentibus` formula; catches what the upstream `nlc_classifier`'s "date"
+  `text_region_class` tag misses — confirmed both false-negative, e.g. it missed the
+  real Feb-8 header in `session-3185-num-26`, and false-positive, e.g. it tagged an
+  unrelated "Amsterdam 12 schepen2 Jachten" line as "date"). Self-sufficient: works on
+  all 1,690 raw sessions, not just the 75% with a `resolutions_flat` match. (2)
+  `session_date_verified` — the content-fingerprint correspondence between
+  `resolutions_flat`'s (possibly mislabeled) session id and the raw session it actually
+  matches; needed specifically because a date alone doesn't say what `resolutions_flat`
+  currently calls that content. Open design question before either is quick to build:
+  `s6b`'s `char_position` axis is built from `resolutions_flat`'s own (possibly
+  drifted) text, so anchoring must key off content or archival provenance
+  (`scan_id`/`page_id`/`line_id`), not the session-number label. Reusable state:
+  `s4_session_date_region_scan` (warm tier, registered) has the raw text_region data;
+  the 1,128 confirmed offset matches are only in `/tmp/scope_results.json` (scratch,
+  not persisted) and would need regenerating or saving properly before the channel
+  work starts.
+
+  **Session 2026-09-21 (fingerprint-match prerequisite persisted).** Took the S4f
+  handoff's flagged prerequisite before either new Group-D channel
+  (`session_day_find`, `session_date_verified`) can be built: the content-fingerprint
+  correspondence between `resolutions_flat` session ids and raw `sessions_json_source`
+  sessions existed only in unregistered scratch (`/tmp/scope_results.json`, 1128/1511
+  matched via an undocumented method). Built
+  [scripts/s6b_session_fingerprint_match.py](../../scripts/s6b_session_fingerprint_match.py)
+  (9 tests) and registered `s6b_session_fingerprint_match` in `data_manifest.toml`.
+  150-char normalized fingerprint of each flat session's resolution text, matched by
+  **substring containment** (not exact-prefix equality) against same-inventory raw
+  sessions' concatenated `para`-class region text — exact-prefix only found 838/1511
+  (55.5%; `resolutions_flat`'s paragraph splitting doesn't align 1:1 with raw para
+  region boundaries, e.g. an attendance line mistagged `para` gets spliced out of the
+  flat text, so real content can start partway into the raw concatenation); substring
+  containment finds **1059/1511 (70.1%), 0 ambiguous**. `data_io.check` and the full
+  suite (363 passed) are clean. Recorded via `svz.py metric`/`svz.py decision`
+  (2026-09-21). This closes only the persistence prerequisite, not the anchor channels
+  themselves — the open design question from the S4f note (key on content/provenance,
+  not the drifted session-number label) is what `s6b_session_fingerprint_match`'s
+  `raw_session_id`/`raw_num`/`offset` columns now answer. **Next:** build
+  `session_day_find` and `session_date_verified` as new Group-D channels in
+  `scripts/s6b_anchor_harvest.py` per STEP_S6 section 2.2, using this dataset for the
+  latter.
+
+  **Session 2026-09-21 (`session_day_find` built, fuzzy-vs-regex validated before
+  wiring in).** Built the first of the two Group-D channels:
+  `phrase_hits`/`session_day_find_rows` in
+  [scripts/s6b_anchor_harvest.py](../../scripts/s6b_anchor_harvest.py), pairing a
+  "president"-family phrase hit with a nearby "present"-family hit past a day's own
+  opening — the same internal-merge signal `s4_session_start_scan.py` targets, but
+  using `FuzzyPhraseSearcher` (already the tool for every other phrase channel here)
+  instead of porting that script's stem regex, so HTR character noise inside a
+  correctly-spelled stem is tolerated, not just morphological variation.
+
+  Two bugs surfaced and fixed before trusting any count. `FuzzyPhraseSearcher`'s
+  `ignorecase` defaults to `False`; against real text ("Preside et Presentibus...",
+  sentence-initial) that undercounted the regex baseline (210 hits/167 sessions,
+  measured on the same session-text universe) by 4x (54/45) until set `True` — the
+  existing `s2_anchor_phrases`/`s4_opening_phrase_candidates` channels share
+  `PHRASE_SEARCH_CONFIG` without this fix, left unchanged since their metrics predate
+  the finding (separate follow-up, not folded in silently). Second, at the existing
+  0.85 threshold the ignorecase-fixed count jumped to 576/365 — sampled snippets
+  showed most were false positives (short words like "present" fuzzy-matching
+  unrelated nearby substrings, pairing a generic "de heer President heeft
+  geproponeerde..." mention with noise). Raising the threshold to 0.95 dropped the
+  count to **154/130** with 25/25 sampled hits genuine (checked twice, different
+  random samples) — lower recall than the regex baseline (which was never itself
+  checked for precision) but real. Present-family phrase list also narrowed from a
+  corpus-frequency guess to one grounded in what actually co-occurs with "presid*" in
+  a 60-char window (237/830 occurrences do; 94.5% of those are
+  present/presentibus/praesentibus/presentie/presente — `presentatie`/
+  `presenterende`/`presenteren`/`presenteert`, common corpus-wide, occur there zero
+  times).
+
+  **Scope note:** unlike STEP_S6's original wording ("self-sufficient: works on all
+  1,690 raw sessions"), this channel runs over `paragraph_axis_1626_1630` like the
+  rest of the harvest — still `resolutions_flat`-derived, not raw
+  `sessions_json_source` text_regions — so it does not yet reach the 179 sessions
+  with zero `resolutions_flat` rows. 4 new tests (17/17 total in the file), full
+  suite (367 passed) and `data_io.check` clean. Recorded via `svz.py decision`
+  (2026-09-21). Not yet run corpus-wide (`main()`'s ~32-minute parallelized pass) —
+  only validated against the same session-text universe
+  `s4_session_start_scan.py` used. **Next:** hand the corpus-wide
+  `uv run python -m scripts.s6b_anchor_harvest` re-run to the user, then decide
+  whether to build `session_date_verified` (needs the open design question on
+  provenance-keyed anchors, not session-number labels) or move to weight fitting
+  (S6e) with what Group D has now.
+
+  **Session 2026-09-21 (corpus-wide harvest re-run).** User ran
+  `uv run python -m scripts.s6b_anchor_harvest` (no code changes). `session_day_find`:
+  **203 anchors / 162 of 1,240 days-with-axis (13.1%)**, 203 distinct positions —
+  smallest of all six non-sentinel channels (group A `tier1_entity_nw` alone: 5,375
+  anchors/995 days; group B `fuzzy_surface_scan`: 189,764). The
+  `insufficient_entity_anchors` supply-gain proxy printed 0/0/0 — degenerate, not a
+  finding: S6c already eliminated that abstention category corpus-wide (777 → 0), so
+  there's no abstained-day set left to check gains against. `session_day_find`'s real
+  signal is low density plus validated precision (154/130 on the session-text universe,
+  25/25 sampled genuine), consistent with internal session-merge formulas being rare
+  (11.1% of raw sessions) rather than a per-day-typical anchor. Recorded via
+  `svz.py metric`/`svz.py decision` (2026-09-21). **Next:** decide `session_date_verified`
+  vs S6e (weight fitting) with what Group D has now — `session_day_find`'s sparsity
+  argues it won't move coverage much either way, so this is a precision/robustness
+  addition to the anchor set, not a new lever on the open coverage questions.
+
+  **Session 2026-09-21 (corpus-scale group-C phrase wiring tested, measured negative).**
+  Scoped and tested the deferred increment `s6c_gap_segmentation.py`'s own docstring
+  names: feeding `s4_opening_phrase_candidates` evidence into
+  `s4_corpus_paragraph_predictions.py`'s `segment_day` call via `position_scores`
+  (currently gold-day-only, corpus predictor gets none). Refactored
+  [scripts/s4_paragraph_axis_baseline.py](../../scripts/s4_paragraph_axis_baseline.py)'s
+  `phrase_hits(axis, phrases)` to `phrase_hits(axis, searcher)` so a `FuzzyPhraseSearcher`
+  can be built once and reused — necessary before this is corpus-scale-tractable at all
+  — verified behavior-preserving by diffing `s4_paragraph_axis_predictions.jsonl`
+  byte-for-byte before/after (identical).
+
+  Before running the full corpus pass (~32 minutes per `s6b_anchor_harvest.py`'s
+  precedent), scored the change cheaply: ran the corpus predictor's own
+  `predict()`/`grouped_enriched()`/`axis_for_date()` codepath (not the separate gold-day
+  pipeline) restricted to the 19/21 scoreable gold days, with and without the phrase
+  evidence, scored via `evaluate_s4_paragraph_axis.py`'s own harness. **Result: net
+  negative.** tol0 F1 **0.644 → 0.622**, mean Pk/WindowDiff **0.285 → 0.292** (worse);
+  tol1/tol2 only marginally better (+0.006 each). Also tried adding `snap_boundaries`
+  (the gold pipeline's second phrase-evidence stage, which the corpus predictor never
+  had) on top — produced **identical** numbers, confirming this is a real result, not an
+  artifact of porting only half the mechanism. Reverted the `predict()`/`main()` wiring
+  in `scripts/s4_corpus_paragraph_predictions.py` back to the unmodified
+  `segment_day(...)` call; kept only the `phrase_hits` refactor (independently useful,
+  verified identical). Recorded via `svz.py metric`/`svz.py decision` (2026-09-21). No
+  corpus-wide run was needed to reach this answer — the ~32-minute job was avoided for a
+  result that would not have justified it. **Next:** decide `session_date_verified` vs a
+  fresh look at what else could close the 79/1,059 severe-collapse days, since
+  group-C phrase evidence is now a tested dead end for that specific problem.
 
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
@@ -723,6 +1528,182 @@ context_phrases = [
 
 ---
 
+## Entity Resolution Fix (persons/orgs/places, `build_alignment_new.py`) ✅
+
+Partial implementation of Track B/C's "candidate shortlist, then verify" design,
+scoped to the 1626-1630 window. Plan: `/Users/rikhoekstra/.claude/plans/short-resolutions-is-fine-calm-iverson.md`.
+
+**Findings that changed scope mid-implementation**: `align_resolutions.py`
+(the file originally targeted for an orthography fix) turned out to be
+orphaned -- its output is consumed by nothing except itself. The live
+pipeline is `build_alignment_new.py`, which had two bugs *upstream* of
+orthography, both the same pattern -- an id-reference silently used as if it
+were already a name string:
+
+- **Persons**: enriched `persons`/`president_ids`/`deputy_ids` are `Id_persoon`
+  ids, not names. `resolve_enriched_entities` already had the correct-resolution
+  code path (via a `persons_info` lookup) but it was never actually invoked at
+  either live call site -- raw ids passed straight through.
+- **Institutions**: enriched `institutions` holds `ID_instelling` ids (a
+  register at `~/GNB_artikel/data/processed/instituten_lookup_cleaned.csv`,
+  now copied to the warm tier and registered as `instituten_lookup_cleaned`),
+  but the code resolved them against `ORG-entities.json` (`O0000002`-style
+  ids) -- a disjoint id space that never matched, silently falling back to the
+  raw integer.
+
+Both fixed by wiring in the correct lookup (`load_persons_info_lookup`,
+new `load_institution_names`) at both call sites. Verified directly:
+`institutions=['14']` now resolves to `'Hof van Holland en Zeeland'` (was
+`'14'`); `persons=['791967']` now resolves to `'Huygen, Rutger heer van Clarenbeek'` (was `'791967'`).
+
+**Orthography fix** (the original ask): `matched_entity_names` did a literal
+substring check against the full canonical dictionary. `fuzzy_search.FuzzyTokenSearcher`
+over the full ~10,876-name LOC+PER+ORG dictionary does not scale (benchmarked:
+2,459 LOC names alone did not finish indexing in 60s). Built
+`build_entity_surface_matches.py` instead: candidate shortlist per flat
+resolution from `LOC-/PER-annotations.json`'s `resolution_id -> entity_id`
+links (offsets ignored -- documented ~50% wrong elsewhere in this repo, so
+used only as *which entities to check*, never *where*), confirmed against
+each resolution's real text via exact substring first, `rapidfuzz.fuzz.partial_ratio`
+fallback (threshold 85) only for misses. Cached as the
+`entity_surface_matches_1626_1630` dataset (18,698 rows: 11,330 exact + 7,368
+fuzzy, built in 79s) and wired into `matched_entity_names` as an additive
+lookup (falls back to literal substring for anything outside the cache).
+11/11 spot-checked fuzzy matches against full resolution text were correct
+historical spelling variants (e.g. "Vlaenderen"/Vlaanderen, "Carleton"/Charleton,
+"Maseick"/Maaseik, "Sevenbergen"/Zevenbergen, "groeninge"/Groningen).
+
+**Known limitation, not fixed here**: the pipeline's headline tier/confidence
+stats are driven mainly by pre-built Excel overlap tables
+(`place_overlap_1626_1630.xlsx` etc., built by `build_per_overlap.py` and
+similar), checked *before* the text-fallback this step improves -- confirmed
+`build_per_overlap.py` has the same literal-substring limitation. A 100-date
+smoke test's aggregate stats were unchanged before/after for this reason; the
+fix is verified correct at the function level (see above) but a full
+pipeline-level confidence-distribution shift would need those Excel builders
+audited too -- a natural next step, not attempted here.
+
+**Explicitly deferred**: PER-entities.json (`P0xxxxxx`) id-space unification
+with `Id_persoon` (not needed -- `Id_persoon` is already the id the enriched
+pipeline and `persoon_functie_sanitized.csv` use); the `raa_nw` MySQL database
+(mentioned once in this file, never otherwise documented -- flagged as a gap,
+not accessed).
+
+---
+
+## Step 1 — N-status gap diagnostic (`analyze_n_status_gaps.py`) ✅
+
+Full detail in `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`. The doc's own
+stated order gates the resolution-level concordance assembly on this step
+(and Step 2, candidate scoring for `A`/`X` rows) reporting results first, so
+this ran before any concordance-assembly work.
+
+Headline finding, at real scale (3,197 of the 4,916-row `session_date_status_1626_1630`
+ledger, 65%, are `N`-status -- no HTR candidate within the current +/-1-day
+window): **2,444 rows (49.7% of the entire ledger) have no HTR session for
+their inventory anywhere within +/-14 days.** This is a structural coverage
+ceiling, not a matching-quality gap -- concretely answers "100% may not be
+attainable": realistic full-corpus concordance coverage is well under 100%
+regardless of how good the matching gets, and roughly half the ledger should
+be expected to close as `missing_htr` rather than resolved. The remaining
+753 rows (23.6% of `N`-rows) recover within +/-14 days, front-loaded toward
+close offsets (+/-2 days alone: 174 rows) -- a modest window widen (+/-3 to
++/-7, not the full +/-14 tested) is a plausible, bounded-payoff follow-up,
+not yet implemented. No weekday concentration (flat 14.1-14.8% every day),
+so no recess-calendar story to chase.
+
+Two latent bugs fixed in the (previously unrun) script: `.dt.dayofweek`
+accessor on a `Period`-dtype `Series`, and an offset-search order bug
+(`EXTRA_OFFSETS` iterated far-to-near, so "nearest recovery offset" wasn't
+actually nearest -- fixed to sort by `(abs(offset), offset)`).
+
+## Step 2 — Candidate scoring prototype for `A`/`X`-status rows (7 rows) ✅
+
+Full detail in `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`. Built
+`scripts/s4_candidate_scoring.py` (`score_candidates`/`score_ledger_row`,
+reusing `calculate_idf_weights`, existing overlap lookups, and
+`AlignmentEmbedder` tfidf backend), `notebooks/candidate_scoring_prototype.ipynb`,
+and `tests/test_candidate_scoring.py`. Produces ranked suggestions for human
+review, never auto-selects.
+
+Verified against the real 7 rows: 6/7 top candidates correct (2 of those
+were nihil actum rows correctly surfaced as non-matches, per user
+confirmation those are parsing artifacts to skip, not scoring failures).
+The 1 wrong pick (`session-4562|1629-05-12`) was traced to content that is
+genuinely absent from that inventory's HTR text (confirmed via regex,
+substring, and fuzzy search for the enriched text's key name) -- the
+resolution-level analogue of Step 1's structural coverage gap, not a
+scorer defect.
+
+Found a clean, data-driven separator: every correct top candidate had
+`entity_overlap_score` in `[30.7, 107.1]`; every problem case (nihil actum
+or missing content) had exactly `0.0`, no borderline values. Added a
+`low_confidence` flag (`entity_overlap_score <= 0.0`) to both scoring
+functions on that basis -- caveated in the doc as an n=7 floor to revisit
+once `?`/`-1`/`+1` rows are scored.
+
+**Step 3** (done, 17 Sep 2026): extended candidate scoring to `?`/`-1`/`+1`
+rows using the same module -- `scripts/s4_candidate_scoring.py` now unions
+`previous_day_session_ids`/`next_day_session_ids` for ambiguous `?` rows via
+a new `candidate_session_ids` helper, and looks up the single relevant
+column for `-1`/`+1`. `low_confidence` floor applied as-is (not re-derived).
+First eyeball pass against the real 603 rows (17 Sep 2026) found 146/610
+(23.9%) candidate rows have a formulaic `"Nihil Actum"` enriched date with no
+real content to match -- scoring them anyway produced spurious top picks
+from real HTR content on that date. Fixed: `is_nihil_actum()` added to
+`scripts/s4_candidate_scoring.py`, `score_ledger_row` now abstains (`[]`)
+before scoring these; 12/12 tests passing. Of the remaining rows, roughly
+1 in 7 has a genuine, correctly-ranked HTR match; the rest are structurally
+missing HTR, consistent with Step 1. Re-checked the `entity_overlap_score`
+floor against a stratified eyeball of the `?`/`-1`/`+1` rows (17 Sep 2026):
+scores under 5 had no good candidates, so `MIN_CONFIDENT_ENTITY_OVERLAP` was
+raised from `0.0` to `5.0` in `scripts/s4_candidate_scoring.py` (tests
+updated, 12/12 passing). Full detail in `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`.
+
+**Step 3b -- window-widen follow-up (built and run 17 Sep 2026)**: implements
+Step 1's "modest window widen (+/-3 to +/-7 days)" suggestion.
+`analyze_n_status_gaps.py` gained `direct_session_ids` (offset -> actual HTR
+session ids, not just a recovery flag), `nearest_recovery_candidates`, and a
+`WIDE_WINDOW_OFFSETS` constant capped at +/-7 days (the front-loaded
+523/753-row band, not the full +/-14 the diagnostic tested).
+`scripts/s4_candidate_scoring.py`'s `score_ledger_row` gained a `candidate_ids`
+override; `scripts/s4_candidate_scoring_batch.py` now also scores every
+`N`-status row recoverable within that window into the same
+`s4_candidate_scoring_predictions` dataset.
+
+**Real-corpus result**: 523 recoverable `N` rows fell in the +/-7 band; 48
+are nihil actum (correctly reclassified out of `missing_htr`/`uncertain`);
+the other 475 all scored `entity_overlap_score == 0.0` -- **zero** cleared
+the `5.0` confidence floor. Verified this is the same 0-or->5 bimodality
+Step 3 already found for the `A`/`X`/`-1`/`+1`/`?` set (460/464 there were
+also exactly `0.0`), not a lookup bug (candidate session ids checked present
+in `paragraph_axis_1626_1630`, `volgnr`/`enriched_id` key formats checked to
+already match). **Conclusion: the window-widen improves status-classification
+accuracy but unlocks zero new resolved HTR sessions on this corpus** --
+entity overlap is not a useful signal at +/-2..+/-7 days, only at +/-1.
+Day-level effect: `resolved_auto` unchanged at 1,113; `nihil_actum` 146 ->
+194; `uncertain` 1,213 -> 1,165 (still `uncertain`, but 475 of those rows are
+now correctly tagged `resolution_source: "candidate_scoring_low_confidence"`
+instead of implying they were never scored -- a real mislabeling bug found
+and fixed in `resolve_row` while verifying this run). Resolution-level
+concordance: `resolved_auto` unchanged at 13,528; `missing_htr` 5,481 ->
+5,465 and `nihil_actum` 124 -> 127 (better-ranked candidate now available
+for some multi-inventory dates); `cross_day_shift` still 0, as expected given
+zero confident wide-window matches. Full writeup:
+`docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`. Tests: `tests/test_n_status_gaps.py`
+(new) + additions to `tests/test_candidate_scoring.py` and
+`tests/test_day_status_resolution.py` (206 total, all passing).
+
+Follow-up candidates from this diagnostic: (1) done 17 Sep 2026 -- see
+"Window-widen non-entity-signal follow-up" below (dense TF-IDF tested and
+rejected; the actual fix was closing an entity-matching gap, not adding a
+non-entity signal); (2) whether the 16-row resolution-level `missing_htr`
+shift and 3-row `nihil_actum` shift should be spot-checked by hand before
+trusting `select_day_status`'s rank-based pick across overlapping
+inventories at this larger scale -- still not started.
+
+---
+
 ## HOE Classifier (`hoe_classify.py`) ✅
 
 ### Motivation
@@ -929,15 +1910,15 @@ the corrections list is fetched directly from MySQL.
 
 ## Data paths (defaults)
 
-| Logical name | Path | Phase |
-|---|---|---|
-| `session_date_status_1626_1630` | `data/derived/session_date_status_1626_1630.parquet` | frozen |
-| `session_date_status_1626_1630_review` | `output/session_date_status_1626_1630_review.csv` | explore |
-| `session_date_status_1626_1630_heatmap` | `output/session_date_status_1626_1630_heatmap.html` | explore |
-| `s4_session_date_mapping_predictions` | `output/s4_session_date_mapping_predictions.jsonl` | semi |
-| `s4_session_date_mapping_review_ui` | `output/s4_session_date_mapping_review_ui.html` | explore |
-| `s4_session_date_mapping_decisions` | `output/s4_session_date_mapping_decisions.json` | semi |
-| `s4_session_date_mapping_predictions_approved` | `output/s4_session_date_mapping_predictions_approved.jsonl` | semi |
+| Logical name                                     | Path                                                          | Phase   |
+| ------------------------------------------------ | ------------------------------------------------------------- | ------- |
+| `session_date_status_1626_1630`                | `data/derived/session_date_status_1626_1630.parquet`        | frozen  |
+| `session_date_status_1626_1630_review`         | `output/session_date_status_1626_1630_review.csv`           | explore |
+| `session_date_status_1626_1630_heatmap`        | `output/session_date_status_1626_1630_heatmap.html`         | explore |
+| `s4_session_date_mapping_predictions`          | `output/s4_session_date_mapping_predictions.jsonl`          | semi    |
+| `s4_session_date_mapping_review_ui`            | `output/s4_session_date_mapping_review_ui.html`             | explore |
+| `s4_session_date_mapping_decisions`            | `output/s4_session_date_mapping_decisions.json`             | semi    |
+| `s4_session_date_mapping_predictions_approved` | `output/s4_session_date_mapping_predictions_approved.jsonl` | semi    |
 
 S4a completed 2026-09-01: registered both outputs in `data_manifest.toml` and
 documented the canonical key, ledger schema, and status semantics in
@@ -973,13 +1954,202 @@ into a separate provenance-backed approved mapping artifact; human review is
 pending. S4e remains unchanged, and within-day evaluation of approved cross-day
 mappings remains deferred.
 
-S4g planned 2026-09-02: manual review of the S4f queue found it dominated by
-`N` rows with no candidate evidence at all, and misses the fact that day-level
-mapping cannot resolve resolution-level or cross-day placement. [Candidate
-scoring prototype and resolution-level concordance](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md)
-plans an `N`-status gap diagnostic, an entity-IDF/embedding candidate-scoring
-prototype for the 7 lowest-risk `A`/`X` rows, and the longer-term
-resolution-level concordance spanning 1626-1630 that both feed into.
+S4g steps 1-3 completed 2026-09-17: manual review of the S4f queue found it
+dominated by `N` rows with no candidate evidence at all, and missed the fact
+that day-level mapping cannot resolve resolution-level or cross-day
+placement. [Candidate scoring prototype and resolution-level
+concordance](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md) ran the planned
+`N`-status gap diagnostic (`analyze_n_status_gaps.py`: 76.4% of `N` rows have
+no HTR session within +/-14 days — a structural coverage ceiling, not a
+matching-quality gap) and built the entity-IDF/embedding candidate-scoring
+module (`scripts/s4_candidate_scoring.py`), validated on the 7 `A`/`X` rows
+(6/7 correct) then extended to all 610 `A`/`X`/`-1`/`+1`/`?` rows, adding a
+nihil-actum abstention and an entity-overlap confidence floor
+(`MIN_CONFIDENT_ENTITY_OVERLAP = 5.0`). The longer-term resolution-level
+concordance spanning 1626-1630 that both steps feed into remains planned.
+
+S4g step 4 (implementation plan) drafted 2026-09-17 in
+[docs/CANDIDATE_SCORING_AND_CONCORDANCE.md](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md#step-4--concordance-implementation-plan-drafted-17-sep-2026-not-built):
+assembly-only plan (A) persist `s4_candidate_scoring.py` as a registered
+`s4_candidate_scoring_predictions` dataset, (B) resolve one day-level status
+per ledger key by joining the ledger, S4f human decisions, and candidate
+scoring with a fixed precedence, (C) expand to one row per enriched
+resolution ordered by `(date, resolution_index)` with paragraph-axis
+attribution as a best-effort, non-status-affecting enrichment column given
+its current 0.238 coverage, (D) extend the abstention vocabulary with
+`resolved_auto`/`resolved_manual`, (E) freeze as `resolution_concordance_1626_1630`,
+(F) stratified spot-check, no heavy compute.
+
+**Step A built and run 2026-09-17**: `scripts/s4_candidate_scoring_batch.py` runs
+`score_ledger_row` over every `A`/`X`/`-1`/`+1`/`?` ledger row (same loading
+machinery as the notebook prototype and `s4_session_date_mapping_predictions.py`)
+and writes one row per ledger key via `save_semi_structured`.
+`s4_candidate_scoring_predictions` registered in `data_manifest.toml`
+(parent: `session_date_status_1626_1630`); `uv run python -m data_io.check`
+resolves it. Executed against the live ledger: 610 rows written (4 confident
+`low_confidence=False` picks, all status `A`; 146 `nihil_actum`; 460
+`low_confidence=True`).
+
+**Step B built and run 2026-09-17**: `scripts/s4_day_status_resolution.py`
+joins the ledger, `s4_session_date_mapping_predictions_approved` (read
+defensively — absent until S4f human review completes, so `resolved_manual`
+is currently unused), and `s4_candidate_scoring_predictions` into one row per
+`session_date_key` with a single `day_status` +
+optional `resolved_session_id`, per the doc's precedence (human-approved >
+confident automatic candidate > `nihil_actum` > ledger `N` with no HTR
+anywhere within +/-14 days → `missing_htr` > `uncertain`); `T`/`E` rows pass
+through as `resolved_auto` directly. `s4_day_status_resolution` registered in
+`data_manifest.toml` (parent: `session_date_status_1626_1630`); 10/10 tests
+in `tests/test_day_status_resolution.py` passing.
+
+**Bug caught and fixed same session**: the first version labeled every
+ledger `N` row as `missing_htr` (3,197 rows, 65% of the ledger) using only
+S4c's +/-1-day candidate columns. `analyze_n_status_gaps.py` had already
+shown 753 of those 3,197 (23.6%) *do* have a same-inventory HTR session at a
+wider +/-2..+/-14-day offset that nothing downstream had looked up — so the
+first version conflated "structurally missing" with "merely unscored,"
+overstating the gap by 753 rows. Fixed by reusing
+`analyze_n_status_gaps.py`'s `direct_sessions`/`nearest_recovery_offset`
+helpers inside `s4_day_status_resolution.py` (`n_row_recovery_offsets`) to
+split `N` rows correctly, and made `n_recovery_offsets` a required
+`resolve_row` argument (no silent default) so this can't regress unnoticed.
+Corrected run against the live 4,916-row ledger: `resolved_auto=1,113`
+(1,012 `T` + 97 `E` + 4 confident `A` candidates), `missing_htr=2,444`
+(exactly Step 1's documented 49.7%-of-ledger structural ceiling),
+`nihil_actum=146`, `uncertain=1,213` (460 low-confidence-scored + 753
+recoverable-but-unscored `N` rows) — sums reconcile exactly against the
+ledger's status-code breakdown, Step A's output, and Step 1's diagnostic.
+`resolved_manual` is 0 until S4f decisions exist.
+
+**Steps C/D/E built 2026-09-17** (not yet run): `scripts/s4_resolution_concordance.py`
+expands `s4_day_status_resolution` to one row per `enriched_resolutions_1626_1630`
+record (19,133 of 19,134 have a real date; the `NihilActum.xml` template row at
+`resolution_index=0`/`date=None` is skipped, it is not tied to any calendar
+date), ordered by `(date, resolution_index)`, and freezes the result as
+`resolution_concordance_1626_1630` via `save_parquet` (registered in
+`data_manifest.toml`, parent `s4_day_status_resolution`). Two wrinkles the doc's
+plan didn't cover, resolved in the implementation (see the script's module
+docstring):
+
+- Every enriched date matches 2-3 candidate `inventory_id` ledger rows
+  (overlapping `inventory_metadata` periods), so a resolution's date alone
+  doesn't pick a `s4_day_status_resolution` row. Resolved by ranking
+  same-date candidates with the same precedence Step B already uses
+  (human-approved > automatic > nihil actum > missing HTR > uncertain) and
+  flagging `inventory_ambiguous` when more than one candidate ties at the
+  best rank.
+- `status` is `cross_day_shift` (overriding the day-level `day_status`,
+  which is kept in its own column) whenever the resolved session's real date
+  -- looked up in `resolutions_flat` -- differs from the resolution's own
+  `enriched_date`, per the standing "never rewrite the enriched date"
+  constraint.
+
+Paragraph attribution (`paragraph_start_index`/`paragraph_end_index`, decoded
+from `s4_corpus_paragraph_predictions`' cut points) is attached only for
+same-day resolved rows where the prediction's `k_e` matches the date's actual
+resolution count; it stays null otherwise and never affects `status`, per the
+doc's "best-effort enrichment, not a status input" decision. 10/10 new tests
+in `tests/test_resolution_concordance.py` passing; not yet run against the
+live data (needs `uv run python -m scripts.s4_resolution_concordance`) or
+spot-checked (Step F).
+
+**Steps E/F run and verified 2026-09-17**: `uv run python -m scripts.s4_resolution_concordance`
+wrote 19,133 rows to `resolution_concordance_1626_1630` (row-count invariant
+holds: matches dated `enriched_resolutions_1626_1630`). Status distribution:
+`resolved_auto` 13,528 (70.7%), `missing_htr` 5,481 (28.6%), `nihil_actum`
+124 (0.6%); zero `uncertain`/`cross_day_shift` rows, both explained (not
+bugs) in `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`'s Step F section.
+Coverage is notably better than Step 1's ~50% day-level ceiling because
+`select_day_status` takes the best of 2-3 overlapping-inventory candidates
+per date and HTR-covered inventories (3185-3189, >97% resolved) carry more
+resolutions/day than uncovered ones (4861 100% `missing_htr`, 4562 84.3%).
+
+**Data-quality fix applied 2026-09-17** (`scripts/regenerate_enriched_resolutions.py`):
+the 13 duplicate `enriched_id`s (`1629-11-15_0`..`_12`) were traced to a
+stray `162915nov.xml.bak` record alongside `162915nov.xml` in
+`enriched_resolutions_1626_1630_complete.json`; diffed field-by-field first
+(only `file` differs for 11/13, plus a trivial date-abbreviation edit --
+"31 okt." vs "31 oktober" -- for the other 2, confirming `.xml` is the
+later, authoritative version). Original backed up to
+`enriched_resolutions_1626_1630_complete.json.pre_bak_dedup.orig`; the live
+file now has 19,121 records (0 `.bak`, 0 duplicate `(date, resolution_index)`
+keys), verified via `data_io.check` (`enriched_resolutions_1626_1630: ok`).
+**`resolution_concordance_1626_1630` (built above) is now stale by 13 rows**
+relative to this corrected source -- re-running
+`uv run python -m scripts.s4_resolution_concordance` is the natural next
+step before treating the concordance as final.
+
+**Re-run completed 2026-09-17**: `uv run python -m scripts.s4_resolution_concordance`
+wrote 19,120 rows (19,133 - 13, confirming the dedup source is now fully
+reflected). Status distribution: `resolved_auto` 13,528 (unchanged),
+`missing_htr` 5,465 (was 5,481), `nihil_actum` 127 (was 124) -- sums
+reconcile exactly. New metrics printed this run: 3,266 rows fall on a date
+with an ambiguous best-ranked inventory, and 2,217 rows carry paragraph-axis
+attribution. Full arithmetic breakdown of the 16/3 shift (mostly dedup, ~3
+rows independently reclassified) in
+[docs/CANDIDATE_SCORING_AND_CONCORDANCE.md](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md#e--output-dataset-built-17-sep-2026-not-yet-run).
+**Step F hand-review redone 2026-09-17** against the corrected 19,120-row
+output: a fresh stratified sample (3 rows/status) is plausible across all
+three statuses (real text + session id for `resolved_auto`, no session id
+for `missing_htr`, literal "Nihil Actum" text for `nihil_actum`). It also
+**falsified** the earlier arithmetic hypothesis: none of the 13 surviving
+`1629-11-15` rows became `nihil_actum` (all still `missing_htr`) -- the
+`-13 missing_htr` is fully explained by outright row removal, not
+reclassification. A separate `-3 missing_htr`/`+3 nihil_actum` shift among
+*surviving* rows is real but still unexplained (day-level status doesn't
+depend on the deduplicated JSON, so nothing documented should have moved
+them) -- flagged as an open question in
+[docs/CANDIDATE_SCORING_AND_CONCORDANCE.md](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md#open-questions-for-the-next-session),
+not resolved here.
+
+**Window-widen non-entity-signal follow-up done (17 Sep 2026)**: dense
+TF-IDF similarity was tested and rejected (spot-check found it ranked
+non-matches above genuine matches). Root cause of the 523 wide-window rows'
+`entity_overlap_score == 0.0` traced to two compounding gaps -- the
+axis-based overlap lookup does literal-substring matching at Excel-build
+time (misses spelling variants), and person names were never text-matched
+against flat text anywhere in the pipeline (only places/orgs were). Fixed
+via `text_confirmed_names` (same exact+fuzzy method as
+`build_entity_surface_matches.py`) wired into the wide-window path only.
+Real-corpus result: 125/475 (26.3%) now clear the confidence floor (was 0);
+`s4_day_status_resolution`'s `resolved_auto` 1,113 → 1,238; `uncertain`
+1,213 → 1,040; `s4_resolution_concordance`'s `cross_day_shift` populated for
+the first time, 0 → 1,380. A small residual (3/125 rows, only generic
+province-name overlap) is flagged as a likely false-positive caveat, not
+fixed. Full detail: [docs/CANDIDATE_SCORING_AND_CONCORDANCE.md](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md#step-5--window-widen-non-entity-signal-follow-up-done-17-sep-2026).
+
+**Open-questions decided 2026-09-17** (no code changes -- design/scoping
+decisions only, recorded in
+[docs/CANDIDATE_SCORING_AND_CONCORDANCE.md](docs/CANDIDATE_SCORING_AND_CONCORDANCE.md#open-questions-for-the-next-session)):
+`resolved_manual` stays the umbrella status for any human-approved mapping,
+but a future resolution-level correction feedback loop gets its own
+`resolution_source` value rather than being folded into the existing S4f
+day-level `s4f_human_decision` source (no such correction dataset exists
+yet, so nothing to build). Paragraph-axis coverage improving later confirmed
+to need only `uv run python -m scripts.s4_resolution_concordance` rerun --
+`s4_day_status_resolution.py` has no paragraph-data dependency, verified by
+re-reading both scripts. The remaining open item (the unexplained -3/+3
+`missing_htr`/`nihil_actum` shift, and the 3-row generic-name
+false-positive residual) are still open for a future session.
+
+**Track accepted as final, closed (2026-09-18)**: `resolution_concordance_1626_1630`
+(70.7% `resolved_auto`, 28.6% `missing_htr`, 0.6% `nihil_actum`) is accepted
+as the final output of Steps 1-5. The dominant remaining gap (the 49.7%
+structural coverage ceiling documented in Step 1) is diagnosed, not a scoring
+defect, and the wide-window follow-up already showed near-zero further
+returns (0/475 entity-overlap signal before the Step 5 fix, 125/475 after --
+the addressable part of that gap is closed). Full completeness on the
+remaining `missing_htr` rows is explicitly not pursued further. See
+[docs/DECISIONS.md.new](docs/DECISIONS.md.new) for the recorded decision. A
+planned bounded pagexml spot-check (inventory 4861; inventory 4562's
+`1629-05-12` "Crèvecoeur" row) turned out to be non-trivial: `docs/DATA.md`'s
+pagexml location (`/Volumes/2tb disk/data/`) is stale -- the real archive is
+an unextracted, unregistered 88.5 GB tarball
+(`/Volumes/2tb disk/datasets/republic/source/1.01.02-pagexml.tgz`), so
+verifying against it is deferred as its own scoped step, not a quick check.
+Next candidate tracks: **S4 Segmentation Transfer**
+(above, still `[ ]` -- addresses HTR under-segmentation, a distinct problem
+from `missing_htr`) or the **NER training track** (GysBERT fine-tuning).
 
 Logical names are defined in [`data_manifest.toml`](data_manifest.toml). Resolve at runtime:
 
@@ -1012,4 +2182,12 @@ See [docs/DATA.md](docs/DATA.md) for tier layout. Legacy table:
 | schutte NL→buitenland         | `/Users/rikhoekstra/Nextcloud2/Republic/gekoppelde_resources/schutte-bewerkingen/schutte_nl_in_buitenland.parquet` |
 
 ## Dashboard
+
 - Project dashboard: docs/dashboard.md
+
+find "$(python -c "import data_io; print(data_io.resolve('gnb_raw_resolutions'))")" -iname "*4861*" | head -20
+find "$(python -c "import data_io; print(data_io.resolve('gnb_raw_resolutions'))")" -iname "*4562*" -iname "*pagexml*" | head -20
+
+# then grep the matched pagexml file(s) for the name, e.g.:
+
+grep -il "crevecoeur\|crèvecoeur" <matched-file></matched>

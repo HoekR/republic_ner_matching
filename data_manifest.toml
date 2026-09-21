@@ -89,6 +89,41 @@ phase = "frozen"
 description = "LOC (place name) training pairs rebuilt from annotations with corrected character offsets"
 parent = "loc_annotations"
 
+[datasets.entity_surface_matches_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/entity_surface_matches_1626_1630.parquet"
+phase = "frozen"
+description = "Per-flat-resolution LOC/PER canonical entity names confirmed present in that resolution's text (1626-1630 only). Candidates shortlisted from LOC-/PER-annotations.json entity_id co-occurrence (offsets ignored, known unreliable), confirmed by exact substring or per-resolution FuzzyPhraseSearcher fallback against resolutions_flat text -- built once so matched_entity_names becomes a lookup instead of a per-call dictionary scan."
+parent = "loc_annotations"
+
+[datasets.persoon_functie]
+tier = "warm"
+path = "datasets/republic/gnb/persoon_functie.json"
+phase = "frozen"
+description = "GNB_artikel person register (Id_persoon -> full biographical record: naam, geslachtsnaam, functienaam, date range); source of persons_info and persoon_functie_sanitized.csv"
+parent = ""
+
+[datasets.persons_info]
+tier = "warm"
+path = "datasets/republic/gnb/persons_info.json"
+phase = "frozen"
+description = "Id_persoon -> fullname/short_name lookup, derived from persoon_functie; used to resolve enriched resolutions' person id-references to canonical names"
+parent = "persoon_functie"
+
+[datasets.instituten_lookup_cleaned]
+tier = "warm"
+path = "datasets/republic/gnb/instituten_lookup_cleaned.csv"
+phase = "frozen"
+description = "GNB_artikel institution register (ID_instelling -> naam); resolves enriched resolutions' 'institutions' id-references (distinct id space from ORG-entities.json)"
+parent = ""
+
+[datasets.persons_info_with_surfaces_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/persons_info_with_surfaces_1626_1630.parquet"
+phase = "frozen"
+description = "Id_persoon -> canonical name plus pre-mined HTR surface-name variants (XML/PER-annotation/flat-text buckets) for 1626-1630, built by extract_xml_person_surfaces.py"
+parent = "persons_info"
+
 [datasets.inventory_metadata]
 tier = "warm"
 path = "datasets/republic/reference/inventory_metadata.json"
@@ -177,21 +212,21 @@ parent = "paragraph_axis_1626_1630"
 tier = "hot"
 path = "republic_ner_matching/data/derived/place_overlap_1626_1630.xlsx"
 phase = "explore"
-description = "Enriched-to-HTR paragraph place overlap candidates for 1626-1630"
+description = "Enriched-to-HTR paragraph place overlap candidates for 1626-1630. Adopted 2026-09-19: variant/tag_text-aware rebuild from build_windowed_overlap.py --window-days 0 (strict superset of prior literal-substring build, legacy_only=0, +1265 rows; see docs/DECISIONS.md 2026-09-19). Prior content backed up to data/derived/legacy_backup/place_overlap_1626_1630.pre_rebuild_2026-09-19.xlsx."
 parent = "loc_annotations"
 
 [datasets.org_overlap_1626_1630]
 tier = "hot"
 path = "republic_ner_matching/data/derived/org_overlap_1626_1630.xlsx"
 phase = "explore"
-description = "Enriched-to-HTR paragraph organisation overlap candidates for 1626-1630"
+description = "Enriched-to-HTR paragraph organisation overlap candidates for 1626-1630. Adopted 2026-09-19: variant/tag_text-aware rebuild from build_windowed_overlap.py --window-days 0 (strict superset of prior literal-substring build, legacy_only=0, +55 rows; see docs/DECISIONS.md 2026-09-19). Prior content backed up to data/derived/legacy_backup/org_overlap_1626_1630.pre_rebuild_2026-09-19.xlsx."
 parent = "org_annotations"
 
 [datasets.per_overlap_1626_1630]
 tier = "hot"
 path = "republic_ner_matching/data/derived/per_overlap_1626_1630.xlsx"
 phase = "explore"
-description = "Enriched-to-HTR paragraph person overlap candidates for 1626-1630"
+description = "Enriched-to-HTR paragraph person overlap candidates for 1626-1630. Adopted 2026-09-21: variant/tag_text-aware rebuild from build_per_overlap.py --window-days 0 (strict superset of prior literal-substring build on the volgnr+paragraph_id+name key, legacy_only=0, +415 rows; see docs/DECISIONS.md 2026-09-21). Prior content backed up to data/derived/legacy_backup/per_overlap_1626_1630.pre_rebuild_2026-09-21.xlsx."
 parent = "per_annotations"
 
 [datasets.s4_paragraph_axis_predictions]
@@ -207,6 +242,55 @@ path = "republic_ner_matching/output/s5_paragraph_axis_evaluation.jsonl"
 phase = "semi"
 description = "Eligibility-aware S5 evaluation of S4 paragraph-axis boundary predictions"
 parent = "s4_paragraph_axis_predictions"
+
+[datasets.s6a_char_axis_evaluation]
+tier = "hot"
+path = "republic_ner_matching/output/s6a_char_axis_evaluation.jsonl"
+phase = "semi"
+description = "S6a character-coordinate re-scoring of S4 boundary predictions, with per-day folded-anchor groups and the paragraph-vs-character reachable-position ceiling"
+parent = "s4_paragraph_axis_predictions"
+
+[datasets.s6b_known_point_ledger]
+tier = "hot"
+path = "republic_ner_matching/output/s6b_known_point_ledger.jsonl"
+phase = "semi"
+description = "Constraint baseline over a contiguous window: typed known points (session start, tier-1 anchor, gold boundary) chained at character coordinates, with the resolution count that must fall in each gap"
+parent = "alignment_1626_1630"
+
+[datasets.s6b_anchor_harvest]
+tier = "hot"
+path = "republic_ner_matching/output/s6b_anchor_harvest.jsonl"
+phase = "semi"
+description = "S6b anchor harvest table: (date, inventory, char_position, channel, group, weight, payload) rows over the 1626-1630 paragraph axis, spanning provenance groups A (tier-1 entity NW), B (entity_surface_matches_1626_1630 dictionary lookup, s4_fuzzy_surface_form_scan), C (s2_anchor_phrase_inventory, s4_opening_phrase_candidates), and D (session start/end sentinels only -- DAT date hooks and para_start are not yet included, see description in STEP_S6 guide section 2.2). Positions are unresolved to an enriched index except for group A; per-group density is reported separately from any enriched-index-pinned placement"
+parent = "alignment_1626_1630"
+
+[datasets.s6b_session_fingerprint_match]
+tier = "hot"
+path = "republic_ner_matching/output/s6b_session_fingerprint_match.jsonl"
+phase = "semi"
+description = "Content-fingerprint correspondence between resolutions_flat session ids and raw sessions_json_source sessions: one row per resolutions_flat session (150-char normalized fingerprint of its resolution text), matched by substring containment against same-inventory raw sessions' concatenated 'para'-class region text, with the uniquely-matched raw_session_id/raw_num/offset, or empty/ambiguous if none or more than one raw session contains it. 1059/1511 (70.1%) uniquely matched, 0 ambiguous, across inventories 3185/3186/3187/3188/3189/4562. Persists the 2026-09-21 S4f review's session-numbering-drift finding (previously only in unregistered scratch) as reproducible pipeline output; prerequisite for STEP_S6 section 2.2's session_date_verified anchor channel, not the channel itself"
+parent = "s4_session_date_region_scan"
+
+[datasets.s6_oracle_anchor_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/s6_oracle_anchor_diagnostic.jsonl"
+phase = "semi"
+description = "Oracle-anchor sweep on the S6a character axis: upper bound on what any anchor-selection improvement (chaining included) can reach with the current placement model"
+parent = "s6a_char_axis_evaluation"
+
+[datasets.s4_entity_density_split_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/s4_entity_density_split_diagnostic.jsonl"
+phase = "semi"
+description = "Per-paragraph bundled-vs-clean gold entity-density comparison for the S4 paragraph-axis granularity-ceiling diagnostic"
+parent = "boundary_gold_paragraph_axis"
+
+[datasets.s4_bundled_split_poc]
+tier = "hot"
+path = "republic_ner_matching/output/s4_bundled_split_poc.jsonl"
+phase = "semi"
+description = "POC: interior split-point placement inside gold bundled paragraphs, scored against mid_paragraph char_offset ground truth; compares NER-only entity spans against NER-plus-dictionary-lookup augmented spans on the same 22-position batch"
+parent = "boundary_gold_paragraph_axis"
 
 [datasets.s2_anchor_phrase_inventory]
 tier = "hot"
@@ -284,3 +368,80 @@ path = "republic_ner_matching/output/s4_session_date_mapping_predictions_approve
 phase = "semi"
 description = "Ledger-preserving human-approved session-date mappings for 1626-1630"
 parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_region_scan]
+tier = "warm"
+path = "datasets/republic/derived/s4_session_date_region_scan.jsonl"
+phase = "semi"
+description = "Raw sessions_json_source text_regions for 1626-1630 sessions (scan_id/page_id/line_id, text_region_class, and lenient president/present regex hits), extracted for a one-time archive pass so later split-point sanity checks don't need to re-stream the 10GB tar.gz. Cached on warm tier, not hot, given its size."
+parent = "sessions_json_source"
+
+[datasets.s4_candidate_scoring_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_candidate_scoring_predictions.jsonl"
+phase = "semi"
+description = "Ranked entity-IDF/dense-similarity candidate scores for A/X/-1/+1/?-status 1626-1630 session-date ledger rows"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_day_status_resolution]
+tier = "hot"
+path = "republic_ner_matching/output/s4_day_status_resolution.jsonl"
+phase = "semi"
+description = "One resolved day_status + optional resolved_session_id per 1626-1630 session-date ledger key (Step 4B)"
+parent = "session_date_status_1626_1630"
+
+[datasets.resolution_concordance_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/resolution_concordance_1626_1630.parquet"
+phase = "frozen"
+description = "One row per enriched resolution (1626-01-01 through end of 1630), ordered by (date, resolution_index), with day-level status, resolved HTR session, cross-day-shift flag, and best-effort paragraph attribution (Step 4C/E)"
+parent = "s4_day_status_resolution"
+
+[datasets.htr_classified_lines_marijn]
+tier = "hot"
+path = "republicgit/ground_truth/line_classification/htr_classified_lines_marijn.csv"
+phase = "frozen"
+description = "Per-annotator (marijn) line classification ground truth (para_start/para_mid/para_end/etc), tab-delimited despite .csv extension. 1,294 checked=1 rows fall in target inventories 3185-3189, at spot-check density (2-9 sampled pages/inventory). Read with sep='\\t', not the generic data_io.load() CSV branch which assumes comma delimiter."
+parent = ""
+
+[datasets.s4_line_ground_truth_overlap_check]
+tier = "hot"
+path = "republic_ner_matching/output/s4_line_ground_truth_overlap_check.jsonl"
+phase = "semi"
+description = "Per-gold-day check of whether htr_classified_lines_marijn.csv's checked page_ids overlap the 12 structurally-abstaining gold days (line-level-segmentation blocker), joined via session_index_all + sessions_json_source page-range extraction"
+parent = "htr_classified_lines_marijn"
+
+[datasets.loc_entities]
+tier = "hot"
+path = "republic_ner_matching/data.bak/LOC-entities.json"
+phase = "frozen"
+description = "Canonical LOC entity register (id, name, geo_data, links), 2,459 entries. Local data.bak copy used as the best-available source -- not confirmed against a canonical warm-tier path (LOC-annotations.json's sibling entity dictionary, distinct from that per-mention annotation file)."
+parent = ""
+
+[datasets.per_entities]
+tier = "hot"
+path = "republic_ner_matching/data.bak/PER-entities.json"
+phase = "frozen"
+description = "Canonical PER entity register (id, name, category, labels), 8,076 entries. Local data.bak copy used as the best-available source -- not confirmed against a canonical warm-tier path."
+parent = ""
+
+[datasets.org_entities]
+tier = "hot"
+path = "republic_ner_matching/data.bak/ORG-entities.json"
+phase = "frozen"
+description = "Canonical ORG entity register (id, name, category, labels, comment, links), 341 entries. Local data.bak copy used as the best-available source -- not confirmed against a canonical warm-tier path."
+parent = ""
+
+[datasets.s4_fuzzy_surface_form_scan]
+tier = "hot"
+path = "republic_ner_matching/output/s4_fuzzy_surface_form_scan.jsonl"
+phase = "semi"
+description = "Per-paragraph LOC/PER/ORG surface-form matches found by a full-dictionary FuzzyTokenSearcher scan over every 1626-1630 paragraph_axis_1626_1630 record (not restricted to annotation-linked candidates), flagged already_known against entity_surface_matches_1626_1630 vs newly_recovered (zero prior annotation link) -- PLAN.md's deferred 'recover entities the upstream tagger missed' candidate"
+parent = "paragraph_axis_1626_1630"
+
+[datasets.s4_llm_split_poc]
+tier = "hot"
+path = "republic_ner_matching/output/s4_llm_split_poc.jsonl"
+phase = "semi"
+description = "Few-shot local-LLM (Ollama) split-point predictions on the 22 bundled gold positions from s4_bundled_split_poc's gold set, scored with the same tol50/150 harness -- tests whether reading raw text directly beats the entity-count-heuristic ceiling (0/27 tol50, 9/27 tol150 baseline; 3/27 tol50, 11/27 tol150 with dictionary augmentation)"
+parent = "boundary_gold_paragraph_axis"

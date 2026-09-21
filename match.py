@@ -281,26 +281,25 @@ def match_ner(
 
 
 # ---------------------------------------------------------------------------
-# Optional Ollama tiebreaker — second-pass LLM verification
+# Optional LLM tiebreaker — second-pass LLM verification
 # ---------------------------------------------------------------------------
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3"
+from mlx_llm import generate, parses_affirmative
+from mlx_llm.model import DEFAULT_MODEL as _DEFAULT_LLM_MODEL
 
-# Uncertainty band: rows with top-1 score in this range are sent to Ollama
+OLLAMA_MODEL = _DEFAULT_LLM_MODEL
+
+# Uncertainty band: rows with top-1 score in this range are sent to the local LLM tiebreaker
 TIEBREAK_LOW = 0.20
 TIEBREAK_HIGH = 0.55
 
 
 def _ollama_verify(span_text: str, span_year: int, candidate_name: str) -> bool | None:
-    """Ask a local Ollama model whether *span_text* refers to *candidate_name*.
+    """Ask a local LLM model whether *span_text* refers to *candidate_name*.
 
     Returns ``True`` (confirmed), ``False`` (rejected), or ``None`` if the
-    request fails or Ollama is unavailable.  Never raises.
+    request fails or LLM is unavailable.  Never raises.
     """
-    import json
-    import urllib.request
-
     prompt = (
         f"Context: Dutch Republic historical records, 17th/18th century.\n"
         f"Task: Determine if a name mention refers to a known delegate.\n\n"
@@ -315,26 +314,10 @@ def _ollama_verify(span_text: str, span_year: int, candidate_name: str) -> bool 
         f"Is it highly probable that \"{span_text}\" refers to \"{candidate_name}\"?\n"
         f"Answer only YES or NO."
     )
-    payload = json.dumps(
-        {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "options": {"temperature": 0}}
-    ).encode()
-    req = urllib.request.Request(
-        OLLAMA_URL,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            body = json.loads(resp.read())
-        answer = body.get("response", "").strip().upper()
-        if answer.startswith("YES"):
-            return True
-        if answer.startswith("NO"):
-            return False
+    response_text = generate(prompt, model=OLLAMA_MODEL, temperature=0.0)
+    if response_text is None:
         return None
-    except Exception:
-        return None
+    return parses_affirmative(response_text)
 
 
 def apply_ollama_tiebreaker(
@@ -342,17 +325,17 @@ def apply_ollama_tiebreaker(
     store: dict,
     low: float = TIEBREAK_LOW,
     high: float = TIEBREAK_HIGH,
-    ollama_url: str = OLLAMA_URL,
     model: str = OLLAMA_MODEL,
 ) -> pd.DataFrame:
-    """Run Ollama verification on uncertain rows in a ``match_ner`` result.
+    """Run local-LLM verification on uncertain rows in a ``match_ner`` result.
 
     Rows where ``score_1`` falls in ``(low, high)`` are sent to the local
-    Ollama instance.  A new column ``ollama_verified`` is added:
+    mlx-lm model. A new column ``ollama_verified`` is added (name kept for
+    backward compatibility with existing consumers of this DataFrame):
 
-    - ``True``  — Ollama confirmed the top candidate
-    - ``False`` — Ollama rejected it (cand_1 / score_1 are set to None / 0)
-    - ``None``  — Ollama unreachable or inconclusive (result left unchanged)
+    - ``True``  — the model confirmed the top candidate
+    - ``False`` — the model rejected it (cand_1 / score_1 are set to None / 0)
+    - ``None``  — the model was unavailable or inconclusive (result left unchanged)
 
     Parameters
     ----------
@@ -378,7 +361,7 @@ def apply_ollama_tiebreaker(
     if n == 0:
         return results
 
-    print(f"Ollama tiebreaker: checking {n} uncertain matches …")
+    print(f"LLM tiebreaker: checking {n} uncertain matches …")
     for idx in results.index[uncertain]:
         row = results.loc[idx]
         cand_id = row.get("cand_1")

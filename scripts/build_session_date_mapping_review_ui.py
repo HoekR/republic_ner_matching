@@ -28,6 +28,12 @@ AXIS_DATASET = "paragraph_axis_1626_1630"
 OUTPUT_DATASET = "s4_session_date_mapping_review_ui"
 DECISIONS_DATASET = "s4_session_date_mapping_decisions"
 REVIEW_STATUSES = {"A", "X", "?", "-1", "+1", "N"}
+# Duplicated from scripts/s4_candidate_scoring.py's is_nihil_actum (not imported,
+# to avoid a circular import -- that module imports _candidate_text from here).
+# See that module's docstring for the corpus-wide rationale: a date whose
+# enriched text is purely "Nihil Actum" carries no real content to match, so
+# s4_day_status_resolution.py already auto-resolves it ahead of human review.
+NIHIL_ACTUM_PATTERN = re.compile(r"^\s*nihil\s+actum\b", re.IGNORECASE)
 CANDIDATE_COLUMNS = (
     "trusted_session_ids",
     "exact_date_session_ids",
@@ -64,10 +70,36 @@ def candidate_sources(row: dict[str, Any]) -> list[dict[str, Any]]:
     return [{"session_id": session_id, "sources": sources} for session_id, sources in candidates.items()]
 
 
-def queue_rows(ledger: pd.DataFrame) -> list[dict[str, Any]]:
-    """Select manual-review rows in canonical inventory/date order."""
-    rows = ledger.loc[ledger["status_code"].isin(REVIEW_STATUSES)].sort_values(["inventory_id", "enriched_date"])
+def queue_rows(ledger: pd.DataFrame, statuses: set[str] | None = None) -> list[dict[str, Any]]:
+    """Select manual-review rows in canonical inventory/date order.
+
+    ``statuses`` narrows the queue to a subset of ``REVIEW_STATUSES`` (e.g. just
+    the nearby-day ``-1``/``+1`` candidates); defaults to the full review set.
+    """
+    wanted = REVIEW_STATUSES if statuses is None else (REVIEW_STATUSES & statuses)
+    rows = ledger.loc[ledger["status_code"].isin(wanted)].sort_values(["inventory_id", "enriched_date"])
     return [row for row in rows.to_dict(orient="records")]
+
+
+def enriched_text_by_date(enriched_records: list[dict[str, Any]]) -> dict[str, str]:
+    """Concatenate each date's enriched resolution text, in resolution order."""
+    by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for record in enriched_records:
+        by_date[str(record.get("date", ""))[:10]].append(record)
+    return {
+        date: " ".join(str(item.get("text", "")) for item in sorted(records, key=lambda r: r.get("resolution_index", 0)) if item.get("text"))
+        for date, records in by_date.items()
+    }
+
+
+def drop_nihil_actum_rows(rows: list[dict[str, Any]], text_by_date: dict[str, str]) -> list[dict[str, Any]]:
+    """Exclude rows whose enriched date is purely a 'Nihil Actum' entry.
+
+    Those dates auto-resolve to ``nihil_actum`` ahead of human review (see
+    ``s4_day_status_resolution.py``'s precedence order) and carry no real
+    content to match against HTR candidates.
+    """
+    return [row for row in rows if not NIHIL_ACTUM_PATTERN.match(text_by_date.get(str(row["enriched_date"]), "").strip())]
 
 
 def stratified_sample(rows: list[dict[str, Any]], per_status: int, seed: int = 42) -> list[dict[str, Any]]:
@@ -158,13 +190,29 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sample-per-status", type=int, default=None, help="Cap rows per ledger status for a stratified sample")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for --sample-per-status")
+    parser.add_argument(
+        "--status",
+        action="append",
+        default=None,
+        help=f"Restrict the queue to this ledger status (repeatable); default is all of {sorted(REVIEW_STATUSES)}",
+    )
+    parser.add_argument(
+        "--include-nihil-actum",
+        action="store_true",
+        help="Keep rows whose enriched date is a 'Nihil Actum' entry (excluded by default; see drop_nihil_actum_rows)",
+    )
     args = parser.parse_args()
 
     ledger = load(LEDGER_DATASET)
-    rows = queue_rows(ledger)
+    enriched_records = load(ENRICHED_DATASET)
+    rows = queue_rows(ledger, statuses=set(args.status) if args.status else None)
+    if not args.include_nihil_actum:
+        before = len(rows)
+        rows = drop_nihil_actum_rows(rows, enriched_text_by_date(enriched_records))
+        print(f"Dropped {before - len(rows)} nihil-actum row(s) from the queue")
     if args.sample_per_status is not None:
         rows = stratified_sample(rows, args.sample_per_status, args.seed)
-    payloads = build_payloads(ledger, load(ENRICHED_DATASET), load(FLAT_DATASET), load(AXIS_DATASET), rows=rows)
+    payloads = build_payloads(ledger, enriched_records, load(FLAT_DATASET), load(AXIS_DATASET), rows=rows)
     output = Path(resolve(OUTPUT_DATASET))
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_html(payloads, Path(resolve(DECISIONS_DATASET)).name), encoding="utf-8")

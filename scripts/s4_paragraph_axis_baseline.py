@@ -13,6 +13,7 @@ from fuzzy_search.search.phrase_searcher import FuzzyPhraseSearcher
 
 from build_alignment_new import align_session, calculate_idf_weights
 from data_io import load, resolve, save_semi_structured
+from scripts.s6c_gap_segmentation import segment_day
 
 
 GOLD_DATASET = "boundary_gold_sample"
@@ -42,6 +43,8 @@ def interpolate_positions(
     enriched_count: int, axis_count: int, alignments: Sequence[tuple[int | None, int | None]]
 ) -> list[int] | None:
     """Fill unanchored enriched positions between strict NW entity anchors."""
+    if enriched_count <= 1:
+        return []
     anchors = [(enriched_index, axis_index) for enriched_index, axis_index in alignments if enriched_index is not None and axis_index is not None]
     if not anchors or axis_count < enriched_count:
         return None
@@ -65,12 +68,22 @@ def interpolate_positions(
     return completed[1:] if all(left < right for left, right in zip(completed, completed[1:])) else None
 
 
-def phrase_hits(axis: list[dict[str, Any]], phrases: list[str]) -> dict[int, tuple[str, int, float]]:
-    """Return the strongest recurring-opening hit in each axis paragraph."""
-    searcher = FuzzyPhraseSearcher(
-        phrases,
-        config={"char_match_threshold": 0.85, "ngram_threshold": 0.85, "levenshtein_threshold": 0.85},
-    )
+PHRASE_SEARCH_CONFIG = {"char_match_threshold": 0.85, "ngram_threshold": 0.85, "levenshtein_threshold": 0.85}
+
+
+def build_phrase_searcher(phrases: list[str]) -> FuzzyPhraseSearcher:
+    return FuzzyPhraseSearcher(phrases, config=PHRASE_SEARCH_CONFIG)
+
+
+def phrase_hits(axis: list[dict[str, Any]], searcher: FuzzyPhraseSearcher) -> dict[int, tuple[str, int, float]]:
+    """Return the strongest recurring-opening hit in each axis paragraph.
+
+    Takes a pre-built searcher rather than a phrase list: at gold-day scale (21 days)
+    rebuilding one per call was invisible, but the same call site is reused corpus-wide
+    (~1,240 days) by s4_corpus_paragraph_predictions.py, where rebuilding a searcher from
+    ~3,800 phrases per day would dominate runtime -- build once, reuse, per
+    s6b_anchor_harvest.py's existing pattern.
+    """
     hits: dict[int, tuple[str, int, float]] = {}
     for index, record in enumerate(axis):
         matches = searcher.find_matches({"id": record["axis_id"], "text": record["text"]})
@@ -86,6 +99,27 @@ def snap_to_phrase(position: int, hits: dict[int, tuple[str, int, float]], max_d
     if not nearby:
         return position, None
     return min(nearby, key=lambda item: (abs(item[0] - position), -item[1][2], -len(item[1][0])))
+
+
+def snap_boundaries(positions: Sequence[int], hits: dict[int, tuple[str, int, float]]) -> list[tuple[int, tuple[str, int, float] | None]]:
+    """Snap each position independently, keeping only snaps that preserve strict order.
+
+    A per-day all-or-nothing revert discards every snap in a day the moment two
+    positions land on the same paragraph; this accepts snaps one boundary at a
+    time so a single collision only falls back for the colliding boundary.
+    """
+    snapped: list[tuple[int, tuple[str, int, float] | None]] = []
+    prev_accepted = -1
+    for index, position in enumerate(positions):
+        upper_bound = positions[index + 1] if index + 1 < len(positions) else None
+        candidate_position, hit = snap_to_phrase(position, hits)
+        if hit is not None and prev_accepted < candidate_position and (upper_bound is None or candidate_position < upper_bound):
+            snapped.append((candidate_position, hit))
+            prev_accepted = candidate_position
+        else:
+            snapped.append((position, None))
+            prev_accepted = position
+    return snapped
 
 
 def read_review_codes() -> dict[str, str]:
@@ -111,21 +145,26 @@ def build_axis_overlap(axis: list[dict[str, Any]], overlap: pd.DataFrame) -> dic
     return dict(lookup)
 
 
-def predict_day(day: dict[str, Any], axis: list[dict[str, Any]], lookup: dict[tuple[str, str], set[str]], idf_weights: dict[str, float], review_code: str, phrases: list[str]) -> dict[str, Any]:
+def predict_day(day: dict[str, Any], axis: list[dict[str, Any]], lookup: dict[tuple[str, str], set[str]], idf_weights: dict[str, float], review_code: str, searcher: FuzzyPhraseSearcher) -> dict[str, Any]:
     base = {"date": day["date"], "k_e": day["k_e"], "paragraph_count": len(axis), "unit": "paragraph_stream"}
     if review_code in REVIEW_ABSTENTION_REASONS:
         return {**base, "status": "abstained", "reason": REVIEW_ABSTENTION_REASONS[review_code], "boundaries": []}
 
+    if not axis:
+        return {**base, "status": "abstained", "reason": "missing_htr", "boundaries": []}
+
     enriched_ids = [overlap_enriched_id(enriched_id, str(day["date"])) for enriched_id in day["enriched_ids"]]
     axis_ids = [record["axis_id"] for record in axis]
     alignments = align_session(enriched_ids, axis_ids, lookup, idf_weights)
-    positions = interpolate_positions(day["k_e"], len(axis_ids), alignments)
-    if positions is None:
-        return {**base, "status": "abstained", "reason": "insufficient_entity_anchors", "boundaries": []}
-    snapped = [snap_to_phrase(position, phrase_hits(axis, phrases)) for position in positions]
-    snapped_positions = [position for position, _ in snapped]
-    if not all(left < right for left, right in zip(snapped_positions, snapped_positions[1:])):
-        snapped = [(position, None) for position in positions]
+    hits = phrase_hits(axis, searcher)
+    # S6c (docs/steps/STEP_S6_anchor_chain_alignment.md, rescoped 2026-09-21): a
+    # count-constrained segmentation DP replaces interpolate_positions here so a single
+    # folded anchor or a too-short axis degrades to repeated paragraph assignments
+    # instead of discarding the whole day's prediction; group-C phrase hits feed it as
+    # soft in-gap evidence. interpolate_positions itself is untouched -- it stays the
+    # deliberately unmodified placement model s6_oracle_anchor_diagnostic.py measures.
+    positions = segment_day(day["k_e"], len(axis_ids), alignments, {index: hit[2] for index, hit in hits.items()})
+    snapped = snap_boundaries(positions, hits)
     return {
         **base,
         "status": "predicted",
@@ -135,7 +174,7 @@ def predict_day(day: dict[str, Any], axis: list[dict[str, Any]], lookup: dict[tu
                 "paragraph_stream_index": position,
                 "char_offset": hit[1] if hit else 0,
                 "kind": "cut",
-                "source": "entity_nw_interpolation_phrase_snap" if hit else "entity_nw_interpolation",
+                "source": "s6c_gap_segmentation_phrase_snap" if hit else "s6c_gap_segmentation",
                 "opening_phrase": hit[0] if hit else None,
                 "opening_similarity": hit[2] if hit else None,
             }
@@ -160,9 +199,10 @@ def main() -> None:
     idf_weights = calculate_idf_weights(combined)
     phrase_candidates = load(PHRASE_DATASET)[0]["candidates"]
     phrases = [item["phrase"] for item in phrase_candidates if item["word_count"] >= 3]
+    searcher = build_phrase_searcher(phrases)
     review_codes = read_review_codes()
     predictions = [
-        predict_day(day, by_date[str(day["date"])], lookup, idf_weights, review_codes.get(str(day["date"]), "S"), phrases)
+        predict_day(day, by_date[str(day["date"])], lookup, idf_weights, review_codes.get(str(day["date"]), "S"), searcher)
         for day in gold["days"]
     ]
     output = save_semi_structured(predictions, logical_name=OUTPUT_DATASET, script=__file__)

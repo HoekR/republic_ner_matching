@@ -2,6 +2,14 @@
 
 Read **`docs/DATA.md`** and **`data_manifest.toml`** before pipeline work.
 
+## Which track to work on
+
+Several research tracks (S4 segmentation transfer, Track B/C name matching, HOE classifier, ...)
+compete for the same session budget. Before starting work, run
+`uv run python scripts/svz.py review` (or read `docs/STATE.md`) to see which track is improving,
+stagnant, or blocked, and follow `docs/ITERATION_POLICY.md` to decide what to pick up. Record any
+stop/continue/switch call via `svz.py decision ...` into `docs/DECISIONS.md`.
+
 ## Data paths
 
 - Use `from data_io import resolve, load, save_parquet, save_semi_structured` — no absolute paths in scripts.

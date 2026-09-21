@@ -15,17 +15,20 @@
 
 ## Doc layout (recommended)
 
+Thin bootstrap: root `PLAN.md` (headlines) plus empty `plans/` (`milestones/`, `steps/`). Add step and milestone files when the project becomes multi-step — no sample STEP stubs in the template.
+
 | File | Role |
 |------|------|
 | `AGENTS.md` | Canonical agent brief (Cursor + Copilot) |
-| `PLAN.md` | Short progress checklist |
-| `docs/PLAN-full.md` | Cross-cutting overview (stack, risks, diagram) — optional |
-| `docs/steps/STEP*.md` | **One editable guide per step** (goal, done-when, commands, model notes) |
-| `docs/steps/README.md` | Index linking all steps |
-| `docs/steps/MODEL-TIERS.md` | Project-specific handoff table (optional) |
+| `PLAN.md` | Headlines: short checklist + milestone index |
+| `plans/<name>.md` | Cross-cutting overview (stack, risks, diagram) — optional |
+| `plans/milestones/M*.md` | Milestone writeups — optional |
+| `plans/steps/STEP*.md` | **One editable guide per step** (goal, done-when, commands, model notes) |
+| `plans/steps/README.md` | Index linking all steps — optional |
+| `plans/steps/MODEL-TIERS.md` | Project-specific handoff table — optional |
 | `.cursor/rules/` | Points to `AGENTS.md`; `alwaysApply: true` |
 
-**Wisdom lives in dighum_template.** Project steps stay in `docs/steps/` — domain-specific, versioned with the repo.
+**Wisdom lives in dighum_template.** Project steps stay in `plans/steps/` — domain-specific, versioned with the repo. Older projects may still use `docs/steps/` (workflow MCP falls back).
 
 ### Step file template
 
@@ -69,7 +72,7 @@ Guide step 2. List commands only; I run them myself. Do not use tools.
 ### Simple Agent — edit files, no terminal
 
 ```
-Read docs/steps/STEP2-loaders.md only.
+Read plans/steps/STEP2-loaders.md only.
 Implement load_data.py as specified. Do not run commands.
 ```
 
@@ -120,16 +123,17 @@ Long agent runs burn Cursor budget on shell retries, context bloat, and re-plann
 | Wrong | Right |
 |-------|-------|
 | "Execute the plan" | "start step 3a" |
-| One 50-page PLAN.md | `PLAN.md` + `docs/steps/*` |
+| One 50-page PLAN.md | `PLAN.md` + `plans/steps/*` (create on demand) |
 | Agent runs `pm.sample()` | User runs; agent interprets PPC if stuck |
 | Strong model writes boilerplate | Simple model + step guide |
 | Domain steps in dighum wisdom | Portable rules here; steps in project |
+| Sample STEP stubs in every new repo | Empty `plans/steps/`; add guides when needed |
 
 ## Example invocation table
 
 | You say | Agent does |
 |---------|------------|
-| **start step N** | Opens `docs/steps/STEPN-*.md` only |
+| **start step N** | Opens `plans/steps/STEPN-*.md` only |
 | **guide step N** | Spec / checklist; no later steps |
 | **review my step N** | Read your diff; suggest fixes |
 

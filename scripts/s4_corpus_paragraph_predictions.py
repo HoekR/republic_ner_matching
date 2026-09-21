@@ -14,11 +14,13 @@ import pandas as pd
 
 from build_alignment_new import align_session, calculate_idf_weights
 from data_io import load, resolve, save_semi_structured
-from scripts.s4_paragraph_axis_baseline import build_axis_overlap, interpolate_positions, overlap_enriched_id
+from scripts.s4_paragraph_axis_baseline import build_axis_overlap, overlap_enriched_id
+from scripts.s6c_gap_segmentation import segment_day
 
 
 AXIS_DATASET = "paragraph_axis_1626_1630"
 ENRICHED_DATASET = "enriched_resolutions_1626_1630"
+CONCORDANCE_DATASET = "resolution_concordance_1626_1630"
 OUTPUT_DATASET = "s4_corpus_paragraph_predictions"
 OVERLAP_DATASETS = ("place_overlap_1626_1630", "org_overlap_1626_1630", "per_overlap_1626_1630")
 
@@ -48,6 +50,44 @@ def grouped_enriched() -> dict[str, list[str]]:
     return grouped
 
 
+def session_of(flat_id: str) -> str:
+    return str(flat_id).split("-resolution-", 1)[0]
+
+
+def resolved_sessions() -> dict[str, str]:
+    """Best day-level resolved HTR session per enriched date, from the day-status-resolution
+    track (`resolution_concordance_1626_1630`, "accepted final" per docs/DECISIONS.md).
+
+    Built independently of this predictor's own raw calendar-date axis grouping, and already
+    resolves some cross-day/candidate-scored session mappings (confident entity-overlap
+    scoring over ledger `-1`/`+1`/`?` rows, `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`) that
+    grouping by calendar date alone cannot see -- this was the orphan STEP_S6 section 1(b)
+    warned about: several resolution mechanisms built and not talking to each other. Human-
+    approved `-1`/`+1` decisions are not yet included (`docs/SESSION_DATE_MAPPING_REVIEW.md`:
+    review still pending), so this only recovers what candidate scoring already resolved
+    automatically.
+    """
+    concordance = load(CONCORDANCE_DATASET)
+    resolved = concordance.loc[concordance["day_status"] == "resolved_auto", ["enriched_date", "resolved_session_id"]]
+    resolved = resolved.dropna().drop_duplicates("enriched_date")
+    return {str(row.enriched_date): str(row.resolved_session_id) for row in resolved.itertuples(index=False)}
+
+
+def axis_for_date(
+    date: str,
+    axis_by_date: dict[str, list[dict[str, Any]]],
+    axis_by_session: dict[str, list[dict[str, Any]]],
+    session_by_date: dict[str, str],
+) -> list[dict[str, Any]]:
+    """Same-calendar-day paragraphs when present; otherwise the concordance-resolved session's
+    paragraphs, which may be filed under a different calendar date in `paragraph_axis_1626_1630`."""
+    same_day = axis_by_date.get(date, [])
+    if same_day:
+        return same_day
+    session_id = session_by_date.get(date)
+    return axis_by_session.get(session_id, []) if session_id else []
+
+
 def predict(
     date: str,
     enriched_ids: list[str],
@@ -60,15 +100,20 @@ def predict(
         return {**base, "status": "abstained", "reason": "missing_htr", "boundaries": []}
     axis_ids = [record["axis_id"] for record in axis]
     alignments = align_session(enriched_ids, axis_ids, lookup, idf_weights)
-    positions = interpolate_positions(len(enriched_ids), len(axis_ids), alignments)
-    if positions is None:
-        return {**base, "status": "abstained", "reason": "insufficient_entity_anchors", "boundaries": []}
+    # S6c count-constrained segmentation DP (scripts/s6c_gap_segmentation.py) replaces
+    # interpolate_positions here, same as the gold-day baseline -- see that module's
+    # docstring. Group-C phrase-hit evidence was tried and measured NEGATIVE on the
+    # gold-day sample (docs/DECISIONS.md 2026-09-21): net worse tol0 F1 (0.644 -> 0.622)
+    # and WindowDiff, only marginal tol1/tol2 gains -- not wired in here. Do not re-add
+    # without new evidence; see that decision for the full comparison and why
+    # snap_boundaries (the gold pipeline's second phrase-evidence stage) didn't rescue it.
+    positions = segment_day(len(enriched_ids), len(axis_ids), alignments)
     return {
         **base,
         "status": "predicted",
         "reason": None,
         "boundaries": [
-            {"paragraph_stream_index": position, "char_offset": 0, "kind": "cut", "source": "entity_nw_interpolation"}
+            {"paragraph_stream_index": position, "char_offset": 0, "kind": "cut", "source": "s6c_gap_segmentation"}
             for position in positions
         ],
     }
@@ -77,21 +122,30 @@ def predict(
 def main() -> None:
     axis = load(AXIS_DATASET)
     axis_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    axis_by_session: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in axis:
         axis_by_date[str(record["date"])].append(record)
+        axis_by_session[session_of(record["flat_id"])].append(record)
+    session_by_date = resolved_sessions()
     overlaps = [pd.read_excel(resolve(dataset)) for dataset in OVERLAP_DATASETS]
     overlaps = [overlap.rename(columns={"naam": "name"}) if "name" not in overlap and "naam" in overlap else overlap for overlap in overlaps]
     combined = pd.concat(overlaps, ignore_index=True)
     lookup = build_axis_overlap(axis, combined)
     idf_weights = calculate_idf_weights(combined)
     predictions = [
-        predict(date, enriched_ids, axis_by_date[date], lookup, idf_weights)
+        predict(date, enriched_ids, axis_for_date(date, axis_by_date, axis_by_session, session_by_date), lookup, idf_weights)
         for date, enriched_ids in sorted(grouped_enriched().items())
     ]
     output = save_semi_structured(predictions, logical_name=OUTPUT_DATASET, script=__file__)
+    recovered = sum(
+        1
+        for date in grouped_enriched()
+        if not axis_by_date.get(date) and axis_by_session.get(session_by_date.get(date, ""))
+    )
     print(f"Wrote {len(predictions)} corpus-day predictions to {output}")
     print(f"Status counts: {dict(Counter(item['status'] for item in predictions))}")
     print(f"Abstentions: {dict(Counter(item['reason'] for item in predictions if item['status'] == 'abstained'))}")
+    print(f"Days recovered via resolution_concordance_1626_1630's resolved_session_id (no same-day axis otherwise): {recovered}")
 
 
 if __name__ == "__main__":

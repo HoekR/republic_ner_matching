@@ -1,7 +1,7 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-08-31 17:59",
-  "active_focus": "S4a: define and register the inventory-aware session-date status ledger before any reassignment.",
+  "last_updated": "2026-09-21 19:05",
+  "active_focus": "Corpus-scale group-C phrase-hit wiring into segment_day tested on gold days and rejected (tol0 F1 0.644->0.622, net negative). session_day_find done (203/162/1240 days corpus-wide). Next: decide session_date_verified vs a fresh angle on the 79/1059 severe-collapse days.",
   "tasks": [
     {
       "id": "S0",
@@ -35,45 +35,156 @@
     },
     {
       "id": "S4",
-      "title": "Segmentation assembly",
+      "title": "Segmentation assembly (paragraph-axis baseline)",
       "status": "inprogress",
-      "notes": "Corpus paragraph-axis baseline produced 244 predictions across 1,594 enriched days; session-date status mapping now addresses no-same-day-HTR cases."
+      "notes": "2026-09-18: fixed k_e<=1 short-circuit and per-boundary snap collision revert. Predicted days 5/21 -> 9/21 (4 are trivial k_e==1); boundary micro F1 unchanged 0.576 exact / 0.727 within-2 -- open question, not yet explained. 12/21 remaining abstentions are structural (paragraph axis coarser than K_e) -> see line-level-segmentation."
     },
     {
       "id": "S4a",
       "title": "Session-date inputs",
-      "status": "inprogress",
-      "notes": "Define composite inventory-date key and register canonical ledger/review outputs."
+      "status": "done",
+      "notes": "Composite inventory-date key defined and registered; data_io.check passes for all S4 inputs."
     },
     {
       "id": "S4b",
       "title": "Session-date ledger",
-      "status": "todo",
-      "notes": "Build trusted-anchor and exact-date HTR evidence per inventory-date."
+      "status": "done",
+      "notes": "4,916 inventory-date rows: T=1,012, A=4, E=97, X=3, N=3,800."
     },
     {
       "id": "S4c",
       "title": "Nearby session candidates",
-      "status": "todo",
-      "notes": "Record inventory-local +/-1-day candidate sessions without auto-assignment."
+      "status": "done",
+      "notes": "+/-1-day candidates recorded without auto-assignment."
     },
     {
       "id": "S4d",
       "title": "Session status heatmap",
-      "status": "todo",
-      "notes": "Render a per-inventory-year calendar heatmap from the status ledger."
+      "status": "done",
+      "notes": "Per-inventory-year calendar heatmap rendered."
     },
     {
       "id": "S4e",
       "title": "Session-key consumers",
-      "status": "todo",
-      "notes": "Create review export and a separate mapping-aware corpus segmentation consumer."
+      "status": "done",
+      "notes": "Review export and mapping-aware corpus segmentation consumer both produced."
     },
     {
       "id": "S5",
       "title": "Evaluation and review routing",
+      "status": "done",
+      "notes": "scripts/evaluate_s4_paragraph_axis.py excludes C/M days, reports coverage separately. Routing abstentions to sequence_review_ui.py still deferred pending the next real S4 iteration."
+    },
+    {
+      "id": "line-level-segmentation",
+      "title": "Line-level cut points for the 12 structurally-abstaining gold days",
+      "status": "blocked",
+      "notes": "Per SEGMENTATION_TRANSFER.md section 9's fallback trigger. BLOCKED 2026-09-18, corrected 2026-09-18: canonical htr_classified_lines.csv has zero rows in inventories 3185-3189; the marijn-variant file has 1,294 checked rows in the right inventories but at spot-check density (2-9 pages/inventory), unmapped to dates. The page-to-date join is NOT a cheap check (see docs/DECISIONS.md 2026-09-18 'Correct line-level-segmentation blocker'): no manifest dataset maps (inventory, scan/page) to date -- session_index_all.parquet and session_date_status_1626_1630 are both session-level only. Doing the join needs a new extraction step over the unextracted 10 GB sessions_json-2026-02-27.tar.gz. Next action: scope and register a targeted page-range extraction from that archive before attempting the overlap check, or drop this track -- do not treat it as a quick lookup."
+    },
+    {
+      "id": "track-b-name-matching",
+      "title": "Track B -- soundex/Levenshtein reranker for person-name matching",
+      "status": "todo",
+      "notes": "Design-only in PLAN.md (B1 preprocessing, B2 soundex index, B3 structural reranker on TF-IDF top-k). Not started."
+    },
+    {
+      "id": "track-c-fuzzy-search-context",
+      "title": "Track C -- FuzzyTokenSearcher context/role matching",
+      "status": "todo",
+      "notes": "Design-only in PLAN.md (context-phrase model, two-level fuzzy match pipeline, role tie-breaking). Not started."
+    },
+    {
+      "id": "entity-resolution-fix",
+      "title": "Entity resolution fix (persons/orgs/places id->name bugs, build_alignment_new.py)",
+      "status": "done",
+      "notes": "Fixed silent id-as-name bugs for persons and institutions; built entity_surface_matches_1626_1630 cache (18,698 rows) for orthography fallback. Known limitation not fixed here -> excel-overlap-builder-audit."
+    },
+    {
+      "id": "excel-overlap-builder-audit",
+      "title": "Audit place/org/per_overlap_1626_1630.xlsx builders for the same literal-substring bug",
+      "status": "done",
+      "notes": "Confirmed the literal-substring bug for all three builders (see docs/DECISIONS.md 2026-09-19). Place +13.4% (1265/9428), org +4.0% (55/1363) rows recoverable via build_windowed_overlap.py's existing --compare-legacy rebuild, both zero-regression (legacy_only=0). Per confirmed by code inspection (no fuzzy pass in build_per_overlap.py); no rebuild script exists yet for it.",
+      "next_action": "Re-run the overlap builders on a sample of dates with the entity-resolution-fix text fallback applied, and diff entity counts against the current xlsx outputs.",
+      "goal": "n/a - closed",
+      "cost": "cheap",
+      "blocks": [
+        "S4",
+        "short-resolution-alignment",
+        "resolution-concordance-completeness",
+        "entity-resolution-fix"
+      ]
+    },
+    {
+      "id": "resolution-concordance-completeness",
+      "title": "Resolution concordance completeness (N-status gaps, candidate scoring, window-widen)",
+      "status": "done",
+      "notes": "Accepted as final 2026-09-18 (docs/DECISIONS.md): 70.7% resolved_auto, 28.6% missing_htr (structural ceiling, 49.7% of ledger has no HTR within +/-14d), 0.6% nihil_actum. Window-widen to +/-7d unlocked zero new confident matches. Closed track, not open for further work."
+    },
+    {
+      "id": "hoe-classifier-other-bucket",
+      "title": "HOE classifier -- reduce the 'other' bucket (31% unclassified)",
+      "status": "todo",
+      "notes": "hoe_classify.py pipeline is done end-to-end; 'other' is still ~1.32M rows / 31% of the 4.2M-row HOE layer. Priorities: frequency analysis on top-100 other forms; merge abbrd.functienaam seeds."
+    },
+    {
+      "id": "ner-finetuning-original-goal",
+      "title": "GysBERT multi-class NER fine-tuning (original project goal, Phase 2+)",
+      "status": "blocked",
+      "notes": "Phase 1 data prep done (21K LOC + 13K PER training pairs). Phase 2 (model training) not run this cycle -- deprioritized while the alignment/segmentation pivot (CURRENT/NEW Approach) is active."
+    },
+    {
+      "id": "short-resolution-alignment",
+      "title": "Short-resolution alignment (align_short_resolutions.py) -- decide: wire into concordance or retire",
+      "status": "todo",
+      "notes": "ORPHAN, registered 2026-09-19 (docs/APPROACH_OVERVIEW.md layer 3/B2). Built once, never iterated: aligns short 'no decision' resolutions using formulaic open/close phrase anchors (a different milestones instantiation than s4_paragraph_axis_baseline.py's entity anchors, over a different resolution subset). Verified orphaned -- its output is referenced nowhere else in the repo (not in data_manifest.toml, not by s4_resolution_concordance.py, not by any paragraph-prediction script) and it had no state.json entry, so svz.py review could never surface it. NO METRIC RECORDED, so its accuracy/coverage is unknown. Next action: measure what fraction of enriched resolutions it covers and whether that subset overlaps s4_paragraph_axis_baseline's bundled-paragraph subset, then decide wire-into-D vs retire. Do not build on it before that.",
+      "goal": "A coverage number for align_short_resolutions.py (what fraction of enriched resolutions it aligns, and whether that subset overlaps the bundled-paragraph subset), followed by a recorded decision to wire it into concordance or retire it.",
+      "cost": "cheap"
+    },
+    {
+      "id": "fuzzy-surface-form-scan",
+      "title": "Corpus-wide fuzzy surface-form scan (s4_fuzzy_surface_form_scan.py) -- recover entities the tagger missed",
       "status": "inprogress",
-      "notes": "Eligibility-aware S4 evaluation runs; route 18 insufficient-anchor abstentions after the next S4 iteration."
+      "notes": "Registered 2026-09-19 (docs/APPROACH_OVERVIEW.md layer 0c). Built and launched same day as weekend batch work; was not in state.json at all until now. Full-dictionary FuzzyTokenSearcher scan (LOC/PER/ORG, index_vocabulary_pairs=False, levenshtein_threshold 0.85, 4-char min match) over all 21,519 paragraph_axis_1626_1630 paragraphs, flagging already_known vs newly_recovered against entity_surface_matches_1626_1630. Est 7-9h, checkpointed/resumable. LEVERAGE IS UNPROVEN and was questioned the same session: the cheaper scoped version (entity_surface_matches, layer 0b) already tested this lever in s4_bundled_split_poc and gave only a modest lift (0/27 -> 3/27 tol50). Output currently feeds nothing. Next action when it finishes: record newly_recovered count as a metric, then decide whether any downstream consumer justifies it -- do not assume it is progress.",
+      "goal": "A newly_recovered entity count, plus an explicit decision on whether any downstream consumer justifies the 7-9h scan -- or a recorded conclusion that the scoped entity_surface_matches version was already sufficient.",
+      "cost": "multi-session"
+    },
+    {
+      "id": "interior-cut-evaluation-harness",
+      "title": "Extend the boundary evaluation harness to credit sub-paragraph (interior) cuts",
+      "status": "done",
+      "notes": "DONE 2026-09-20 via S6a (scripts/s6a_char_axis_evaluation.py, 14/14 tests). The harness now scores at character coordinates: gold (paragraph_stream_index, char_offset) composes to one integer axis per day by pure concatenation (no separator -- gold paragraph_boundary cuts carry char_offset == len(paragraph), so a paragraph-final cut composes to exactly the next paragraph's start). compute_boundary_prf needed no change, only this adapter. Interior/sub-paragraph cuts are therefore no longer structurally invisible: s4_bundled_split_poc.py and s4_llm_split_poc.py results can now be scored on the same axis as the main baseline at tol 50/150 chars. Registered output: s6a_char_axis_evaluation.",
+      "next_action": "Extend the S0 harness to score interior char-offset cuts alongside paragraph-index cuts, then re-score the existing 22-position gold set through it.",
+      "goal": "A boundary metric that can distinguish a correct sub-paragraph cut from a wrong one, so interior-cut work (s4_bundled_split_poc, s4_llm_split_poc) can register as tracked S4 progress instead of staying an isolated diagnostic.",
+      "cost": "session",
+      "blocks": [
+        "S4"
+      ]
+    },
+    {
+      "id": "adopt-windowed-overlap-rebuild",
+      "title": "Adopt build_windowed_overlap.py's variant-aware rebuild as canonical place/org overlap; build the equivalent fuzzy pass for PER",
+      "status": "done",
+      "notes": "2026-09-19: place/org canonical overlap swapped to variant-aware rebuild. 2026-09-21: PER canonical overlap swapped (build_per_overlap.py extended, +415 rows). 2026-09-21: downstream re-run done (build_alignment_new.py 11:43, s4_corpus_paragraph_predictions.py 11:44) against all three swapped tables. 2026-09-21: checked build_alignment_new.py's own headline confidence_tier distribution pre- vs post-swap -- tier1_anchor 5725->5730, tier2_* 4734->4708, tier3_* 2883->2904 out of 13342 unchanged total; largest single-tier delta 26 rows (0.19pp). Headline tier stats barely moved; the swap's real effect showed up in S6b's anchor-supply measurement (insufficient_entity_anchors abstentions 815->777) instead. Accepted as final -- see docs/DECISIONS.md 2026-09-21.",
+      "next_action": "Re-run downstream consumers (build_alignment_new.py, s4_paragraph_axis_baseline.py, s4_corpus_paragraph_predictions.py) against the now-swapped place/org/per overlap tables and check whether headline tier/confidence stats move.",
+      "goal": "Canonical overlap tables include the variant/fuzzy recovery, and downstream tier/confidence stats reflect it (or a measured reason not to adopt). DONE: adopted, re-run, measured -- stats barely move, and that's now on record rather than assumed.",
+      "cost": "cheap",
+      "blocks": [
+        "S4",
+        "short-resolution-alignment"
+      ]
+    },
+    {
+      "id": "s6-anchor-chain-alignment",
+      "title": "S6 -- multi-channel anchor chaining at character coordinates",
+      "status": "inprogress",
+      "notes": "S6a, S6 Step 1 oracle diagnostic, S6b constraint-baseline ledger, and S6b anchor harvest (all four groups) are DONE. CAVEAT (2026-09-21) RESOLVED same day: re-ran build_alignment_new.py (11:43) + s4_corpus_paragraph_predictions.py (11:44) against the swapped place/org/per overlap tables, then re-ran the parallelized/checkpointed s6b_anchor_harvest.py corpus-wide (1240 days, 247914 anchor rows, ~32min). Split re-confirmed and MORE lopsided: insufficient_entity_anchors abstentions 815->777, of which only 19 (2.4%, was 59/7.2%) have zero group-A anchors and only 18 (2.3%, was 57/7.0%) gain a non-A anchor from B/C -- 758/777=97.6% already had a group-A anchor and abstained anyway (placement model binds, not anchor supply). adopt-windowed-overlap-rebuild itself closed 2026-09-21 (docs/DECISIONS.md) after also checking build_alignment_new.py's own headline confidence_tier distribution barely moved (largest tier delta 26/13342 rows). SEPARATELY (2026-09-21): checked whether any downstream consumer needs character-exact cuts -- it does not (s4_resolution_concordance.py treats paragraph attribution as optional best-effort; build_alignment_new.py never reads char offsets; NER training pairs use a separate annotation layer). S6c RESCOPED: target paragraph-level (lumped) coverage/accuracy, not tol0/tol50 character precision -- sidesteps inheriting s4_bundled_split_poc.py's weak char-placement precision (0-15% recall at tol50).",
+      "next_action": "Build S6c as a count-constrained segmentation DP working directly inside s6b_known_point_ledger.py's gaps (947 open corpus-wide gaps hold 70.7% of unplaced resolutions), using B/C raw positions as soft in-gap evidence. Score against predicted-day coverage and the S6a LUMPED paragraph-level metric (current baseline 0.828) as primary; treat tol0/tol50 character gains (current 0.467/0.500/0.567) as a bonus only. Job: fix interpolate_positions's over-eager abstention (only 5/19 gold days predicted even with oracle-perfect anchors) while holding today's paragraph-level placement quality. If lumped/coverage still doesn't move, escalate to the blocked line-level-segmentation track (needs a sessions_json page-to-date extraction), not a fresh approach.",
+      "goal": "A segmentation DP that raises predicted-day coverage and/or the 0.828 lumped paragraph-level score on the 947 open gaps, without depending on resolving B/C anchors to enriched indices first (already shown not to be the binding constraint).",
+      "cost": "multi-session",
+      "blocks": [
+        "S4",
+        "interior-cut-evaluation-harness"
+      ]
     }
   ],
   "dependencies": [
@@ -116,6 +227,14 @@
     {
       "from": "S4",
       "to": "S5"
+    },
+    {
+      "from": "S4",
+      "to": "line-level-segmentation"
+    },
+    {
+      "from": "entity-resolution-fix",
+      "to": "excel-overlap-builder-audit"
     }
   ],
   "metrics": [
@@ -168,10 +287,52 @@
       "value": "480 / 611 paragraphs; 87 unresolved annotation references"
     },
     {
-      "scope": "S5",
-      "name": "paragraph_axis_baseline",
-      "label": "Paragraph-axis entity-NW baseline",
-      "value": "coverage 5/21; micro F1 0.576 exact, 0.727 within 2 paragraphs"
+      "scope": "S4",
+      "name": "boundary_f1_tolerance0",
+      "label": "Boundary micro F1 (tolerance 0)",
+      "value": "0.576",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "value": "0.576"
+        },
+        {
+          "date": "2026-09-18",
+          "value": "0.576"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "boundary_f1_tolerance2",
+      "label": "Boundary micro F1 (within 2 paragraphs)",
+      "value": "0.727",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "value": "0.727"
+        },
+        {
+          "date": "2026-09-18",
+          "value": "0.727"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "coverage",
+      "label": "Predicted-day coverage (of 21 eligible gold days)",
+      "value": "0.429",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "value": "0.238"
+        },
+        {
+          "date": "2026-09-18",
+          "value": "0.429"
+        }
+      ]
     },
     {
       "scope": "S4",
@@ -202,12 +363,513 @@
       "name": "corpus_baseline_coverage",
       "label": "Corpus entity-NW baseline",
       "value": "244/1,594 predicted; 815 insufficient anchors; 535 no same-day HTR assignment"
+    },
+    {
+      "scope": "resolution-concordance-completeness",
+      "name": "resolved_auto_pct",
+      "label": "Resolved-auto share of resolution-level concordance",
+      "value": "70.7%"
+    },
+    {
+      "scope": "resolution-concordance-completeness",
+      "name": "missing_htr_pct",
+      "label": "Missing-HTR share (accepted structural ceiling)",
+      "value": "28.6%"
+    },
+    {
+      "scope": "hoe-classifier-other-bucket",
+      "name": "other_bucket_pct",
+      "label": "'other' bucket share of the HOE layer",
+      "value": "31%"
+    },
+    {
+      "scope": "S4",
+      "name": "entity_density_bundled_clean_effect_size",
+      "label": "Common-language effect size, bundled vs clean-boundary paragraph entity_annotation_count (gold, n=22/112)",
+      "value": "0.770",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.770"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_recall_tol150",
+      "label": "NER-only entity spans, even-split heuristic, tol=150 chars",
+      "value": "0.333",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.333"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_recall_tol150",
+      "label": "NER + entity_surface_matches dictionary lookup, tol=150 chars",
+      "value": "0.407",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.407"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_recall_tol50",
+      "label": "NER-only entity spans, even-split heuristic, tol=50 chars",
+      "value": "0.0",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.0"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_recall_tol50",
+      "label": "NER + dictionary lookup, tol=50 chars",
+      "value": "0.111",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.111"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_phrase_snapped_recall_tol50",
+      "label": "NER-only spans + phrase-boundary snap, tol=50 chars",
+      "value": "0.074",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.074"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_phrase_snapped_recall_tol150",
+      "label": "NER-only spans + phrase-boundary snap, tol=150 chars",
+      "value": "0.333",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.333"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_phrase_snapped_recall_tol50",
+      "label": "NER + dictionary + phrase-boundary snap, tol=50 chars",
+      "value": "0.148",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.148"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_phrase_snapped_recall_tol150",
+      "label": "NER + dictionary + phrase-boundary snap, tol=150 chars",
+      "value": "0.407",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.407"
+        }
+      ]
+    },
+    {
+      "scope": "excel-overlap-builder-audit",
+      "name": "place_overlap_variant_recovery_rate",
+      "label": "1265/9428 additional rows found by build_windowed_overlap.py's variant+tag_text passes vs legacy canonical-only place_overlap_1626_1630.xlsx (window_days=0, --compare-legacy: legacy_only=0, rebuilt_only=1265)",
+      "value": "0.1342",
+      "history": [
+        {
+          "date": "2026-09-19",
+          "value": "0.1342"
+        }
+      ]
+    },
+    {
+      "scope": "excel-overlap-builder-audit",
+      "name": "org_overlap_variant_recovery_rate",
+      "label": "55/1363 additional rows found by build_windowed_overlap.py's variant pass vs legacy canonical-only org_overlap_1626_1630.xlsx (window_days=0, --compare-legacy: legacy_only=0, rebuilt_only=55)",
+      "value": "0.0404",
+      "history": [
+        {
+          "date": "2026-09-19",
+          "value": "0.0404"
+        }
+      ]
+    },
+    {
+      "scope": "excel-overlap-builder-audit",
+      "name": "per_overlap_bug_confirmed",
+      "label": "Confirmed by code inspection: build_per_overlap.py has no fuzzy/variant pass at all (exact tag_text substring, then exact-word surname_token fallback only). Directional cross-check against entity_surface_matches_1626_1630 (different candidate universe, so not a clean rate): 1123 fuzzy-confirmed PER entity/resolution pairs across 991 resolutions are absent from per_overlap_1626_1630.xlsx entirely.",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-19",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "boundary_recall_ceiling_char_coords",
+      "label": "Hard recall bound AT TOLERANCE 0 on the 50-day gold set under (paragraph_stream_index, char_offset): 320/352 distinct cut positions, vs 280/352 (0.795) under paragraph indices alone. Higher is better. Rigorous at tol0 only -- at tol>0 a clustering predictor can exceed the distinct-value count (see DECISIONS.md 2026-09-20 correction). Residual 32 slots have char_offset=null.",
+      "value": "0.909",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.909"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_recall_bound_tol0",
+      "label": "S6a STRICT ceiling: 313/352 distinct character positions reachable at tolerance 0 on the 50-day gold set, vs 280/352 (0.795) under paragraph indices. Higher is better. CORRECTS the step guide's 320/352 (0.909), which counted 7 paragraph-index groups whose slots have char_offset=null as reachable; they are annotation gaps. 39 cut slots carry no offset and are unreachable on a character axis.",
+      "value": "0.889",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.889"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_tol0",
+      "label": "S6a re-scored baseline: micro F1 at tolerance 0 CHARACTERS for the unchanged 2026-09-18 s4_paragraph_axis_predictions, composed onto the character axis. Higher is better. Not comparable to the 0.576 paragraph-coordinate figure (different unit); the point is that 0.467 sits well below the 0.889 ceiling, so the metric is no longer saturated.",
+      "value": "0.467",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.467"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_tol150",
+      "label": "S6a re-scored baseline: micro F1 at tolerance 150 characters (matching the split-POC harness scale). Higher is better.",
+      "value": "0.567",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.567"
+        }
+      ]
+    },
+    {
+      "scope": "interior-cut-evaluation-harness",
+      "name": "folded_groups_separated_by_composition",
+      "label": "22 of 24 folded gold groups (16 days) gain distinct character coordinates under (paragraph_stream_index, char_offset) composition. Higher is better. The 2 that stay folded hold only char_offset=null slots.",
+      "value": "0.917",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.917"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "oracle_anchor_coverage_all_density",
+      "label": "S6 Step 1 oracle diagnostic: with a PERFECT gold-derived anchor set, the current placement model (interpolate_positions + snap_boundaries, unmodified) can predict only 5 of 19 scoreable gold days. Higher is better. 9 days abstain folded_anchors_non_monotone, 5 axis_shorter_than_k_e. This is an upper bound on what ANY anchor-selection improvement, chaining included, can cover.",
+      "value": "0.263",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.263"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "oracle_anchor_f1_tol50_all_density",
+      "label": "S6 Step 1 oracle diagnostic: micro F1 at tol 50 chars on the 5 days perfect anchors can predict (tol0 0.727, tol150 0.788). Higher is better. Caps below 1.0 because the model emits (paragraph index, snap offset), so the 33 mid_paragraph gold cuts are largely unreachable.",
+      "value": "0.788",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.788"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_lumped",
+      "label": "S6a LUMPED baseline: gold cuts collapsed onto the paragraph they open (interior cuts credited at their paragraph start, de-duplicated) and model output collapsed the same way. Higher is better. Flat 0.828 across tol 0/50/150 because paragraph starts are far apart, so tolerance is irrelevant once both sides are at paragraph granularity. Separate metric name on purpose: the STRICT character-precision figures (char_axis_boundary_f1_tol0 = 0.467) are unchanged and must keep their own history.",
+      "value": "0.828",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.828"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "known_point_pinned_share_1626h1",
+      "label": "S6b constraint baseline, contiguous 1626-01-01..06-30: 389 of 1218 enriched resolutions are pinned by a typed known point (366 tier-1 anchors, 41 gold boundaries; session start/end are sentinels). Higher is better. Measures the problem's constraint structure, not any model.",
+      "value": "0.319",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.319"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "unplaced_resolutions_in_open_gaps_1626h1",
+      "label": "S6b constraint baseline: 544 of 723 unplaced resolutions sit in the 93 gaps holding more than 2 resolutions. LOWER is better. Counting GAPS flatters this badly -- 81.2% of gaps are determined or nearly so, but those hold only 24.8% of unplaced resolutions; 18.8% of gaps hold 75.2% of the work.",
+      "value": "0.752",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.752"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "known_point_pinned_share_1626_1630",
+      "label": "S6b constraint baseline, FULL period 1626-1630: 5111 of 13530 enriched resolutions pinned by a typed known point (4761 tier-1 anchors, 350 gold boundaries). Higher is better. Report: docs/S6B_CONSTRAINT_BASELINE.md.",
+      "value": "0.378",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.378"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "unplaced_in_open_gaps_1626_1630",
+      "label": "S6b constraint baseline, FULL period: 5302 of 7504 unplaced resolutions sit in the 947 gaps holding more than 2 resolutions, spanning 3.13M characters. LOWER is better. Gap-count view says 84.3% settled; resolution-weighted view says 70.7% of the work is open. Quote both.",
+      "value": "0.707",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.707"
+        }
+      ]
+    },
+    {
+      "scope": "adopt-windowed-overlap-rebuild",
+      "name": "per_overlap_rebuild_recovered_rows",
+      "label": "PER variant-aware rebuild vs legacy literal-substring build: legacy_only=0 (strict superset), shared=7544, rebuilt_only=415. Higher is better.",
+      "value": "415",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "415"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6b_anchor_harvest_density_smoke_36day",
+      "label": "S6b anchor harvest, 36-day smoke window (1626-01-01..03-01, preliminary, not corpus-wide): group A (tier1_entity_nw) 149 anchors/32 days; group B (entity_surface_matches 617, fuzzy_surface_scan 5007)/36 days; group C (s2_anchor_phrases 465, s4_opening_phrase_candidates 547)/36 days. Of 26 insufficient_entity_anchors abstentions in this window, 3 had zero group-A anchors at all, and all 3 gain a non-A anchor once B/C are harvested (anchor SUPPLY only -- not a placement guarantee, see docs/DECISIONS.md 2026-09-20 on the placement model binding). No trend direction; this is a first reading, full-corpus run not yet done.",
+      "value": "0.0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6b_anchor_harvest_zero_group_a_share_of_abstentions",
+      "label": "S6b anchor harvest, FULL CORPUS 1626-1630: 247,871 anchor rows over 1,240 days-with-axis. Of the 815 corpus-wide insufficient_entity_anchors abstentions, only 59 (7.2%) had ZERO group-A (tier1_entity_nw) anchors at all -- the other 756 (92.8%) already had >=1 group-A anchor and abstained for a different reason (interpolate_positions' monotonicity/axis-length requirements, per the S6 Step 1 oracle diagnostic). Of the 59 zero-anchor days, 57 (96.6%) gain a non-A anchor once groups B/C are harvested -- but that is only 57/815 = 7.0% of all abstentions. LOWER is better (less of the problem is anchor-supply-shaped). Report: this response.",
+      "value": "0.072",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.072"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6b_anchor_harvest_per_group_density_full_corpus",
+      "label": "S6b anchor harvest, FULL CORPUS: per-channel density (anchors / distinct positions / days-touched of 1,240 days-with-axis). A tier1_entity_nw: 5,332/3,718/993. B entity_surface_matches: 18,406/8,075/1,068; fuzzy_surface_scan: 189,764/162,307/1,238 (touches nearly every day and vastly outnumbers group A, but char-offset granularity means many hits cluster within single paragraphs). C s2_anchor_phrases: 14,890/14,890/1,231; s4_opening_phrase_candidates: 16,999/16,999/1,233 (one best hit per paragraph by construction, so anchors==distinct positions). D session_boundary: 2,480/2,480/1,240 (2 per day, as designed). Value recorded is total group-A anchors in thousands (5.332k) as a scale reference; read the full breakdown in the label, not the number. Higher is better for coverage completeness, not for correctness of any given anchor.",
+      "value": "6.99",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "6.99"
+        }
+      ]
+    },
+    {
+      "scope": "adopt-windowed-overlap-rebuild",
+      "name": "tier_headline_stats_shift",
+      "label": "Post-rebuild build_alignment_new.py re-run (2026-09-21, refreshed place/org/per overlap tables), alignment_1626_1630.parquet, n=13342 (unchanged): tier1_anchor 5725->5730 (42.9%->42.9%), tier2_* 4734->4708 (35.5%->35.3%), tier3_* 2883->2904 (21.6%->21.8%). Value = largest single-tier count delta (26) / total (13342). LOWER is better (less headline movement from the overlap swap alone).",
+      "value": "0.0195",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.0195"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6c_gold_day_coverage",
+      "label": "19/21 eligible gold days predicted (was 9/21 pre-S6c)",
+      "value": "0.905",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.905"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_lumped_tol150",
+      "label": "S6c segmentation DP, was 0.828 pre-S6c (baseline unchanged within noise)",
+      "value": "0.826",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.826"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_tol50",
+      "label": "S6c segmentation DP on nearly 3x the predicted days (19 vs 7), was 0.500 pre-S6c",
+      "value": "0.503",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.503"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_insufficient_entity_anchors_abstentions",
+      "label": "was 777 pre-S6c; eliminated entirely (1059 = 282 pre-existing + all 777 recovered)",
+      "value": "0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_coverage_of_days_with_axis",
+      "label": "1059/1059 days with an axis now predict (535 missing_htr, structural, untouched)",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_severe_collapse_share",
+      "label": "79/1059 predicted days have 7+ resolutions collapsed onto one paragraph -- low-localization coverage, not a bug",
+      "value": "0.075",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.075"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_missing_htr_after_concordance_wiring",
+      "label": "was 535 pre-wiring; 81 days recovered via resolution_concordance_1626_1630's resolved_session_id",
+      "value": "454",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "454"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_fingerprint_match_rate",
+      "label": "S6b prerequisite: resolutions_flat session -> raw session content-fingerprint match rate (substring containment on 'para'-class text), registered as s6b_session_fingerprint_match, replacing unregistered scratch. 1059/1511 matched, 0 ambiguous, 659/1059 drifted (non-zero offset). Higher is better.",
+      "value": "0.701",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.701"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_day_find_hit_precision_sample",
+      "label": "session_day_find (S6b Group-D channel): 25/25 sampled hits genuine at FuzzyPhraseSearcher threshold 0.95+ignorecase, 154 hits/130 sessions vs regex baseline's unvalidated 210/167 on the same session-text universe. Higher is better (this is a precision spot-check, not corpus coverage).",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_day_find_corpus_density",
+      "label": "session_day_find corpus-wide: 203 anchors / 162 of 1240 days-with-axis (13.1%), 203 distinct positions -- smallest of all six non-sentinel channels (vs group A tier1_entity_nw 5375 anchors/995 days). insufficient_entity_anchors supply-gain proxy is degenerate at 0/0/0: S6c already eliminated that abstention category entirely, so the proxy has nothing left to measure -- not evidence this channel closed a gap.",
+      "value": "0.131",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.131"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_predictor_phrase_evidence_tol0_f1",
+      "label": "s4_corpus_paragraph_predictions.py's predict(), with s4_opening_phrase_candidates fed into segment_day's position_scores, scored on the 19/21 scoreable gold days: tol0 F1 0.622 vs 0.644 WITHOUT phrase evidence -- a regression, not a gain. tol1/tol2 marginally better (0.796/0.812 vs 0.790/0.807), mean Pk/WindowDiff worse (0.292 vs 0.285). Adding snap_boundaries (the gold pipeline's second phrase-evidence stage) on top produced IDENTICAL numbers -- not a partial-implementation artifact. NOT wired into the corpus predictor. Higher is better (but this is the WITH-evidence reading; compare against the 0.644 without-evidence baseline, not a target).",
+      "value": "0.622",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.622"
+        }
+      ]
     }
   ],
-  "blockers": [],
+  "blockers": [
+    "line-level-segmentation: htr_classified_lines_marijn.csv page_id->calendar-date mapping not yet built, so overlap with the 12 structurally-abstaining gold days is unverified."
+  ],
   "next_actions": [
-    "Complete S4a session-date inputs and manifest registration.",
-    "Build the S4b date-indexed ledger from trusted anchors and direct HTR dates.",
-    "Generate +/-1-day session candidates and the per-year status heatmap after ledger validation."
+    "Run `uv run python scripts/svz.py review` at the start of the next session before picking up work; see docs/ITERATION_POLICY.md.",
+    "line-level-segmentation: map marijn-variant page_ids to calendar dates (session/page index join) and check overlap with the 12 gold days before writing any DP/classifier code.",
+    "S4: explain why boundary F1 stayed at 0.576/0.727 despite the collision fix relocating most boundaries from raw interpolation to phrase-snapped positions -- needs a per-boundary gold-vs-predicted diff, not attempted yet.",
+    "S4: investigate the 2 gold dates (1626-05-17, 1627-04-11) with zero boundary_gold_paragraph_axis records -- data-completeness gap, not yet root-caused."
   ]
 }

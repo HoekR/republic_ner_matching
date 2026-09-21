@@ -1,7 +1,7 @@
 <!-- Same body as .cursor/rules/project-standards.mdc.
      Source: dighum_template/template/shared/agent-standards.md -->
 
-# Agent standards (Cursor + VS Code Copilot)
+# Agent standards (Cursor + VS Code Copilot + Claude Code)
 
 Read `AGENTS.md`, `docs/DATA.md`, and `PLAN.md` before pipeline work.
 
@@ -14,3 +14,12 @@ Read `AGENTS.md`, `docs/DATA.md`, and `PLAN.md` before pipeline work.
 - Never use `pd.to_datetime` / `Timestamp` for calendar dates before 1678 — use `pd.Period` with `freq="D"`
 - Never discard archival metadata fields during transforms
 - `archive-inventory` / `archive-scan` only for legacy orphan files (requires `--with-archivist`), never on `data_io` outputs
+
+## Workflow
+
+- One active step per session — never implement the whole `PLAN.md` at once
+- Read `PLAN.md` first; if a guide exists under `plans/steps/STEP*.md`, follow it before editing files
+- Prefer advising commands; do not run heavy compute (sampling, long builds) by default — user runs the terminal
+- Do not scan or dump large parts of the repo unless asked
+- Targeted edits only — no whole-file rewrites of unchanged content
+- When a step is done: mark it in `PLAN.md`, give a short 3-bullet handoff, name the next step, and remind the user to clear the chat before the next step

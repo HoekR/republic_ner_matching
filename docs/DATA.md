@@ -13,7 +13,14 @@ This project decouples code from physical storage using `data_manifest.toml` and
 
 `republic_ner_matching/data` symlinks to `/Volumes/2tb disk/datasets/republic`.
 
-Legacy warm archives remain at `/Volumes/2tb disk/data/` (pagexml, sessions_json).
+Legacy source archives (pagexml, sessions_json) live at
+`/Volumes/2tb disk/datasets/republic/source/` as unextracted, unregistered
+tarballs: `1.01.02-pagexml.tgz` (88.5 GB) and `sessions_json-2026-02-27.tar.gz`
+(10 GB). Neither is in `data_manifest.toml` yet — register a dataset entry
+(or a targeted extraction of one) before referencing either from code.
+`/Volumes/2tb disk/data/` is a separate, unrelated directory (currently just
+`ead_metadata-extended.tsv` and `emigratie`), not the pagexml/sessions_json
+location this line previously claimed.
 
 ## Day-zero checklist
 
