@@ -6,12 +6,49 @@ import json
 import re
 
 
-def extract_json(text: str) -> dict | None:
-    """Extract the first JSON object from prose-wrapped text.
+def _first_json_object_span(text: str) -> tuple[int, int] | None:
+    """Return ``(start, end)`` for the first top-level ``{...}`` object.
 
-    Searches for the first `{...}` block in text via regex (greedy match),
-    then attempts to parse it as JSON. Returns None if no match is found
-    or if json.loads fails (including json.JSONDecodeError).
+    String-aware: braces inside JSON strings do not affect depth. Returns
+    ``None`` if no complete object is found.
+    """
+    start = text.find("{")
+    if start < 0:
+        return None
+
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return start, i + 1
+            if depth < 0:
+                return None
+    return None
+
+
+def extract_json(text: str) -> dict | None:
+    """Extract the first JSON object from prose-wrapped or over-generated text.
+
+    Prefer brace-depth scanning (string-aware) so trailing chat continuation
+    after a complete object — e.g. ``}<|endoftext|>Human: ...`` — does not
+    poison ``json.loads``. Falls back to a non-greedy regex only if depth
+    scanning finds nothing.
 
     Never raises.
 
@@ -21,11 +58,23 @@ def extract_json(text: str) -> dict | None:
     Returns:
         The parsed dict if a valid JSON object is found, None otherwise.
     """
+    if not text or not isinstance(text, str):
+        return None
+
     try:
-        match = re.search(r"\{.*\}", text, re.DOTALL)
+        span = _first_json_object_span(text)
+        if span is not None:
+            start, end = span
+            obj = json.loads(text[start:end])
+            if isinstance(obj, dict):
+                return obj
+
+        # Fallback: non-greedy match (still may fail on nested objects).
+        match = re.search(r"\{.*?\}", text, re.DOTALL)
         if not match:
             return None
-        return json.loads(match.group(0))
+        obj = json.loads(match.group(0))
+        return obj if isinstance(obj, dict) else None
     except (json.JSONDecodeError, ValueError, TypeError):
         return None
 

@@ -1,4 +1,5 @@
 # Segmentation transfer — reframing enriched↔HTR alignment
+<!-- doc-status: active -->
 
 **Status:** proposed (29 Aug 2026) · **Supersedes:** the entity-discrimination framing of tier-3 alignment
 **Scope:** inventories 3186–3189 (1626–1630); extensible to further inventories, not the whole corpus

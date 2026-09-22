@@ -1,7 +1,55 @@
 # republic_ner_matching — implementation plan
+<!-- doc-status: active -->
+<!-- canonical-goal -->
 
-Fine-tune GysBERT for multi-class NER on 1626-1630 Dutch Republic resolutions.
-Recognize both place names (LOC-annotations) and delegate names (PER-annotations).
+> **Separate the resolutions.** For most of the ~19,120 enriched resolutions (1626-1630 editorial
+> summaries), determine where that resolution begins and ends in the HTR transcription, expressed
+> in session-relative archival terms — a verified archival address, not a possibly-drifted session
+> number. Publish it as a reviewable table where every placement carries a confidence tier and its
+> evidence, and where the *unplaced* parts are characterised rather than merely absent.
+>
+> Framing: patchy alignment, after ancient DNA. Damaged, fragmented aDNA matched against a known
+> reference yields patchy alignment — that is the expected shape of a good result, not a failure.
+> A confidently placed resolution is an aligned read; several resolutions sharing one paragraph is
+> a multi-mapping read (filter, don't count as progress); an unplaced resolution is an uncovered
+> region, and uncovered regions are informative — they must be classified, not merely omitted.
+>
+> **Acceptance criteria** (`docs/DECISIONS.md`, 2026-09-22 "Backfill acceptance-criteria
+> decision"): a resolution is **separated** iff its start paragraph is shared with no other
+> resolution on its date and its extent is ≤ 3 paragraphs. The paragraph-level ceiling is
+> **11,644 / 19,120 = 60.9%** (pigeonhole: a day with *n* paragraphs can separate at most *n*
+> resolutions; 535 days have no HTR at all), not physics — part of it is recoverable by
+> correcting date/session drift rather than better segmentation. Targets are stated against that
+> ceiling, never against a notional 100%. Full metric-tier breakdown (which channel each
+> diagnostic feeds, and what's proposed but not yet computed): `docs/METRICS.md`.
+>
+> | | criterion | baseline (2026-09-22) |
+> |---|---|---|
+> | Global, primary | ≥ 50% of ceiling separated (≥ 5,822) | 1,961 = 16.8% of ceiling |
+> | Global, stretch | ≥ 75% of ceiling (≥ 8,733) | — |
+> | Global, spans | ≥ 6 qualifying spans totalling ≥ 180 days | measured 2026-09-22: 0 spans @30d (gap 0/1/2; longest 6/9/9) |
+> | Local | any inventory-year reaching ≥ 50% of its own ceiling is banked as done and used as the worked example to extend from | — |
+>
+> A **span** is a run of consecutive solid session-days (≥ 50% of that day's resolutions separated)
+> tolerating ≤ 1 non-solid day; it qualifies at ≥ 30 calendar days. Report spans at gap ∈ {0,1,2}
+> always — the tolerance parameter dominates the result. Report separation as a share of all 19,120,
+> of the 13,530 HTR-reachable, and of the 11,644 ceiling, every time — never a single number that a
+> favorable denominator could flatter.
+>
+> This supersedes the original GysBERT NER fine-tuning goal (see "Overview"/"Phases" below,
+> retired): that track would train on spans from the same ~50-55%-recall tagger its own training
+> data comes from and so cannot close its own recall gap (session note, 2026-09-18), and its output
+> is unrelated to this goal's segmentation-transfer work (`docs/DECISIONS.md`, 2026-09-21). Also
+> supersedes "session attribution" (77.1%) and "paragraph attribution" (11.6%) as headline numbers,
+> both measured this session and rejected: session attribution restates which calendar day a
+> resolution falls on (all 1,138 dated sessions assign every resolution on a date the *same* session
+> id — 14,734 row-level "attributions" encode only 1,053 distinct sessions), and paragraph
+> attribution counts a resolution claiming a 99-paragraph span as a hit.
+>
+> Every other document's goal-bearing text should point here rather than restate it — see
+> `docs/APPROACH_OVERVIEW.md` and `README.md`. Every document and top-level section here carries a
+> `<!-- doc-status: active|future|sidelined|retired -->` marker; `uv run python scripts/svz.py doctor`
+> checks that no non-active section asserts a conflicting goal and that this marker is unique.
 
 **Multiple tracks below compete for the same session budget.** Before picking one up, run
 `uv run python scripts/svz.py review` (or read [docs/STATE.md](docs/STATE.md)) and follow
@@ -11,6 +59,7 @@ close out. Durable stop/continue decisions are logged in [docs/DECISIONS.md](doc
 ---
 
 ## Workspace Standard Alignment & Organization (Completed)
+<!-- doc-status: active -->
 
 Aligned with `dighum_template` guidelines via sync tool:
 
@@ -24,6 +73,7 @@ Aligned with `dighum_template` guidelines via sync tool:
 ---
 
 ## CURRENT Approach: Segmentation transfer (29 Aug 2026)
+<!-- doc-status: active -->
 
 > **Canonical document: [docs/SEGMENTATION_TRANSFER.md](docs/SEGMENTATION_TRANSFER.md).**
 > This reframes the alignment problem and supersedes the entity-discrimination framing of tier-3
@@ -915,6 +965,33 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   fresh look at what else could close the 79/1,059 severe-collapse days, since
   group-C phrase evidence is now a tested dead end for that specific problem.
 
+  **Session 2026-09-22 (`session_date_verified` built).** Picked `session_date_verified`
+  over the severe-collapse diagnostic (user direction — the latter was the recommended
+  option given anchor supply's already-established non-bindingness, but not the chosen
+  one). Built the third Group-D channel in
+  [scripts/s6b_anchor_harvest.py](../../scripts/s6b_anchor_harvest.py)
+  (`session_id_char_starts`/`session_date_verified_rows`, 4 new tests, 20/20 passing):
+  one anchor per flat session on a day's axis whose content-fingerprint match
+  (`s6b_session_fingerprint_match`) uniquely identifies which raw archival session it
+  actually is, positioned at that session's first char offset within the day's axis and
+  keyed by `flat_session_id` rather than `resolutions_flat`'s own possibly-drifted
+  session-number label — the open design question the 2026-09-21 S4f session flagged
+  before this could be built. Weighted 4.0 (group D, on par with the validated-but-derived
+  `session_day_find`, below the trivially-true `session_boundary` sentinel at 5.0).
+
+  9-day smoke window (1626-01-01..01-10, `--start`/`--end`): **7 anchors / 7 of 9 days**,
+  matching the fingerprint match dataset's ~70% overall match rate. `data_io.check` and
+  the full test suite clean. **Not run corpus-wide this session** — the smoke run
+  overwrote the local (gitignored, regenerable) `output/s6b_anchor_harvest.jsonl` that
+  previously held the 2026-09-21 corpus-wide result (247,914 rows); that file now only
+  covers the 9-day smoke window until the next full run. **Next:** hand
+  `uv run python -m scripts.s6b_anchor_harvest` (full period, no args needed, ~32 min
+  parallelized) to the user, read `session_date_verified`'s corpus-wide density off the
+  output summary, then decide whether it's worth folding into weight fitting (S6e) or
+  whether — per the earlier `session_day_find` precedent and the standing S6 Step 1 /
+  anchor-supply findings — it's confirmed low-yield and the severe-collapse angle should
+  be picked up instead.
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,
@@ -926,6 +1003,7 @@ TRIFECTA layering (reduced to its evaluation discipline only); entity-noise simu
 ---
 
 ## NEW Approach: Semantic & LLM-Assisted Resolution Alignment
+<!-- doc-status: retired -->
 
 Enriched resolutions represent concise editorial **summaries** (abstracts of decisions, attendees, petitions) while flat resolutions are **full early-modern Dutch transcriptions**. To leverage LLMs and dense semantics effectively without incurring prohibitive cloud costs or hallucination risks, a two-tier hybrid architecture is implemented:
 
@@ -987,6 +1065,7 @@ python build_alignment_new.py --use-embeddings --use-llm-judge --llm-model llama
 ---
 
 ## Overview
+<!-- doc-status: retired -->
 
 **Inputs:**
 
@@ -1008,6 +1087,7 @@ python build_alignment_new.py --use-embeddings --use-llm-judge --llm-model llama
 ---
 
 ## Phases
+<!-- doc-status: retired -->
 
 ### Phase 1 — Data preparation ✅
 
@@ -1128,6 +1208,7 @@ Final checks:
 ---
 
 ## Pilot plan — session/date reconciliation
+<!-- doc-status: retired -->
 
 The current export/reconciliation work should be treated as a pilot, not a full rewrite. The goal is to test whether the available source material is sufficient to align enriched resolutions, flat resolutions, and session text well enough for manual comparison.
 
@@ -1170,6 +1251,7 @@ The current export/reconciliation work should be treated as a pilot, not a full 
 ---
 
 ## Track B — Approaches from `huygens_name_index/names`
+<!-- doc-status: future -->
 
 **Source**: `/Users/rikhoekstra/develop/huygens_name_index/names`
 
@@ -1342,6 +1424,7 @@ Three graduated improvements, in increasing complexity:
 ---
 
 ## Track C — Structured span matching built on `fuzzy-search`
+<!-- doc-status: future -->
 
 ### Motivation
 
@@ -1529,6 +1612,7 @@ context_phrases = [
 ---
 
 ## Entity Resolution Fix (persons/orgs/places, `build_alignment_new.py`) ✅
+<!-- doc-status: active -->
 
 Partial implementation of Track B/C's "candidate shortlist, then verify" design,
 scoped to the 1626-1630 window. Plan: `/Users/rikhoekstra/.claude/plans/short-resolutions-is-fine-calm-iverson.md`.
@@ -1592,6 +1676,7 @@ not accessed).
 ---
 
 ## Step 1 — N-status gap diagnostic (`analyze_n_status_gaps.py`) ✅
+<!-- doc-status: active -->
 
 Full detail in `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`. The doc's own
 stated order gates the resolution-level concordance assembly on this step
@@ -1618,6 +1703,7 @@ accessor on a `Period`-dtype `Series`, and an offset-search order bug
 actually nearest -- fixed to sort by `(abs(offset), offset)`).
 
 ## Step 2 — Candidate scoring prototype for `A`/`X`-status rows (7 rows) ✅
+<!-- doc-status: active -->
 
 Full detail in `docs/CANDIDATE_SCORING_AND_CONCORDANCE.md`. Built
 `scripts/s4_candidate_scoring.py` (`score_candidates`/`score_ledger_row`,
@@ -1705,6 +1791,7 @@ inventories at this larger scale -- still not started.
 ---
 
 ## HOE Classifier (`hoe_classify.py`) ✅
+<!-- doc-status: sidelined -->
 
 ### Motivation
 
@@ -1782,6 +1869,7 @@ Priorities for reduction:
 ---
 
 ## Additional data sources
+<!-- doc-status: active -->
 
 ### `abbrd` — Authoritative delegate biographical index
 
@@ -1909,6 +1997,7 @@ the corrections list is fetched directly from MySQL.
 ---
 
 ## Data paths (defaults)
+<!-- doc-status: active -->
 
 | Logical name                                     | Path                                                          | Phase   |
 | ------------------------------------------------ | ------------------------------------------------------------- | ------- |
@@ -1919,6 +2008,12 @@ the corrections list is fetched directly from MySQL.
 | `s4_session_date_mapping_review_ui`            | `output/s4_session_date_mapping_review_ui.html`             | explore |
 | `s4_session_date_mapping_decisions`            | `output/s4_session_date_mapping_decisions.json`             | semi    |
 | `s4_session_date_mapping_predictions_approved` | `output/s4_session_date_mapping_predictions_approved.jsonl` | semi    |
+| `short_resolution_llm_sample_manifest`         | `output/short_resolution_llm_sample_manifest.jsonl`         | semi    |
+| `metrics_nihil_actum_invariant`                | `output/metrics_nihil_actum_invariant.jsonl`                | semi    |
+| `metrics_ke_drift_diagnostic`                  | `output/metrics_ke_drift_diagnostic.jsonl`                  | semi    |
+| `metrics_separation_span_table`                | `output/metrics_separation_span_table.jsonl`                | semi    |
+| `metrics_span_gap_map`                         | `output/metrics_span_gap_map.jsonl`                         | semi    |
+| `metrics_bottleneck_diagnostic`                | `output/metrics_bottleneck_diagnostic.jsonl`                | semi    |
 
 S4a completed 2026-09-01: registered both outputs in `data_manifest.toml` and
 documented the canonical key, ledger schema, and status semantics in
@@ -2182,6 +2277,7 @@ See [docs/DATA.md](docs/DATA.md) for tier layout. Legacy table:
 | schutte NL→buitenland         | `/Users/rikhoekstra/Nextcloud2/Republic/gekoppelde_resources/schutte-bewerkingen/schutte_nl_in_buitenland.parquet` |
 
 ## Dashboard
+<!-- doc-status: active -->
 
 - Project dashboard: docs/dashboard.md
 

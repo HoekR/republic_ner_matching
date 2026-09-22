@@ -467,6 +467,106 @@ def review(args: argparse.Namespace) -> None:
     print("\nSee docs/ITERATION_POLICY.md before switching tracks or recording a cutoff (`svz.py decision ...`).")
 
 
+DOC_STATUSES = {"active", "future", "sidelined", "retired"}
+DOC_STATUS_RE = re.compile(r"<!--\s*doc-status:\s*(active|future|sidelined|retired)\s*-->", re.IGNORECASE)
+CANONICAL_GOAL_MARKER = "<!-- canonical-goal -->"
+GOAL_TRIGGER_RE = re.compile(
+    r"project goal|goal of this project|the goal is to|^\s*>?\s*\*{0,2}goal:\*{0,2}",
+    re.IGNORECASE | re.MULTILINE,
+)
+# Deliberately broad and therefore imprecise: neither actual historical conflict this check was
+# built to catch (PLAN.md's NER header, APPROACH_OVERVIEW.md's "Goal: map...") used consistent
+# "goal" phrasing, so a trigger narrow enough to avoid ever matching a scoped local "Goal: fix X"
+# label (common step-doc convention, e.g. docs/CANDIDATE_SCORING_AND_CONCORDANCE.md's per-step
+# goals) would also miss real project-level restatements. Rather than silently narrowing the
+# regex until it stops finding real problems, false positives are resolved explicitly per
+# document with LOCAL_GOAL_EXEMPT_MARKER -- an auditable choice, not a quieter heuristic.
+LOCAL_GOAL_EXEMPT_MARKER = "<!-- local-goal-ok -->"
+# Auto-rendered by `render()`; a manual doc-status marker would be meaningless (and at risk of
+# being clobbered) on a file nothing hand-edits.
+CONFORMANCE_EXCLUDED_DOCS = {"docs/STATE.md"}
+
+
+def parse_doc_status(text: str) -> str | None:
+    match = DOC_STATUS_RE.search(text)
+    return match.group(1).lower() if match else None
+
+
+def has_canonical_goal_marker(text: str) -> bool:
+    return CANONICAL_GOAL_MARKER in text
+
+
+def contains_goal_assertion(text: str) -> bool:
+    if LOCAL_GOAL_EXEMPT_MARKER in text:
+        return False
+    return bool(GOAL_TRIGGER_RE.search(text))
+
+
+def split_plan_sections(text: str) -> list[tuple[str, str]]:
+    """Split PLAN.md into (heading, section_text_including_heading) at each `## ` heading.
+
+    Any text before the first `## ` heading (the file's own header/title) is returned as its
+    own ("<preamble>", ...) entry so it is still checked.
+    """
+    lines = text.splitlines(keepends=True)
+    sections: list[tuple[str, str]] = []
+    current_heading = "<preamble>"
+    current_lines: list[str] = []
+    for line in lines:
+        if line.startswith("## "):
+            sections.append((current_heading, "".join(current_lines)))
+            current_heading = line[3:].strip()
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    sections.append((current_heading, "".join(current_lines)))
+    return [(heading, body) for heading, body in sections if body.strip()]
+
+
+def check_document(name: str, text: str) -> list[str]:
+    """Conformance problems for one doc or doc-section: (1) no doc-status marker, (2) asserts a
+    project goal while not both non-active and outside the canonical location."""
+    problems: list[str] = []
+    status = parse_doc_status(text)
+    if status is None:
+        problems.append(f"{name}: no doc-status marker (expected <!-- doc-status: {{{'|'.join(sorted(DOC_STATUSES))}}} -->)")
+    if has_canonical_goal_marker(text):
+        return problems
+    if contains_goal_assertion(text) and status in (None, "active"):
+        problems.append(f"{name}: asserts a project goal outside the canonical location while active")
+    return problems
+
+
+def doc_conformance_problems(repo_root: Path | None = None) -> list[str]:
+    root = repo_root or Path(".")
+    problems: list[str] = []
+    canonical_hits = 0
+
+    candidates = [root / "README.md", root / "PLAN.md", *sorted((root / "docs").rglob("*.md"))]
+    for path in candidates:
+        if not path.exists():
+            continue
+        rel = str(path.relative_to(root)) if repo_root else str(path)
+        if rel in CONFORMANCE_EXCLUDED_DOCS:
+            continue
+        text = path.read_text(encoding="utf-8")
+        if rel == "PLAN.md":
+            for heading, body in split_plan_sections(text):
+                if has_canonical_goal_marker(body):
+                    canonical_hits += 1
+                problems.extend(check_document(f"PLAN.md § {heading}", body))
+        else:
+            if has_canonical_goal_marker(text):
+                canonical_hits += 1
+            problems.extend(check_document(rel, text))
+
+    if canonical_hits != 1:
+        problems.append(
+            f"expected exactly one canonical goal marker ({CANONICAL_GOAL_MARKER}) across all docs, found {canonical_hits}"
+        )
+    return problems
+
+
 def doctor(_: argparse.Namespace) -> None:
     state = load_state()
     problems: list[str] = []
@@ -490,6 +590,7 @@ def doctor(_: argparse.Namespace) -> None:
                 f"Metric {metric_entry.get('name')!r} has scope {metric_entry.get('scope')!r} "
                 "that does not match any task id (or <task_id>-<subid> pattern)"
             )
+    problems.extend(doc_conformance_problems())
     if problems:
         for problem in problems:
             print(f"ERROR: {problem}", file=sys.stderr)

@@ -1,4 +1,5 @@
 # Observable Framework bridge (deferred plan)
+<!-- doc-status: active -->
 
 **Status:** deferred — architecture sketched; wait for a concrete Observable viz idea before building  
 **Applies to:** DH projects with `data_io` + manifest-backed pipelines (pilot: `gnb_analysis` RPP)  

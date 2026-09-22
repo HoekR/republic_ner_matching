@@ -1,4 +1,5 @@
 # Project wisdom (portable topics)
+<!-- doc-status: active -->
 
 Copied from `dighum_template/wisdom/topics/` (Portable: yes).
 

@@ -1,4 +1,5 @@
 # Pandas dates before 1678
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** all DH projects (early modern corpus)  

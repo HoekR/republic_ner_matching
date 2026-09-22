@@ -1,4 +1,5 @@
 # Local config files, not environment variables
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** all DH projects  

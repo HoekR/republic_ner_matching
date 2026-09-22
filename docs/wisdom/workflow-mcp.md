@@ -1,4 +1,5 @@
 # workflow MCP server
+<!-- doc-status: active -->
 
 **Status:** stable (v1)  
 **Applies to:** multi-step DH projects with `PLAN.md` + `plans/steps/`  

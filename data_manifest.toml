@@ -445,3 +445,66 @@ path = "republic_ner_matching/output/s4_llm_split_poc.jsonl"
 phase = "semi"
 description = "Few-shot local-LLM (Ollama) split-point predictions on the 22 bundled gold positions from s4_bundled_split_poc's gold set, scored with the same tol50/150 harness -- tests whether reading raw text directly beats the entity-count-heuristic ceiling (0/27 tol50, 9/27 tol150 baseline; 3/27 tol50, 11/27 tol150 with dictionary augmentation)"
 parent = "boundary_gold_paragraph_axis"
+
+[datasets.short_resolution_llm_sample_manifest]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_llm_sample_manifest.jsonl"
+phase = "semi"
+description = "Frozen train/dev/test sample manifest for the short-resolution LLM alignment side plan: session-day split, HTR candidate units with position/length/segmentation/anchor strata and deterministic formula/alignment signals. Evaluation-only; does not alter production concordance."
+parent = "enriched_resolutions_1626_1630"
+
+[datasets.short_resolution_baseline_report]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_baseline_report.jsonl"
+phase = "semi"
+description = "Deterministic baseline scores for short-resolution LLM alignment: per frozen dev/test candidate, alignment tier/overlap, formula signals (open/close), positional score, and combined formula/entity score. Evaluation-only; baseline must be reproducible across comparison runs."
+parent = "short_resolution_llm_sample_manifest"
+
+[datasets.short_resolution_structured_summaries]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_structured_summaries.jsonl"
+phase = "semi"
+description = "Step 3 experiment-only structured summaries: per frozen candidate, semantic evidence (kind, actor, subject, action, is_receipt, is_opening, is_continuation, evidence_quote, uncertainty) with provenance (model, prompt_version, temperature, parse success/error, gate pass/fail). Evaluation-only; does not alter production concordance."
+parent = "short_resolution_llm_sample_manifest"
+
+[datasets.short_resolution_ranking_report]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_ranking_report.jsonl"
+phase = "semi"
+description = "Step 4 candidate-ranking report with LLM choices, baseline rank, confidence, evidence quote, and gold outcome. Evaluation-only; does not alter production concordance."
+parent = "short_resolution_llm_sample_manifest"
+
+[datasets.metrics_nihil_actum_invariant]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_nihil_actum_invariant.jsonl"
+phase = "semi"
+description = "Tier V nihil-actum invariant: per-day K_e series from resolution_concordance_1626_1630 plus pass/fail check that nihil_actum days have zero attributed resolutions. Shared parent for Tier D K_e drift and Tier O span table; k_e_signal is 0 on nihil days."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.metrics_ke_drift_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_ke_drift_diagnostic.jsonl"
+phase = "semi"
+description = "Tier D per-day K_e drift diagnostic over the Tier V day series: ranks calendar days whose k_e_signal jumps implausibly vs ±3-day neighbor median. Nihil days excluded from candidates; dates failing the Tier V invariant are blocked."
+parent = "metrics_nihil_actum_invariant"
+
+[datasets.metrics_separation_span_table]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_separation_span_table.jsonl"
+phase = "semi"
+description = "Tier O consecutive-day separation span table: per-day separated_share on Tier V k_e_signal; solid-day runs at gap in {0,1,2}; qualifying spans at 7/14/30/60 calendar-day thresholds (Global, spans uses >=30)."
+parent = "metrics_nihil_actum_invariant"
+
+[datasets.metrics_span_gap_map]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_span_gap_map.jsonl"
+phase = "semi"
+description = "Tier O span-gap geography: classifies non-solid days between consecutive solid days, bridge counterfactuals per interrupter class, and whether S6c severe-collapse days are implicated in Global spans failure."
+parent = "metrics_separation_span_table"
+
+[datasets.metrics_bottleneck_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_bottleneck_diagnostic.jsonl"
+phase = "semi"
+description = "Tier P bottleneck diagnostic: oracle_ceiling (perfect gold anchors) vs real_performance (NW entity anchors) under unmodified interpolate_positions; decision aid for whether Tier A-D evidence or the placement algorithm binds."
+parent = "boundary_gold_sample"

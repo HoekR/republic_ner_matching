@@ -1,4 +1,5 @@
 # Pattern authority (delegate / NER pipelines)
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** Republic attendance, NER matching, RPP  

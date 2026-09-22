@@ -1,4 +1,5 @@
 # Republic NER Matching
+<!-- doc-status: active -->
 
 Named-entity matching and sequence alignment pipeline for Dutch Republic resolutions (1626–1630 and beyond), aligned with Digital Humanities Project Standards (`dighum_template`).
 

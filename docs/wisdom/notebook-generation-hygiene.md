@@ -1,4 +1,5 @@
 # Notebook generation hygiene
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** all DH projects  

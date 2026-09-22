@@ -1,4 +1,5 @@
 # workflow MCP server
+<!-- doc-status: active -->
 
 Cursor MCP tools for **cost-sensitive step-by-step** projects (`PLAN.md` + `docs/steps/`).
 

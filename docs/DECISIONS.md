@@ -1,4 +1,5 @@
 # Decision Log
+<!-- doc-status: active -->
 
 Record durable methodological and architectural decisions here. Keep entries short enough to scan.
 
@@ -210,3 +211,63 @@ Record durable methodological and architectural decisions here. Keep entries sho
 - **Context:** Scoped wiring s4_opening_phrase_candidates evidence into s4_corpus_paragraph_predictions.py's segment_day call (the gap S6c's own docstring named as deferred, not the full ~32-min corpus-wide run). Refactored scripts/s4_paragraph_axis_baseline.py's phrase_hits(axis, phrases) to phrase_hits(axis, searcher) so a searcher can be built once and reused, matching s6b_anchor_harvest.py's pattern -- verified behavior-preserving by diffing s4_paragraph_axis_predictions.jsonl byte-for-byte before/after (identical). Before wiring the corpus predictor's main() to build a searcher and running the expensive full corpus pass, scored the change cheaply on just the 19/21 scoreable gold days using the corpus predictor's own predict()/grouped_enriched()/axis_for_date() codepath (not the separate gold-day baseline pipeline), reusing evaluate_s4_paragraph_axis.py's evaluate_segmentation_session/summarize_segmentation_evaluations harness.
 - **Decision:** Did not wire phrase-hit evidence into the corpus predictor. Reverted the predict()/main() changes back to the unmodified segment_day(...) call with no position_scores, keeping only the phrase_hits refactor in s4_paragraph_axis_baseline.py (a pure, verified-identical efficiency change, independently useful).
 - **Reason:** Measured net negative on the primary metric: tol0 F1 0.644 (no phrase evidence) -> 0.622 (with phrase evidence, via segment_day's position_scores bonus), same 19/21 coverage both ways. tol1/tol2 saw only marginal gains (+0.006 each) and mean Pk/WindowDiff got worse (0.285 -> 0.292). Also tested adding snap_boundaries (the gold-day pipeline's second phrase-evidence stage, which the corpus predictor never had) on top of the DP bonus -- produced IDENTICAL numbers, confirming this is a real result and not an artifact of a half-ported mechanism. Net effect: the phrase bonus sometimes pulls segment_gap's chosen position away from the correct one when several resolutions share a gap, trading exact hits for near-misses. Full test suite and data_io.check remain clean; no corpus-wide run was needed to reach this answer, saving the ~32-minute job for a result that would not have justified it.
+
+## 2026-09-21: Demote tolerance metrics in favor of concordance and collapse counts
+
+- **Context:** Character-level tolerance metrics (tol0/tol150) punish OCR noise/spacing and mask multi-resolution paragraph collapsing.
+- **Decision:** Demote tol0/tol150 character metrics; adopt paragraph-level concordance and max-collapse count per session as primary drivers.
+- **Reason:** Tolerance windows treat discrete paragraphs as continuous space and penalize semantically valid formulaic phrase snaps.
+
+## 2026-09-22: Backfill acceptance-criteria decision (separated definition, ceiling, targets table)
+
+- **Context:** PLAN.md's canonical-goal block (PLAN.md:17) cites 'docs/DECISIONS.md, 2026-09-22' as the source of the separated/ceiling/targets definition, but no such entry existed -- the last entry was 2026-09-21. Discovered while consolidating docs/STATE.md's metrics into docs/METRICS.md.
+- **Decision:** Record here, as stated in PLAN.md: a resolution is separated iff its start paragraph is shared with no other resolution on its date and its extent is <=3 paragraphs. Paragraph-level ceiling: 11,644/19,120 = 60.9%. Targets against that ceiling: Global primary >=50% (>=5,822), Global stretch >=75% (>=8,733), Global spans >=6 qualifying spans totalling >=180 days, Local: any inventory-year reaching >=50% of its own ceiling. Baseline: 1,961 = 16.8% of ceiling.
+- **Reason:** These numbers were manually derived and cited as a decision that was never logged. No script in the repo reproduces the literal figures (11644, 19120, 1961) -- flagged as an open gap in docs/METRICS.md rather than silently left uncited.
+
+## 2026-09-22: Adopt channel-based metric tiers (O/P/A-E/V/X) in docs/METRICS.md
+
+- **Context:** docs/STATE.md's ~59 metric lines were a flat, ungrouped list spanning unrelated tracks (S1 diagnostics, S4 boundary F1, HOE classifier, S6 anchor work, resolution-concordance completeness). User asked whether metrics form a tiered sequence; none existed -- the closest was PLAN.md's acceptance-criteria table, which orders targets, not the other ~46 diagnostics. The project already names anchor-signal channels A-D inline in PLAN.md's S6b session notes (PLAN.md:538-561); user chose to organize the metric tiers by those channels rather than an abstract distance-from-goal scheme.
+- **Decision:** Created docs/METRICS.md defining Tier O (outcome/acceptance criteria, sourced from PLAN.md), Tier P (placement/model, cross-channel), Tier A-D (one per anchor channel; D also covers session-boundary/concordance completeness), Tier E (short-resolution anchors via align_short_resolutions.py, currently empty pending integration into scripts/s6b_anchor_harvest.py), Tier V (validation/consistency invariants -- pass/fail, not coverage), and Tier X (exploratory/historical readings that justified a past decision but are not ongoing tracked signals). Mapped every existing docs/STATE.md metric line into exactly one tier. Also specified four not-yet-computed proposals, all deferred to a following step: a Tier-O consecutive-day span table implementing the existing but never-measured 'Global, spans' criterion; a Tier-D per-day K_e drift-comparison diagnostic; a Tier-V nihil-actum invariant (a nihil_actum day must have zero attributed resolutions); and a Tier-P bottleneck diagnostic that reruns the S6 Step-1 oracle technique to decide whether anchor supply (A-E) or the placement algorithm (P) is the next worthwhile investment -- explicitly scoped as an extension of scripts/svz.py review and docs/ITERATION_POLICY.md, not a new orchestrator or DP solver.
+- **Reason:** A flat metric list could not answer whether results are tiered, how they relate, or whether anything is missing. Channel-based grouping keeps each metric next to the thing that would move it, and matches the project's own aDNA framing (PLAN.md:11-15): Tiers A-D as anchor/seed classes, Tier P as the aligner whose own resolving-power limit is distinct from input quality, Tier O's spans as a coverage-breadth statistic, Tier V as a negative-control check. The bottleneck diagnostic stays a decision aid feeding the existing review mechanism rather than a parallel system, consistent with docs/ITERATION_POLICY.md's 'advisors and editors, not operators' convention. Only documentation changed this session; the four proposals are next-step work.
+
+## 2026-09-22: Tier V day series parents Tier D K_e drift
+
+- **Context:** docs/METRICS.md specified Tier V (nihil-actum invariant) and Tier D (K_e drift) as separate deferred proposals; state.json had V->O->D. User asked to fill V then D and noted D benefits from V.
+- **Decision:** V emits the shared per-day K_e series (k_e_signal=0 on nihil days, invariant_ok gate). D consumes that series only — never rebuilds K_e from concordance. Nihil days are never drift candidates; V violations block those dates. Tier O spans table (still open) should reuse the same V parent.
+- **Reason:** Keeps the negative-control (V) upstream of any drift/span reading so a failed invariant cannot silently inflate Tier D/O numbers; k_e_signal avoids treating the 1-row Nihil Actum formula as ordinary low-K_e work.
+
+## 2026-09-22: Short-resolution Step 4 ranking gate fails — baseline saturates
+
+- **Context:** Held-out test ranking (n=20) after live LLM run: baseline top-1 20/20, LLM top-1 8/20, abstention 7/20. Side-plan gate requires LLM to beat strongest deterministic baseline.
+- **Decision:** Record GATE_FAIL. Do not promote ranking into production concordance or advance Steps 5-6 on ranking grounds. Deterministic baselines remain the comparison ceiling for this sample; next side-plan move is Step 7 revise/close unless a separately scoped opening-signal experiment is justified.
+- **Reason:** Perfect baseline top-1 leaves no measurable LLM gain; abstention and underperformance vs that ceiling cannot clear the documented gate.
+
+## 2026-09-22: Close short-resolution LLM side track (Step 7)
+
+- **Context:** plans/SHORT_RESOLUTION_SIDE_PLAN.md Steps 1-4 done; held-out ranking GATE_FAIL (baseline top-1 20/20, LLM 8/20, abstention 7/20). Promote criteria require beating the strongest deterministic baseline and a gain in low-anchor/merged strata; none met. Steps 5-6 not entered.
+- **Decision:** CLOSE the LLM side track. Do not promote summaries, ranking, or opening signals into concordance, S6c, or any production consumer. Keep short_resolution_* experiment datasets registered for audit only. Leave short-resolution-alignment / Tier E (align_short_resolutions.py formula coverage → wire-in vs retire) open as a separate deterministic decision. Reopen LLM work only with a sample where deterministic baselines fail on held-out ranking.
+- **Reason:** No measurable LLM gain over a saturated deterministic baseline; further prompt tuning cannot clear the documented gate. Closing avoids sinking Steps 5-6 into an already-failed ranking premise while preserving the distinct Tier E orphan question.
+
+## 2026-09-22: Retire Tier E / short-resolution-alignment with the LLM side-track close
+
+- **Context:** Step 7 closed the short-resolution LLM side plan (ranking GATE_FAIL). Tier E (align_short_resolutions.py formula anchors) was still listed as an open orphan: built once, no metric, not in s6b_anchor_harvest. User judged it off the drawing board with the side track.
+- **Decision:** Retire Tier E and mark short-resolution-alignment done/retired. Do not wire formula short-resolution anchors into concordance or S6b harvest without a new measured case that clears a gate against current deterministic channels. Keep the script as historical reference only.
+- **Reason:** The side track was the live evaluation vehicle for short-resolution signal; with it closed and Tier E never measured or consumed, keeping the orphan open invites undirected work. Retirement matches the Step 7 rule against promoting unvalidated short-resolution consumers.
+
+## 2026-09-22: Tier O spans measured; Tier P bottleneck automated
+
+- **Context:** metrics-separation-span-table and metrics-bottleneck-diagnostic were the remaining open items from the 2026-09-22 metrics-tier overhaul.
+- **Decision:** Built scripts/metrics_separation_span_table.py (parent Tier V k_e_signal) and scripts/metrics_bottleneck_diagnostic.py (oracle vs NW real under unmodified interpolate_positions). Global, spans is unmet at gap in {0,1,2}: 0 qualifying >=30d spans (longest 6/9/9). Separated baseline 1961/11644=16.8% reproduced. Bottleneck reading: oracle_coverage=0.263, real_coverage=0.368, recommended_focus=algorithm_redesign (oracle itself below redesign threshold; real>oracle is the known thin-anchor monotone dodge, same pattern as endpoints density).
+- **Reason:** Makes PLAN.md Global, spans and the evidence-vs-algorithm QC move repeatable; confirms placement-model redesign remains the binding constraint under the unmodified interpolator, consistent with the 2026-09-20 S6 Step-1 decision.
+
+## 2026-09-22: Defer severe-collapse autopsy
+
+- **Context:** Tier O unmet (0 spans@30d; longest 6/9/9) with 221 solid days already; 79 severe-collapse days are a disclosed S6c caveat (7.5%), not the binding span-formation problem. session_date_verified now at 71.9% day density.
+- **Decision:** Defer the 79-day severe-collapse autopsy. Next: map why solid days fail to form contiguous >=30d spans; consider S6e weight fitting with session_date_verified. Revisit the 79 only if the span map implicates them.
+- **Reason:** Solid-day geography and dense Group-D anchors are cheaper levers on Global spans than an autopsy of a disclosed low-localization tail; Group-C phrase evidence already failed as a collapse fix.
+
+## 2026-09-22: Span-gap map: reopen severe-collapse autopsy
+
+- **Context:** metrics_span_gap_map on 221 solid days: 171 breaking gaps; dominant interrupter weak_separation (125/171); 43/171=25.15% of breaking gaps contain a severe-collapse day (0 solid days are themselves severe-collapse; recomputed corpus severe-collapse count=92). Bridge counterfactuals: longest after bridging weak_separation=12d, missing_htr=6d, nihil=9d — all still 0 spans@30.
+- **Decision:** Reopen the deferred 79-day severe-collapse autopsy (flag severe_collapse_implicated=True). Do not expect autopsy or single-class bridging alone to meet Global spans: even making all weak_separation transparent caps longest at 12 calendar days. Autopsy is a local quality lever on the dominant interrupter; densifying solids (raising separated_share on weak_separation days) remains necessary for >=30d runs.
+- **Reason:** The 2026-09-22 deferral said revisit the 79 only if the span map implicates them; 25.15% of breaking gaps contain collapse days (threshold 25%) and those gaps are almost all weak_separation-dominated (40/43). Recording the bridge ceiling prevents mistaking the autopsy for a Global-spans unlock.

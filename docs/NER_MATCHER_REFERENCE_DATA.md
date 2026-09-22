@@ -1,4 +1,5 @@
 # NER matcher — cross-repo reference data
+<!-- doc-status: active -->
 
 Reference tables for `.github/agents/republic-ner-matcher.agent.md`, split out so the
 agent prompt doesn't re-send them on every invocation. Load this file only when a task

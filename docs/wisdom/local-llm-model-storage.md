@@ -1,4 +1,5 @@
 # Local LLM model storage
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** projects using local LLM runners (Ollama, LM Studio, mlx-lm)  

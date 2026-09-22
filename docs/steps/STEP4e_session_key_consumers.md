@@ -1,4 +1,5 @@
 # S4e: Session-Key Consumers
+<!-- doc-status: active -->
 
 ## Goal
 

@@ -1,4 +1,5 @@
 # S4 iteration review (temporary)
+<!-- doc-status: sidelined -->
 
 **Status:** working document, not canonical. Captures one iteration's reasoning trail
 in more narrative form than PLAN.md's compressed changelog allows, because this

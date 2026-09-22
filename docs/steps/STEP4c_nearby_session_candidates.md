@@ -1,4 +1,5 @@
 # S4c: Nearby Session Candidates
+<!-- doc-status: active -->
 
 ## Goal
 

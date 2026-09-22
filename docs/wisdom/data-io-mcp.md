@@ -1,4 +1,5 @@
 # data_io MCP server
+<!-- doc-status: active -->
 
 **Status:** stable (v1)  
 **Applies to:** DH projects with vendored `data_io` + `data_manifest.toml`  

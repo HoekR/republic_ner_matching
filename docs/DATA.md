@@ -1,4 +1,5 @@
 # Data layout and manifest
+<!-- doc-status: active -->
 
 This project decouples code from physical storage using `data_manifest.toml` and the `data_io` package. Scripts request datasets by **logical name**; paths resolve at runtime with tier mount checks.
 

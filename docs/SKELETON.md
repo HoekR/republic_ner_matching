@@ -1,4 +1,5 @@
 # Project skeleton for new DH repos
+<!-- doc-status: sidelined -->
 
 Use this repo as the **source of truth** for `data_io`. New projects get `data_io` + `llm_archivist` via the bootstrap script.
 

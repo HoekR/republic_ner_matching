@@ -1,4 +1,7 @@
 # Candidate Scoring Prototype and Resolution-Level Concordance
+<!-- doc-status: active -->
+<!-- local-goal-ok -->
+<!-- ^ each "Goal:" below labels one step's own scoped objective, not a restatement of the project goal -->
 
 **Status:** Steps 1-3 done (17 Sep 2026); Step 4 (concordance implementation
 plan) drafted 17 Sep 2026, sub-step A built 17 Sep 2026, B-F not yet built.

@@ -1,4 +1,7 @@
 # Cost-sensitive agent workflow
+<!-- doc-status: active -->
+<!-- local-goal-ok -->
+<!-- ^ "**Goal:** …" below is a template placeholder field for step-file authors, not a claim -->
 
 **Status:** stable  
 **Applies to:** multi-step DH pipelines (Bayesian stats, publication, long migrations)  

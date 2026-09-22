@@ -1,4 +1,5 @@
 # Approach overview — what exists, what it contributes, how it iterates
+<!-- doc-status: active -->
 
 **Status:** working overview, written 2026-09-19, §1 row 0a / §5 / §6 updated 2026-09-21
 (overlap-builder audit and rebuild swap completed; see `adopt-windowed-overlap-rebuild` in

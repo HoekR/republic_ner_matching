@@ -1,4 +1,5 @@
 # Project Dashboard
+<!-- doc-status: sidelined -->
 
 ## Agent: minimal_agent
 - Status: Draft

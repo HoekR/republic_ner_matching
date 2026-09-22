@@ -1,4 +1,5 @@
 # Iteration policy — deciding what to work on next
+<!-- doc-status: active -->
 
 This project runs several independent-ish research tracks over time (S4 segmentation transfer,
 line-level segmentation, Track B/C name matching, the HOE classifier's `other` bucket, etc.). Each

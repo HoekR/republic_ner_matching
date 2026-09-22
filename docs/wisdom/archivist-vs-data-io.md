@@ -1,4 +1,5 @@
 # data_io vs llm_archivist
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** all DH projects  

@@ -1,4 +1,5 @@
 # S4d: Session Status Heatmap
+<!-- doc-status: active -->
 
 ## Goal
 

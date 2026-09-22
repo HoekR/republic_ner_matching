@@ -1,4 +1,5 @@
 # S4b: Session-Date Ledger
+<!-- doc-status: active -->
 
 ## Goal
 

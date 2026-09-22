@@ -1,4 +1,5 @@
 # Paper figure styling
+<!-- doc-status: active -->
 
 **Status:** stable  
 **Applies to:** Republic DH projects with matplotlib figures  

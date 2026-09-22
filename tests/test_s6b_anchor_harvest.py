@@ -10,7 +10,9 @@ from scripts.s6b_anchor_harvest import (
     read_checkpoint_rows,
     read_done_dates,
     session_boundary_rows,
+    session_date_verified_rows,
     session_day_find_rows,
+    session_id_char_starts,
     surface_match_rows,
     tier1_rows,
 )
@@ -126,6 +128,40 @@ def test_session_day_find_rows_picks_the_most_similar_present_hit_in_window():
     (row,) = session_day_find_rows("1626-01-01", "3185", president_hits, present_hits)
     assert row["payload"]["present_phrase"] == "presentibus"
     assert row["payload"]["present_similarity"] == 0.95
+
+
+def test_session_id_char_starts_groups_resolutions_under_their_session_and_keeps_the_first_start():
+    axis = [
+        {"flat_id": "session-3185-num-1-resolution-1"},
+        {"flat_id": "session-3185-num-1-resolution-1"},  # second paragraph of the same resolution
+        {"flat_id": "session-3185-num-1-resolution-2"},  # second resolution, same session
+        {"flat_id": "session-3185-num-2-resolution-1"},  # next session
+        {"flat_id": "not-a-flat-id"},
+    ]
+    starts = [0, 100, 250, 900, 1200]
+    assert session_id_char_starts(axis, starts) == {"session-3185-num-1": 0, "session-3185-num-2": 900}
+
+
+def test_session_date_verified_rows_anchors_only_uniquely_matched_sessions():
+    session_starts = {"session-3185-num-1": 0, "session-3185-num-2": 900}
+    verified_by_session_id = {
+        "session-3185-num-1": {"raw_session_id": "session-3185-num-2", "raw_num": 2, "offset": 1},
+        # session-3185-num-2 has no entry: unmatched or ambiguous, contributes nothing.
+    }
+    (row,) = session_date_verified_rows("1626-01-01", "3185", session_starts, verified_by_session_id)
+    assert row["channel"] == "session_date_verified"
+    assert row["group"] == "D"
+    assert row["char_position"] == 0
+    assert row["payload"] == {
+        "flat_session_id": "session-3185-num-1",
+        "raw_session_id": "session-3185-num-2",
+        "raw_num": 2,
+        "offset": 1,
+    }
+
+
+def test_session_date_verified_rows_empty_when_nothing_verified():
+    assert session_date_verified_rows("1626-01-01", "3185", {"session-3185-num-1": 0}, {}) == []
 
 
 def test_checkpoint_path_for_uses_a_sibling_checkpoint_suffix(tmp_path):

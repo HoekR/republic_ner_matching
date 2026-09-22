@@ -1,4 +1,5 @@
 # S6b — constraint baseline: known points and counted gaps
+<!-- doc-status: active -->
 
 Window **1626-01-01 → 1630-12-31**, generated from the registered `s6b_known_point_ledger` dataset by [scripts/s6b_constraint_baseline_report.py](../scripts/s6b_constraint_baseline_report.py).
 

@@ -1,4 +1,5 @@
 # data_io MCP server
+<!-- doc-status: active -->
 
 Cursor MCP tools wrapping `data_io` — manifest registry, capped previews, provenance chains.
 

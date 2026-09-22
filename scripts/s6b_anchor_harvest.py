@@ -10,13 +10,15 @@ plus gold boundaries and session sentinels, but STEP_S6_anchor_chain_alignment.m
          (`entity_surface_matches_1626_1630`, `s4_fuzzy_surface_form_scan`)
     C -- formulaic text, independent of the tagger
          (`s2_anchor_phrase_inventory`, `s4_opening_phrase_candidates`)
-    D -- structural / temporal: session start/end sentinels, plus `session_day_find` (an
+    D -- structural / temporal: session start/end sentinels, `session_day_find` (an
          internal "President de Heer X, Present de <weekday> den <date>" session-start
          formula found past a day's own opening, signalling two real sessions merged into
-         one HTR-parsed block -- docs/DECISIONS.md 2026-09-21 S4f review). DAT date hooks
-         and `para_start` are not wired in yet -- no registered dataset maps them to this
-         axis. `session_date_verified` (the other planned Group-D channel, keyed off
-         s6b_session_fingerprint_match) is not built here.
+         one HTR-parsed block -- docs/DECISIONS.md 2026-09-21 S4f review), and
+         `session_date_verified` (one anchor per flat session on the day's axis whose
+         content-fingerprint match, `s6b_session_fingerprint_match`, uniquely identifies
+         which raw archival session it actually is -- independent of resolutions_flat's
+         own possibly-drifted session-number label). DAT date hooks and `para_start` are
+         not wired in yet -- no registered dataset maps them to this axis.
 
 This script builds the literal `(date, inventory, char_position, channel, group, weight,
 payload)` table and reports two things: per-channel anchor density, and an anchor-SUPPLY
@@ -52,6 +54,7 @@ import argparse
 import json
 import multiprocessing
 import os
+import re
 import time
 from collections import Counter, defaultdict
 from collections.abc import Sequence
@@ -80,6 +83,7 @@ FUZZY_SCAN_DATASET = "s4_fuzzy_surface_form_scan"
 S2_PHRASE_DATASET = "s2_anchor_phrase_inventory"
 S4_PHRASE_DATASET = "s4_opening_phrase_candidates"
 CORPUS_PREDICTIONS_DATASET = "s4_corpus_paragraph_predictions"
+SESSION_FINGERPRINT_DATASET = "s6b_session_fingerprint_match"
 OUTPUT_DATASET = "s6b_anchor_harvest"
 
 PHRASE_SEARCH_CONFIG = {"char_match_threshold": 0.85, "ngram_threshold": 0.85, "levenshtein_threshold": 0.85}
@@ -95,6 +99,7 @@ CHANNEL_GROUP = {
     "s4_opening_phrase_candidates": "C",
     "session_boundary": "D",
     "session_day_find": "D",
+    "session_date_verified": "D",
 }
 CHANNEL_WEIGHT = {
     "tier1_entity_nw": 3.0,
@@ -104,6 +109,7 @@ CHANNEL_WEIGHT = {
     "s4_opening_phrase_candidates": 1.5,
     "session_boundary": 5.0,
     "session_day_find": 4.0,
+    "session_date_verified": 4.0,
 }
 
 # STEP_S6 section 2.2, group D: an internal "President de Heer X, Present de <weekday>
@@ -287,6 +293,56 @@ def session_day_find_rows(
     return rows
 
 
+SESSION_ID_PATTERN = re.compile(r"^(session-\d+-num-\d+)-resolution-\d+$")
+
+
+def session_id_char_starts(axis: Sequence[dict[str, Any]], starts: Sequence[int]) -> dict[str, int]:
+    """Character offset at which each flat SESSION (not resolution) first opens on this axis.
+
+    A session-day's axis can hold paragraphs from more than one `resolutions_flat` session
+    (e.g. a nihil-actum date or a `-1`/`+1` ledger fallback), so this groups by the
+    session-id prefix of `flat_id` rather than assuming one session per day.
+    """
+    first: dict[str, int] = {}
+    for position, record in zip(starts, axis):
+        match = SESSION_ID_PATTERN.match(str(record.get("flat_id", "")))
+        if match:
+            first.setdefault(match.group(1), position)
+    return first
+
+
+def session_date_verified_rows(
+    date: str, inventory: str, session_starts: dict[str, int], verified_by_session_id: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """One anchor per flat session on this day's axis whose content-fingerprint match
+
+    (`s6b_session_fingerprint_match`) uniquely identifies which raw archival session it
+    actually is -- independent of `resolutions_flat`'s own possibly-drifted session-number
+    label. STEP_S6 section 2.2, group D. A session with no unique match (unmatched or
+    ambiguous) contributes nothing here; its content is still on the axis, just unverified.
+    """
+    rows = []
+    for session_id, position in session_starts.items():
+        verified = verified_by_session_id.get(session_id)
+        if verified is None:
+            continue
+        rows.append(
+            harvest_row(
+                date,
+                inventory,
+                "session_date_verified",
+                position,
+                {
+                    "flat_session_id": session_id,
+                    "raw_session_id": verified["raw_session_id"],
+                    "raw_num": verified["raw_num"],
+                    "offset": verified["offset"],
+                },
+            )
+        )
+    return rows
+
+
 def density_report(rows: Sequence[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Per-channel: anchor count, days touched, and distinct (date, char_position) positions."""
     counts: Counter[str] = Counter()
@@ -354,6 +410,11 @@ def _harvest_date_worker(date: str) -> list[dict[str, Any]]:
             inventory,
             phrase_hits(axis, starts, _SHARED["searcher_president"]),
             phrase_hits(axis, starts, _SHARED["searcher_present"]),
+        )
+    )
+    rows.extend(
+        session_date_verified_rows(
+            date, inventory, session_id_char_starts(axis, starts), _SHARED["verified_by_session_id"]
         )
     )
     return rows
@@ -435,6 +496,16 @@ def main() -> None:
         if args.start <= date <= args.end:
             fuzzy_by_date[date].append(record)
 
+    verified_by_session_id: dict[str, dict[str, Any]] = {
+        str(record["flat_session_id"]): {
+            "raw_session_id": record["raw_matches"][0],
+            "raw_num": record["raw_num"],
+            "offset": record["offset"],
+        }
+        for record in load(SESSION_FINGERPRINT_DATASET)
+        if record.get("raw_num") is not None
+    }
+
     s2_phrases = [entry["phrase"] for entry in load(S2_PHRASE_DATASET)["opening_phrases_top_20"]]
     s4_candidates = [entry["phrase"] for entry in load(S4_PHRASE_DATASET)[0]["candidates"]]
     searcher_s2 = FuzzyPhraseSearcher(s2_phrases, config=PHRASE_SEARCH_CONFIG)
@@ -450,6 +521,7 @@ def main() -> None:
     _SHARED["searcher_s4"] = searcher_s4
     _SHARED["searcher_president"] = searcher_president
     _SHARED["searcher_present"] = searcher_present
+    _SHARED["verified_by_session_id"] = verified_by_session_id
 
     output_path = resolve(OUTPUT_DATASET)
     checkpoint_path = checkpoint_path_for(output_path)

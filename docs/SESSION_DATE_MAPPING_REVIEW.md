@@ -1,4 +1,5 @@
 # Session-Date Evidence Review UI
+<!-- doc-status: active -->
 
 **Status:** tooling implemented (1 Sep 2026); human review pending
 
