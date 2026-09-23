@@ -506,7 +506,7 @@ parent = "metrics_nihil_actum_invariant"
 tier = "hot"
 path = "republic_ner_matching/output/metrics_ke_kf_window_drift_diagnostic.jsonl"
 phase = "semi"
-description = "Tier D windowed K_e-vs-paragraph_count (K_f proxy) shift-signature diagnostic, scoped to metrics_span_gap_map's longest weak_separation-dominated breaking gaps (not corpus-wide): per flagged window, per-day residual (k_e - paragraph_count), lag-1 autocorrelation, and count of sign-flipping adjacent day pairs, to distinguish a genuine session/date-drift signature (alternating over/under-attribution that would net out under re-mapping) from a uniform capacity shortfall (persistently positive residual, no compensating neighbor)."
+description = "Tier D windowed K_e-vs-paragraph_count (K_f proxy) shift-signature diagnostic, scoped to metrics_span_gap_map's longest weak_separation-dominated breaking gaps (not corpus-wide): per flagged window, per-day residual (k_e - paragraph_count), lag-1 autocorrelation, and count of sign-flipping adjacent day pairs, to distinguish a genuine session/date-drift signature (alternating over/under-attribution that would net out under re-mapping) from a uniform capacity shortfall (persistently positive residual, no compensating neighbor). Also holds a corpus_collision_crosstab record: resolution_concordance_1626_1630's resolved_session_id dates claimed by more than one enriched date, cross-tabbed against Tier O's weak_separation classification corpus-wide (not just the flagged windows) to size how much of the weak_separation population this mapping gap explains."
 parent = "metrics_span_gap_map"
 
 [datasets.metrics_separation_span_table]

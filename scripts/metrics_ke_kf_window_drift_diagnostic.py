@@ -40,6 +40,7 @@ from data_io import load, save_semi_structured
 
 GAP_DATASET = "metrics_span_gap_map"
 PREDICTIONS_DATASET = "s4_corpus_paragraph_predictions"
+CONCORDANCE_DATASET = "resolution_concordance_1626_1630"
 OUTPUT_DATASET = "metrics_ke_kf_window_drift_diagnostic"
 
 MIN_GAP_SESSION_DAYS = 8
@@ -86,6 +87,87 @@ def select_windows(
         if int(g.get("n_nonsolid_session_days") or 0) >= min_gap_session_days
         and str(g.get("dominant_class")) != "adjacent_solid"
     ]
+
+
+def session_collision_dates(concordance_records: list[dict[str, Any]]) -> set[str]:
+    """Enriched dates whose ``resolved_session_id`` is independently claimed by another date.
+
+    ``resolve_row`` (scripts/s4_day_status_resolution.py) picks each ledger row's
+    (i.e. each enriched date's) best-matching session independently, with no
+    constraint that a session can be claimed by only one date -- two different
+    calendar dates can and do resolve to the identical session.
+    """
+    if isinstance(concordance_records, pd.DataFrame):
+        concordance_records = concordance_records.to_dict(orient="records")
+    frame = pd.DataFrame(
+        [
+            {
+                "enriched_date": str(r.get("enriched_date") or "")[:10],
+                "day_status": r.get("day_status"),
+                "resolved_session_id": r.get("resolved_session_id"),
+            }
+            for r in concordance_records
+        ]
+    )
+    resolved = frame.loc[
+        (frame["day_status"] == "resolved_auto") & frame["resolved_session_id"].notna(),
+        ["enriched_date", "resolved_session_id"],
+    ].drop_duplicates()
+    session_date_counts = resolved.groupby("resolved_session_id")["enriched_date"].nunique()
+    collided_sessions = set(session_date_counts[session_date_counts > 1].index)
+    return set(resolved.loc[resolved["resolved_session_id"].isin(collided_sessions), "enriched_date"])
+
+
+def collision_weak_separation_crosstab(
+    day_frame: pd.DataFrame,
+    *,
+    resolved_dates: set[str],
+    collision_dates: set[str],
+) -> dict[str, Any]:
+    """Corpus-wide check: are session-collision dates disproportionately weak_separation?
+
+    Scoped to ``resolved_dates`` (Tier O days with a resolved_auto session) since
+    a collision is only defined among those. Reports the weak_separation rate for
+    collision vs. non-collision dates, and what share of ALL weak_separation days
+    (not just the flagged windows) are collision-involved -- the corpus-wide,
+    population-level version of the per-window shift-signature check above.
+    """
+    work = day_frame.loc[day_frame["enriched_date"].isin(resolved_dates)].copy()
+    work["is_collision"] = work["enriched_date"].isin(collision_dates)
+    work["is_weak_separation"] = work["nonsolid_class"] == "weak_separation"
+
+    n_collision = int(work["is_collision"].sum())
+    n_noncollision = int((~work["is_collision"]).sum())
+    collision_weak_rate = (
+        float(work.loc[work["is_collision"], "is_weak_separation"].mean()) if n_collision else 0.0
+    )
+    noncollision_weak_rate = (
+        float(work.loc[~work["is_collision"], "is_weak_separation"].mean()) if n_noncollision else 0.0
+    )
+    n_weak_separation_total = int(work["is_weak_separation"].sum())
+    n_weak_separation_collision = int((work["is_collision"] & work["is_weak_separation"]).sum())
+    weak_separation_collision_share = (
+        (n_weak_separation_collision / n_weak_separation_total) if n_weak_separation_total else 0.0
+    )
+    return {
+        "record_type": "corpus_collision_crosstab",
+        "n_resolved_auto_days": int(len(work)),
+        "n_collision_days": n_collision,
+        "n_noncollision_days": n_noncollision,
+        "collision_weak_separation_rate": round(collision_weak_rate, 4),
+        "noncollision_weak_separation_rate": round(noncollision_weak_rate, 4),
+        "n_weak_separation_days_total": n_weak_separation_total,
+        "n_weak_separation_days_collision_involved": n_weak_separation_collision,
+        "weak_separation_days_collision_share": round(weak_separation_collision_share, 4),
+        "note": (
+            "collision_weak_separation_rate vs. noncollision_weak_separation_rate is the "
+            "effect-size check (a collision date should be far more likely to be "
+            "weak_separation if the mechanism is real). weak_separation_days_collision_share "
+            "is the population-level answer to 'how much of the weak_separation days "
+            "blocking spans does this one mapping bug explain' -- corpus-wide, not just "
+            "the top-ranked windows above."
+        ),
+    }
 
 
 def residual_series(window_frame: pd.DataFrame) -> pd.Series:
@@ -187,6 +269,10 @@ def summarize_window(
 def build_output_records(
     windows: list[dict[str, Any]],
     predictions: pd.DataFrame,
+    *,
+    day_frame: pd.DataFrame,
+    resolved_dates: set[str],
+    collision_dates: set[str],
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
@@ -198,6 +284,9 @@ def build_output_records(
         summaries.append(summary)
 
     signature_counts = pd.Series([s["shift_signature"] for s in summaries]).value_counts().to_dict()
+    crosstab = collision_weak_separation_crosstab(
+        day_frame, resolved_dates=resolved_dates, collision_dates=collision_dates
+    )
     meta = {
         "record_type": "meta",
         "tier": "D",
@@ -208,6 +297,8 @@ def build_output_records(
         "shift_autocorr_threshold": SHIFT_AUTOCORR_THRESHOLD,
         "shift_complementary_share_threshold": SHIFT_COMPLEMENTARY_SHARE_THRESHOLD,
         "shift_signature_counts": {str(k): int(v) for k, v in signature_counts.items()},
+        "n_session_collision_dates_corpus": len(collision_dates),
+        "weak_separation_days_collision_share": crosstab["weak_separation_days_collision_share"],
         "note": (
             "Scoped to metrics_span_gap_map's longest breaking gaps (>= "
             f"{MIN_GAP_SESSION_DAYS} non-solid session-days), not corpus-wide. "
@@ -219,26 +310,50 @@ def build_output_records(
             "with no compensating neighbor -- evidence of a real capacity/"
             "placement gap, not a mapping error. K_f is proxied by paragraph_count "
             "(HTR axis capacity), the same proxy metrics_weak_separation_headroom_"
-            "diagnostic.py already uses -- not a literal resolutions_flat count."
+            "diagnostic.py already uses -- not a literal resolutions_flat count. "
+            "See the corpus_collision_crosstab record for the population-level "
+            "(not just top-window) version of the session-collision check."
         ),
     }
     records.append(meta)
+    records.append(crosstab)
     records.extend(summaries)
     return records
+
+
+def load_gap_day_frame(gap_records: list[dict[str, Any]]) -> pd.DataFrame:
+    """Tier O per-day rows (nonsolid_class, day_status) from metrics_span_gap_map's output."""
+    if isinstance(gap_records, pd.DataFrame):
+        gap_records = gap_records.to_dict(orient="records")
+    day_frame = pd.DataFrame([r for r in gap_records if r.get("record_type") == "day"])
+    day_frame["enriched_date"] = day_frame["enriched_date"].astype(str).str.slice(0, 10)
+    return day_frame
 
 
 def main() -> None:
     gap_records = load(GAP_DATASET)
     predictions_records = load(PREDICTIONS_DATASET)
+    concordance_records = load(CONCORDANCE_DATASET)
     predictions = load_predictions_frame(predictions_records)
     windows = select_windows(gap_records)
-    records = build_output_records(windows, predictions)
+    day_frame = load_gap_day_frame(gap_records)
+
+    collision_dates = session_collision_dates(concordance_records)
+    resolved_dates = set(day_frame.loc[day_frame["day_status"] == "resolved_auto", "enriched_date"])
+
+    records = build_output_records(
+        windows,
+        predictions,
+        day_frame=day_frame,
+        resolved_dates=resolved_dates,
+        collision_dates=collision_dates,
+    )
     meta = records[0]
 
     path = save_semi_structured(
         records,
         logical_name=OUTPUT_DATASET,
-        parent_sources=[GAP_DATASET, PREDICTIONS_DATASET],
+        parent_sources=[GAP_DATASET, PREDICTIONS_DATASET, CONCORDANCE_DATASET],
         description=(
             "Tier D windowed K_e-vs-paragraph_count shift-signature diagnostic, scoped to "
             "metrics_span_gap_map's longest weak_separation-dominated breaking gaps."
@@ -246,10 +361,18 @@ def main() -> None:
         script=__file__,
     )
 
+    crosstab = next(r for r in records if r["record_type"] == "corpus_collision_crosstab")
     print(f"Wrote {len(records)} records to {path}")
     print(f"n_windows_inspected={meta['n_windows_inspected']}")
     print(f"shift_signature_counts={meta['shift_signature_counts']}")
-    for window in records[1:]:
+    print(
+        f"corpus_collision_crosstab: n_collision_days={crosstab['n_collision_days']} "
+        f"collision_weak_sep_rate={crosstab['collision_weak_separation_rate']} "
+        f"noncollision_weak_sep_rate={crosstab['noncollision_weak_separation_rate']} "
+        f"weak_separation_days_collision_share={crosstab['weak_separation_days_collision_share']} "
+        f"({crosstab['n_weak_separation_days_collision_involved']}/{crosstab['n_weak_separation_days_total']})"
+    )
+    for window in (r for r in records if r["record_type"] == "window"):
         print(
             f"  {window['left_solid_date']}..{window['right_solid_date']} "
             f"(nonsolid={window['n_nonsolid_session_days']}, dominant={window['dominant_class']}): "

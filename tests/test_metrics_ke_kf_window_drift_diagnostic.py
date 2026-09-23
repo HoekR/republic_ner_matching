@@ -7,11 +7,13 @@ import pandas as pd
 from scripts.metrics_ke_kf_window_drift_diagnostic import (
     build_output_records,
     classify_shift_signature,
+    collision_weak_separation_crosstab,
     complementary_adjacent_pairs,
     lag1_autocorrelation,
     load_predictions_frame,
     residual_series,
     select_windows,
+    session_collision_dates,
     summarize_window,
 )
 
@@ -103,6 +105,40 @@ def test_summarize_window_alternating_synthetic_window():
     assert summary["n_complementary_adjacent_pairs"] >= 3
 
 
+def test_session_collision_dates_finds_shared_session():
+    concordance = [
+        {"enriched_date": "1627-03-27", "day_status": "resolved_auto", "resolved_session_id": "s-55"},
+        {"enriched_date": "1627-03-29", "day_status": "resolved_auto", "resolved_session_id": "s-55"},
+        {"enriched_date": "1627-03-28", "day_status": "resolved_auto", "resolved_session_id": "s-56"},
+        {"enriched_date": "1627-03-30", "day_status": "missing_htr", "resolved_session_id": None},
+        # Duplicate row for the same date (e.g. multiple resolutions that date) must not
+        # itself count as a collision.
+        {"enriched_date": "1627-03-28", "day_status": "resolved_auto", "resolved_session_id": "s-56"},
+    ]
+    assert session_collision_dates(concordance) == {"1627-03-27", "1627-03-29"}
+
+
+def test_collision_weak_separation_crosstab_effect_size():
+    day_frame = pd.DataFrame(
+        [
+            {"enriched_date": "1627-03-27", "day_status": "resolved_auto", "nonsolid_class": "weak_separation"},
+            {"enriched_date": "1627-03-29", "day_status": "resolved_auto", "nonsolid_class": "weak_separation"},
+            {"enriched_date": "1627-03-28", "day_status": "resolved_auto", "nonsolid_class": None},
+            {"enriched_date": "1627-03-30", "day_status": "resolved_auto", "nonsolid_class": None},
+        ]
+    )
+    crosstab = collision_weak_separation_crosstab(
+        day_frame,
+        resolved_dates={"1627-03-27", "1627-03-29", "1627-03-28", "1627-03-30"},
+        collision_dates={"1627-03-27", "1627-03-29"},
+    )
+    assert crosstab["n_collision_days"] == 2
+    assert crosstab["collision_weak_separation_rate"] == 1.0
+    assert crosstab["noncollision_weak_separation_rate"] == 0.0
+    assert crosstab["n_weak_separation_days_total"] == 2
+    assert crosstab["weak_separation_days_collision_share"] == 1.0
+
+
 def test_build_output_records_meta_counts_signatures():
     windows = [
         {
@@ -121,10 +157,28 @@ def test_build_output_records_meta_counts_signatures():
             "reason": [None] * 3,
         }
     )
-    records = build_output_records(windows, predictions)
+    day_frame = pd.DataFrame(
+        [
+            {"enriched_date": "1626-01-10", "day_status": "resolved_auto", "nonsolid_class": None},
+            {"enriched_date": "1626-01-11", "day_status": "resolved_auto", "nonsolid_class": "weak_separation"},
+            {"enriched_date": "1626-01-12", "day_status": "resolved_auto", "nonsolid_class": None},
+        ]
+    )
+    records = build_output_records(
+        windows,
+        predictions,
+        day_frame=day_frame,
+        resolved_dates={"1626-01-10", "1626-01-11", "1626-01-12"},
+        collision_dates={"1626-01-11"},
+    )
     meta = records[0]
     assert meta["record_type"] == "meta"
     assert meta["n_windows_inspected"] == 1
     assert sum(meta["shift_signature_counts"].values()) == 1
-    assert records[1]["record_type"] == "window"
-    assert len(records[1]["days"]) == 3
+    assert meta["n_session_collision_dates_corpus"] == 1
+    crosstab = records[1]
+    assert crosstab["record_type"] == "corpus_collision_crosstab"
+    assert crosstab["n_weak_separation_days_collision_involved"] == 1
+    window = records[2]
+    assert window["record_type"] == "window"
+    assert len(window["days"]) == 3

@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-23 15:31",
+  "last_updated": "2026-09-23 15:40",
   "active_focus": "Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.",
   "tasks": [
     {
@@ -1293,6 +1293,18 @@
         {
           "date": "2026-09-23",
           "value": "0.923"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_collision_weak_separation_share",
+      "label": "Corpus-wide (not window-sampled) cross-tab: resolved_session_id collision dates (153, session claimed by 2+ enriched dates) vs Tier O weak_separation classification, over all 1,138 resolved_auto days. Collision dates are weak_separation 80.4% of the time vs. 32.7% for non-collision dates (2.5x). 123/445 (27.6%) of ALL weak_separation days corpus-wide are collision-involved -- the population-level answer to how much of the span-blocking weak_separation population this one mapping bug explains. Higher is worse (more of the blocking population explained by a fixable mapping bug, which is actually a favorable reading for tractability).",
+      "value": "0.2764",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.2764"
         }
       ]
     }

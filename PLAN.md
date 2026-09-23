@@ -1336,6 +1336,22 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   via `svz.py metric`/`svz.py decision` (2026-09-23, "`resolved_session_id` has no cross-date
   uniqueness constraint").
 
+  **Session 2026-09-23 (corpus-wide, not window-sampled, confirmation).** User pushed back on
+  the 12/13-window heuristic as circumstantial and asked to check specifically against the
+  `weak_separation` days actually blocking spans, not a window sample. Extended
+  `metrics_ke_kf_window_drift_diagnostic.py` with `session_collision_dates()` +
+  `collision_weak_separation_crosstab()` (2 new tests, 12/12 passing) to join **every**
+  `resolved_session_id` collision against the **full** Tier O day series (1,138 `resolved_auto`
+  days), not just the 13 flagged windows.
+
+  **Result: collision dates are `weak_separation` 80.4% of the time vs. 32.7% for non-collision
+  dates (a 2.5× effect size) — and 123/445 (27.6%) of ALL `weak_separation` days corpus-wide are
+  collision-involved.** Over a quarter of the exact population blocking Global spans is explained
+  by this one traced, fixable mapping bug. Recorded via `svz.py metric`/`svz.py decision`
+  (2026-09-23, "Corpus-wide collision-vs-weak_separation crosstab confirms and sizes the
+  mechanism"). Registered output now carries a `corpus_collision_crosstab` record alongside the
+  per-window signatures. Full test suite (476 passed) and `data_io.check` clean.
+
   **This is the answer to "where's the largest expected improvement":** a structural mapping gap
   with a concrete, sized, traced mechanism — not another `position_scores` evidence variant (three
   already failed through the same in-day-placement mechanism) and not the `missing_htr` structural
