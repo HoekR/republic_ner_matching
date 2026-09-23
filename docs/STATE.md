@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-09-23 16:36
+Last updated: 2026-09-23 17:02
 
 ```mermaid
 flowchart TD
@@ -88,7 +88,7 @@ flowchart TD
 
 ## Active Focus
 
-Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.
+Lever (c) tested (cheap gap-candidate-grounded precursor to the full two-sided consolidation table): ties day-level grounding exactly (tol0 0.588=0.588, candidate_id_match_rate=1.0), still below the 0.644 no-evidence baseline. Do not build the full consolidation table. position_scores tuning now exhausted across five variants (blanket/day-grounded/relocated/exact-relocated/candidate-grounded). Next: pick up lever (b) (per-entity role/type weighting in segment_gap's cost function) via explicit go/no-go, or accept 68.8% of ceiling (Global-primary MET) as this track's outcome and switch tracks per svz.py review. Clear chat.
 
 ## Key Intermediate Results & Metrics
 
@@ -185,6 +185,9 @@ Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 pr
 - **s6-anchor-chain-alignment — Corpus-wide resolved_session_id collision dates (post-dedup):** 132
 - **s6-anchor-chain-alignment — Global-primary separated/ceiling after uniqueness policy + full chain re-run:** 0.688
 - **s6-anchor-chain-alignment — metrics_span_gap_map weak_separation day count after uniqueness fix:** 430
+- **s6-anchor-chain-alignment — Per-paragraph .find()-relocated Group-B position_scores, 19/21 scoreable gold days, paragraph tol0 F1. Baseline (no evidence)=0.644, blanket Group-B=0.555, relocated Group-B=0.543 (tol1 0.790->0.773, tol2 0.807->0.840, unchanged from blanket). Relocation did not recover the regression -- a third negative result, not milder than the blanket version. Higher is better, compare against 0.644 baseline not 1.0.:** 0.543
+- **s6-anchor-chain-alignment — Ad hoc exact-substring-only relocation (no fuzzy fallback) of Group-B evidence, same 19/21 gold-day harness, paragraph tol0 F1. Baseline=0.644, blanket Group-B=0.555, fuzzy-relocated=0.543, exact-only-relocated=0.560. Even the most precise possible relocation (exact substring, zero false-positive risk) stays net negative and barely above the noisy fuzzy-relocated variant -- rules out fuzzy-fallback noise as the dominant cause and confirms the granularity-mismatch hypothesis does not by itself explain enough of the regression to recover baseline. Higher is better.:** 0.560
+- **s6-anchor-chain-alignment — Per-gap candidate-grounded Group-B position_scores (grounds a match to only the specific enriched resolution(s) segment_day's DP already knows occupy that gap, not the whole day), 19/21 scoreable gold days, paragraph tol0 F1. candidate_id_match_rate=1.0 (87/87), so the tie below isn't a data-matching artifact. Baseline (no evidence)=0.644, blanket Group-B=0.555, day-grounded=0.588, candidate-grounded=0.588 (tol1 0.790->0.779, tol2 0.807->0.829). Tightening grounding from day-level to gap-candidate-level changes NOTHING at tol0 -- the two grounding granularities are functionally equivalent on this gold set. Higher is better, compare against 0.644 baseline not 1.0.:** 0.588
 
 ## Blockers / Open Questions
 

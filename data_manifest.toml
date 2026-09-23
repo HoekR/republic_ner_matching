@@ -292,6 +292,20 @@ phase = "semi"
 description = "Three-way baseline vs. ungrounded Group-B vs. two-sided-GROUNDED Group-B position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Follows docs/DECISIONS.md 2026-09-23 'entity_surface_matches one-sided new recoveries are almost entirely ungrounded (1.6%)' -- tests whether restricting the bonus to matches resolve_enriched_entities confirms the day's own enriched resolutions actually claim fixes the ungrounded signal's measured regression. Scored at PARAGRAPH granularity, not character-offset tolerance."
 parent = "s4_corpus_paragraph_predictions"
 
+[datasets.s6_group_b_relocated_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_relocated_position_scores_eval.jsonl"
+phase = "semi"
+description = "Three-way baseline vs. blanket Group-B vs. per-paragraph .find()-relocated Group-B position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Follows docs/DECISIONS.md 2026-09-23 'Correction: Group-B and Group-C position_scores regressions are not the same magnitude or mechanism', which traced Group-B's larger regression to entity_surface_matches_1626_1630 being keyed by flat resolution id (every sub-paragraph of a multi-paragraph resolution gets an identical bonus). Relocates each match to only the specific paragraph(s) whose own text contains it (exact substring, fuzz.partial_ratio fallback at the same threshold build_entity_surface_matches.py validated). Scored at PARAGRAPH granularity, not character-offset tolerance."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.s6_group_b_candidate_grounded_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_candidate_grounded_position_scores_eval.jsonl"
+phase = "semi"
+description = "Four-way baseline vs. blanket Group-B vs. day-grounded Group-B vs. GAP-CANDIDATE-grounded Group-B position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Tests lever (c) from docs/state.json's 2026-09-23 next_action (the 'full two-sided entity-overlap consolidation table' direction) cheaply: grounds a match to the specific candidate enriched resolution(s) segment_day's count-constrained DP already knows occupy that gap, not any resolution active the whole day (the already-tested, only-partial day-level grounding, tol0 0.555->0.588). Non-circular -- the DP knows which resolutions fall in a gap before choosing where, from the gap's count alone. Scored at PARAGRAPH granularity, not character-offset tolerance."
+parent = "s4_corpus_paragraph_predictions"
+
 [datasets.s4_entity_density_split_diagnostic]
 tier = "hot"
 path = "republic_ner_matching/output/s4_entity_density_split_diagnostic.jsonl"

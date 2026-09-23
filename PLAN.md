@@ -1405,6 +1405,87 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   headline numbers either, absent new evidence it targets placement quality specifically. Full
   test suite (481 passed, 10 skipped) and `data_io.check` clean; no manifest changes.
 
+  **Session 2026-09-23 (lever (a) picked and tested -- per-paragraph `.find()`-relocated Group-B
+  evidence measured negative).** Of the three untried, already-scoped S6 placement-quality levers
+  greenlit above, user picked (a): fix `entity_surface_matches_1626_1630`'s flat-id-level
+  granularity mismatch (docs/DECISIONS.md 2026-09-23 "Correction" entry -- every sub-paragraph of
+  a multi-paragraph flat resolution shares one identical bonus, the diagnosed dominant cause of
+  Group B's -21 TP regression). Built
+  [scripts/s6_group_b_relocated_position_scores_eval.py](../../scripts/s6_group_b_relocated_position_scores_eval.py)
+  (`group_b_relocated_position_scores`: exact substring, `fuzz.partial_ratio` fallback at
+  `build_entity_surface_matches.py`'s own validated threshold 85, applied per axis paragraph's own
+  text instead of per whole flat-resolution text; 4 new tests, 4/4 passing; registered
+  `s6_group_b_relocated_position_scores_eval` in the manifest), same 19/21 gold-day harness through
+  `predict()`'s real codepath.
+
+  **Result: relocation did not recover the regression.** tol0 F1 0.543 (baseline 0.644, blanket
+  Group-B 0.555) -- slightly *worse* than the blanket version, not milder; tol1 0.773 (blanket
+  0.790, also worse); tol2 0.840 (tied with blanket). An ad hoc exact-only control (fuzzy fallback
+  removed) scored 0.560 -- still net negative, isolating fuzzy-fallback noise as not the cause.
+  Spot-checked 1626-01-08 directly: relocation correctly dropped the bonus on 2/18 paragraphs
+  where the name was genuinely paragraph-level absent, but left it on nearly all others, because
+  most flagged names recur across almost every paragraph of their source resolution (genuinely, or
+  via permissive short-string fuzzy matching) -- not just the one paragraph that originally
+  justified the flat-level match.
+
+  **Reading it:** the granularity-mismatch diagnosis was correct as far as it went (Group B's
+  damage genuinely traces to flat-id-level bonus sharing), but fixing it is not sufficient to
+  recover baseline -- the `position_scores` bonus-vs-even-split mechanism in `segment_gap` itself
+  remains the dominant limiting factor, consistent with the standing conclusion. Lever (a) is now
+  closed as tested; do not re-attempt granularity relocation without new evidence. Recorded via
+  `svz.py metric`/`svz.py decision` (2026-09-23, "Per-paragraph `.find()`-relocated Group-B
+  evidence measured negative"). Full test suite (485 passed, 10 skipped) and `data_io.check`
+  clean. **Next:** pick one of the two remaining greenlit levers -- (b) per-entity role/type
+  weighting in `segment_gap`'s cost function, or (c) the full two-sided entity-overlap
+  consolidation table -- via explicit go/no-go before starting, per
+  [docs/ITERATION_POLICY.md](docs/ITERATION_POLICY.md).
+
+  **Session 2026-09-23 (lever (c) picked -- cheap precursor tested, ties day-level grounding,
+  closes lever (c) without building the full table).** User picked (c): the full two-sided
+  entity-overlap consolidation table. That's a genuine multi-session migration (unify
+  `build_windowed_overlap.py`/`build_per_overlap.py`/`entity_surface_matches`/
+  `s4_fuzzy_surface_form_scan` into one table read by both `align_session`/`lookup` and
+  `build_alignment_new.py::resolve_shared_entities`), so per this cycle's own methodology, ran
+  its cheap gold-day-harness precursor first: does the table's *key property* -- grounding a
+  match to a *specific candidate* resolution's own known entities, not day-level presence --
+  actually beat the already-tested day-level grounding (0.555 -> 0.588), before investing in
+  building it?
+
+  Non-circular test, because `segment_day`'s count-constrained DP already knows which
+  enriched-resolution indices occupy a given gap *before* choosing where within it -- that set
+  is exactly the gap's `count`. Built
+  [scripts/s6_group_b_candidate_grounded_position_scores_eval.py](../../scripts/s6_group_b_candidate_grounded_position_scores_eval.py)
+  (`anchor_backbone` duplicates `segment_day`'s own backbone computation read-only so gap
+  boundaries match exactly; `group_b_candidate_grounded_position_scores` resolves each gap's
+  *own* candidate enriched resolutions' entities via `resolve_enriched_entities` and only
+  grounds the bonus to those -- the tightest two-sided grounding possible without building the
+  full table; 5 new tests, 5/5 passing; registered
+  `s6_group_b_candidate_grounded_position_scores_eval` in the manifest), same 19/21 gold-day
+  harness through `predict()`'s real codepath, all four conditions (baseline / blanket / day-
+  grounded / candidate-grounded) scored side by side in one run.
+
+  **Result: candidate-grounding ties day-level grounding exactly.** tol0 F1 **0.588 = 0.588**
+  (`candidate_id_match_rate=1.0`, 87/87 gap-candidate slots resolved to a real enriched-dataset
+  item, so the tie is not a data-matching artifact); tol1 0.779 vs day-grounded's 0.784
+  (marginally worse); tol2 0.829 vs 0.824 (marginally better). Both stay well below the 0.644
+  no-evidence baseline.
+
+  **Reading it: do not build the full two-sided consolidation table on this evidence.** The
+  table's whole purpose here would be delivering per-candidate-resolution grounding instead of
+  day-level grounding -- and this cheap test already delivers exactly that property, at gold-day
+  scale, and found zero additional headroom. The binding constraint is confirmed (a fifth time)
+  to be the `position_scores` bonus-vs-even-split mechanism itself -- entity presence signals
+  content, not where a resolution *opens* -- not evidence granularity at any level tested so
+  far. `position_scores` tuning is now exhausted across five variants (blanket, day-grounded,
+  relocated, exact-relocated, candidate-grounded). Recorded via `svz.py metric`/`svz.py decision`
+  (2026-09-23, "Gap-candidate-grounded Group-B tested (lever c, cheap form) -- ties day-level
+  grounding exactly, closing position_scores tuning"). Full test suite (491 passed, 10 skipped)
+  and `data_io.check` clean. **Next:** only lever (b) (per-entity role/type weighting in
+  `segment_gap`'s cost function) remains untried from the 2026-09-23 greenlit list -- pick it up
+  via explicit go/no-go, or accept 68.8% of ceiling (Global-primary MET) as this track's outcome
+  and switch tracks per `svz.py review`, per
+  [docs/ITERATION_POLICY.md](docs/ITERATION_POLICY.md).
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,
