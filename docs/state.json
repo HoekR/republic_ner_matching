@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-23 14:41",
+  "last_updated": "2026-09-23 14:55",
   "active_focus": "Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.",
   "tasks": [
     {
@@ -1257,6 +1257,18 @@
         {
           "date": "2026-09-23",
           "value": "0.016"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_grounded_paragraph_tol0_f1",
+      "label": "Grounded Group-B (matches filtered to entities resolve_enriched_entities confirms the day's own enriched resolutions actually claim) position_scores, 19/21 scoreable gold days, paragraph tol0 F1. Baseline (no evidence)=0.644, ungrounded Group-B=0.555, grounded Group-B=0.588 (tol1 0.790->0.784, tol2 0.807->0.824). Grounding recovers ~30% of the regression but does not close it -- still net negative at tol0. 101/181 (56%) of ungrounded Group-B's flagged paragraphs survive day-level grounding, far above the 1.6% grounded share found in the corpus-wide 40-day two-sided sample, because day-level grounding only checks whether SOME enriched resolution that date claims the name, not the specific paragraph's true owner resolution -- a coarser, more permissive check. Higher is better, compare against 0.644 baseline not 1.0.",
+      "value": "0.588",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.588"
         }
       ]
     }

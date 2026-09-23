@@ -1227,6 +1227,47 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   proper `docs/steps/STEP_*.md` guide first given it's multi-session and touches the
   already-accepted-final `alignment_1626_1630.parquet` pipeline.
 
+  **Session 2026-09-23 (grounded Group-B tested — partial recovery, not sufficient to wire
+  in).** Before committing to the full consolidation proposal above, ran the cheap, directly
+  implied test: does filtering Group-B's `position_scores` bonus to grounded matches (per the
+  1.6%-grounded finding) actually fix the regression? Built
+  [scripts/s6_group_b_grounded_position_scores_eval.py](../../scripts/s6_group_b_grounded_position_scores_eval.py)
+  (+ `tests/test_s6_group_b_grounded_position_scores_eval.py`, 3/3 passing; registered
+  `s6_group_b_grounded_position_scores_eval` in `data_manifest.toml`), reusing
+  `resolve_enriched_entities` unmodified: a match's bonus now only counts if its
+  `canonical_name` appears in the *union* of that calendar date's own enriched resolutions'
+  resolved entity sets (places + persons + orgs) — day-level grounding, not yet the tighter
+  per-paragraph/per-candidate grounding the consolidation proposal envisions, since that would
+  need to already know the placement `position_scores` is trying to produce. Same 19/21
+  scoreable gold-day harness as the ungrounded eval.
+
+  Real gold-day result: paragraph tol0 F1 **0.555 (ungrounded) → 0.588 (grounded)**, still below
+  the **0.644** no-evidence baseline; tol1 0.790 → 0.784 (slightly worse); tol2 0.840 → 0.824
+  (still above baseline's 0.807, but worse than ungrounded). **Grounding is a real, partial fix,
+  not a sufficient one — do not wire grounded Group-B into the live predictor on this result.**
+  101/181 (56%) of Group-B's flagged paragraphs on the gold days survive day-level grounding, far
+  above the 1.6% grounded share the corpus-wide 40-day two-sided sample found: day-level
+  grounding only checks whether *some* enriched resolution that date claims the name, not the
+  specific paragraph's true owner resolution, so same-day cross-resolution false positives (a
+  common term like "Holland" genuinely belonging to a *different* resolution that date) still
+  pass through. Recorded via `svz.py metric` (`group_b_grounded_paragraph_tol0_f1=0.588`) and
+  `svz.py decision` (2026-09-23, "Day-level grounding of Group-B partially recovers but does not
+  close the regression").
+
+  **Reading it together with the earlier `svz.py review` recommendation:** `position_scores`
+  evidence tuning for `weak_separation` densification remains a thin, largely-exhausted lever —
+  three variants (Group C, ungrounded Group B, day-grounded Group B) have now been tried through
+  the real predictor codepath and none clears the no-evidence baseline at tol0. The two untried
+  candidates that could plausibly still move it are (a) per-paragraph relocation of Group-B
+  evidence via `.find()` (named two sessions up, not attempted) and (b) the full two-sided
+  consolidation table proposed above — both meaningfully more expensive than this session's cheap
+  gold-day check, so neither should be started without deciding it's worth a multi-session
+  investment first. Per `svz.py review`'s own note this session (`severe_collapse_implicated` is
+  now False, so its reopening rationale no longer holds on refreshed data), the next open item
+  independent of this thread is mapping *why* solid days fail to form contiguous ≥30-day spans
+  (Global-spans bridge ceiling stays 12 calendar days even bridging every `weak_separation` day) —
+  see `docs/ITERATION_POLICY.md` before picking either up.
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,
