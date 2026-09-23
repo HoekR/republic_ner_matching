@@ -502,6 +502,13 @@ phase = "semi"
 description = "Tier D per-day K_e drift diagnostic over the Tier V day series: ranks calendar days whose k_e_signal jumps implausibly vs ±3-day neighbor median. Nihil days excluded from candidates; dates failing the Tier V invariant are blocked."
 parent = "metrics_nihil_actum_invariant"
 
+[datasets.metrics_ke_kf_window_drift_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_ke_kf_window_drift_diagnostic.jsonl"
+phase = "semi"
+description = "Tier D windowed K_e-vs-paragraph_count (K_f proxy) shift-signature diagnostic, scoped to metrics_span_gap_map's longest weak_separation-dominated breaking gaps (not corpus-wide): per flagged window, per-day residual (k_e - paragraph_count), lag-1 autocorrelation, and count of sign-flipping adjacent day pairs, to distinguish a genuine session/date-drift signature (alternating over/under-attribution that would net out under re-mapping) from a uniform capacity shortfall (persistently positive residual, no compensating neighbor)."
+parent = "metrics_span_gap_map"
+
 [datasets.metrics_separation_span_table]
 tier = "hot"
 path = "republic_ner_matching/output/metrics_separation_span_table.jsonl"

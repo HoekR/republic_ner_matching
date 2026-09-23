@@ -1310,6 +1310,47 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   (Global-primary criterion MET at 68.8% of ceiling; stretch criteria not met) as this cycle's
   result. Re-run `svz.py review` before picking either up.
 
+  **Session 2026-09-23 (windowed K_e-vs-K_f drift check — found the concrete mechanism).** User
+  asked where the largest improvement is likely, and proposed a windowed comparison of enriched
+  (`K_e`) vs. HTR-side resolution counts over runs of days — scoped to specific places, not the
+  whole 1,594-day corpus — to check for session/date shift. Not previously built: the closest
+  existing pieces (S1-D1's one-off per-day snapshot; Tier D's `metrics_ke_drift_diagnostic.py`,
+  which compares `K_e` only to its own neighbors, never to the HTR side) don't do this. Built
+  [scripts/metrics_ke_kf_window_drift_diagnostic.py](../../scripts/metrics_ke_kf_window_drift_diagnostic.py)
+  (10/10 tests), scoped to `metrics_span_gap_map`'s 13 longest `weak_separation`-dominated
+  breaking gaps (≥8 nonsolid session-days) — using `paragraph_count` (HTR axis capacity) as the
+  K_f-role proxy already used elsewhere in this project. Per window: per-day residual
+  (`k_e - paragraph_count`), lag-1 autocorrelation, and sign-flipping adjacent-pair share.
+
+  **Result: 12/13 windows show a `shift_candidate` signature** (alternating over-/under-
+  attribution between adjacent days), only 1/13 a uniform capacity shortfall. Spot-checked the
+  #1-ranked window (1627-03-25..1627-04-10) directly against `resolution_concordance_1626_1630`:
+  **1627-03-27 and 1627-03-29 both resolve to the identical session `session-3186-num-55`**
+  (duplicated `paragraph_count=53`); **1627-04-01 and 1627-04-03 both resolve to
+  `session-3186-num-57`** (duplicated `paragraph_count=77`) — two different enriched calendar
+  dates independently mapped to the same underlying HTR session. Traced to source:
+  `scripts/s4_day_status_resolution.py`'s `resolve_row()` picks each ledger row's (i.e. each
+  date's) `top_candidate_session_id` independently, with **no constraint that a session can be
+  claimed by only one date**. Quantified corpus-wide: **68/1,053 resolved sessions (6.5%) are
+  claimed by 2+ enriched dates, 153 dates (~10% of `resolved_auto` dates) involved**. Recorded
+  via `svz.py metric`/`svz.py decision` (2026-09-23, "`resolved_session_id` has no cross-date
+  uniqueness constraint").
+
+  **This is the answer to "where's the largest expected improvement":** a structural mapping gap
+  with a concrete, sized, traced mechanism — not another `position_scores` evidence variant (three
+  already failed through the same in-day-placement mechanism) and not the `missing_htr` structural
+  ceiling (already accepted as final). It's independently corroborated by three things this
+  project already had on hand: the `axis_for_date` `richer_session_ignored` bug (9 cases, fixed
+  2026-09-23), `s6b_session_fingerprint_match`'s 62% drifted-offset rate, and the unreviewed
+  301-row session-date mapping queue. **Next:** decide a uniqueness policy for
+  `resolve_row()`/`top_candidate_session_id` (e.g. best-score-wins per session; the loser falls
+  back to its next candidate or to `uncertain`), re-run the day-status → concordance → Tier O
+  chain, and re-measure `weak_separation` count and Global spans. This is new engineering work
+  (a policy decision + a re-run of a multi-stage pipeline), not a cheap bookkeeping fix — scope it
+  as its own session rather than defaulting into it. Full test suite (474 passed) and
+  `data_io.check` clean; registered `metrics_ke_kf_window_drift_diagnostic` in
+  `data_manifest.toml`.
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,
