@@ -30,6 +30,18 @@ recoverable rows, so no code change was needed here: the existing
 way it picks up an ``A``/``X``/``-1``/``+1``/``?`` one. Rows recoverable only
 past +/-7 days, or scored but not confident, still fall through to
 ``uncertain``/``missing_htr`` as before.
+
+``deduplicate_session_claims`` runs over ``candidate_scores`` before any row
+is resolved, enforcing a cross-date uniqueness policy on
+``top_candidate_session_id`` (docs/DECISIONS.md 2026-09-23 "resolved_session_id
+has no cross-date uniqueness constraint" -- two different enriched dates could
+independently claim the identical HTR session, corroborated as
+disproportionately ``weak_separation``-clustered by the follow-up crosstab
+the same day). Best ``combined_score`` wins each session; a losing row falls
+back to its own next-ranked confident candidate, or to ``low_confidence``
+(-> ``uncertain``) once none remain. ``T``/``E`` ledger-direct rows are out of
+scope for this pass -- they are not ranked candidate picks, and the traced
+collision mechanism is specific to ``resolve_row``'s candidate-scoring branch.
 """
 
 from __future__ import annotations
@@ -70,6 +82,58 @@ def load_approved_mappings() -> dict[str, dict[str, Any]]:
         for record in load_jsonl(path)
         if record.get("review_status") == "approved"
     }
+
+
+def deduplicate_session_claims(candidate_scores: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Enforce a cross-date uniqueness policy on confident candidate-scoring picks.
+
+    ``resolve_row`` used to take each row's ``top_candidate_session_id`` at
+    face value, so two different enriched dates could independently resolve
+    to the identical HTR session (68/1,053 resolved_auto sessions corpus-wide,
+    docs/DECISIONS.md 2026-09-23 "resolved_session_id has no cross-date
+    uniqueness constraint"). Policy: best-``combined_score``-wins per session,
+    globally across all rows; every other row claiming that session falls
+    back to its own next-best candidate in ``ranked_candidates`` (already
+    scored, no rescoring needed), or to ``low_confidence`` (-> ``uncertain``
+    in ``resolve_row``) once it has no confident candidate left.
+
+    Implemented as a single greedy pass over all (row, candidate) pairs
+    sorted by descending score: the highest-scoring pair claims its row and
+    its session; any later pair naming an already-claimed row or session is
+    skipped, which is exactly the fallback-to-next-candidate behaviour since
+    that row's next-ranked pair appears later in the same sorted list.
+    """
+    resolved = {key: dict(record) for key, record in candidate_scores.items()}
+    pairs = [
+        (entry["combined_score"], key, entry)
+        for key, record in resolved.items()
+        for entry in (record.get("ranked_candidates") or [])
+        if not entry.get("low_confidence")
+    ]
+    pairs.sort(key=lambda item: item[0], reverse=True)
+
+    claimed_rows: set[str] = set()
+    claimed_sessions: set[str] = set()
+    had_confident_candidate: set[str] = {key for _, key, _ in pairs}
+    for _, key, entry in pairs:
+        if key in claimed_rows or entry["session_id"] in claimed_sessions:
+            continue
+        claimed_rows.add(key)
+        claimed_sessions.add(entry["session_id"])
+        resolved[key].update(
+            {
+                "top_candidate_session_id": entry["session_id"],
+                "entity_overlap_score": entry["entity_overlap_score"],
+                "dense_similarity_score": entry["dense_similarity"],
+                "combined_score": entry["combined_score"],
+                "low_confidence": False,
+            }
+        )
+
+    for key in had_confident_candidate - claimed_rows:
+        resolved[key].update({"top_candidate_session_id": None, "low_confidence": True})
+
+    return resolved
 
 
 def n_row_recovery_offsets(ledger: pd.DataFrame, known_sessions: set[tuple[int, str]]) -> dict[str, int | None]:
@@ -150,6 +214,7 @@ def main() -> None:
     ledger = load(LEDGER_DATASET)
     approved = load_approved_mappings()
     candidate_scores = {str(record["session_date_key"]): record for record in load(CANDIDATE_SCORES_DATASET)}
+    candidate_scores = deduplicate_session_claims(candidate_scores)
     n_recovery_offsets = n_row_recovery_offsets(ledger, direct_sessions(load(FLAT_DATASET)))
 
     records = [

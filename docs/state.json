@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-23 15:40",
+  "last_updated": "2026-09-23 16:36",
   "active_focus": "Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.",
   "tasks": [
     {
@@ -178,9 +178,9 @@
       "id": "s6-anchor-chain-alignment",
       "title": "S6 -- multi-channel anchor chaining at character coordinates",
       "status": "inprogress",
-      "notes": "2026-09-23: axis_for_date fixed (prefers concordance resolved_auto session over a non-empty same-day stub). Re-ran predictions -> span-gap map -> severe-collapse autopsy in sequence: severe-collapse 92->83 days, breaking-gap share 25.15%->23.39% (below 0.25, severe_collapse_implicated now False), coverage unchanged (1140 predicted/454 missing_htr).",
-      "next_action": "severe_collapse_implicated is now False on refreshed data -- the autopsy's own reopening rationale no longer holds. Re-check docs/ITERATION_POLICY.md / svz.py review for the next track: densifying weak_separation (917 days) toward solid remains the only lever shown to move Global spans (bridge ceiling stays 12 calendar days even after this fix).",
-      "goal": "A segmentation DP that raises predicted-day coverage and/or the 0.828 lumped paragraph-level score on the 947 open gaps, without depending on resolving B/C anchors to enriched indices first (already shown not to be the binding constraint).",
+      "notes": "2026-09-23: session-uniqueness-policy fix (resolve_row dedup) built, measured, and confirmed collision-freeness alone does not move this track's metrics (separated share and weak_separation day count both flat after full chain re-run) -- rules out mapping as the binding constraint, strengthens the case that this is a placement-quality problem. User greenlit the segmentation DP as the next multi-session investment; spans criterion downgraded from readiness gate to non-blocking the same session.",
+      "next_action": "GREENLIT 2026-09-23 (user go/no-go, docs/DECISIONS.md): build the S6 segmentation DP improvement targeting the 947 open gaps' placement quality, not another position_scores weight/evidence variant (Group B/C tuning already measured exhausted). Three untried, already-scoped candidate directions from docs/S4_ITERATION_REVIEW.md / STEP_S6 session notes: (a) per-paragraph .find()-relocated Group-B evidence (fixes the flat-id-vs-paragraph-id granularity mismatch diagnosed 2026-09-23 -- Group B's damage was disproportionate because entity_surface_matches is keyed by flat resolution id, giving every sub-paragraph an identical bonus); (b) per-entity role/type weighting in segment_gap's cost function; (c) the full two-sided entity-overlap consolidation table (grounds a match to a *specific* candidate resolution's own known entities, not just day-level presence -- the day-level grounding partial-fix already showed this direction has real signal, tol0 0.555->0.588). Start by picking one and re-running through s4_corpus_paragraph_predictions.predict()'s real codepath on the 19/21 gold days before any corpus-wide run, same harness as every prior position_scores experiment this cycle.",
+      "goal": "Raise Global-primary separated share from 68.8% toward the 75% stretch bar (718-resolution gap) via better in-gap placement quality on weak_separation days -- NOT via Global-spans contiguity, which is now a non-blocking metric (docs/DECISIONS.md 2026-09-23).",
       "cost": "multi-session",
       "blocks": [
         "S4",
@@ -1299,12 +1299,48 @@
     {
       "scope": "s6-anchor-chain-alignment",
       "name": "session_collision_weak_separation_share",
-      "label": "Corpus-wide (not window-sampled) cross-tab: resolved_session_id collision dates (153, session claimed by 2+ enriched dates) vs Tier O weak_separation classification, over all 1,138 resolved_auto days. Collision dates are weak_separation 80.4% of the time vs. 32.7% for non-collision dates (2.5x). 123/445 (27.6%) of ALL weak_separation days corpus-wide are collision-involved -- the population-level answer to how much of the span-blocking weak_separation population this one mapping bug explains. Higher is worse (more of the blocking population explained by a fixable mapping bug, which is actually a favorable reading for tractability).",
-      "value": "0.2764",
+      "label": "weak_separation share of ALL weak_separation days that are collision-involved (post-dedup)",
+      "value": "0.239",
       "history": [
         {
           "date": "2026-09-23",
-          "value": "0.2764"
+          "value": "0.239"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_collision_dates_count",
+      "label": "Corpus-wide resolved_session_id collision dates (post-dedup)",
+      "value": "132",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "132"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "separated_share_of_ceiling_post_uniqueness_fix",
+      "label": "Global-primary separated/ceiling after uniqueness policy + full chain re-run",
+      "value": "0.688",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.688"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_weak_separation_days_post_uniqueness_fix",
+      "label": "metrics_span_gap_map weak_separation day count after uniqueness fix",
+      "value": "430",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "430"
         }
       ]
     }

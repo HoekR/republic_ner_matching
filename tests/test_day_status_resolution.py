@@ -1,4 +1,4 @@
-from scripts.s4_day_status_resolution import resolve_row
+from scripts.s4_day_status_resolution import deduplicate_session_claims, resolve_row
 
 
 def _row(status_code: str, **overrides):
@@ -130,3 +130,79 @@ def test_non_n_status_with_no_candidate_score_is_uncertain():
 
     assert result["day_status"] == "uncertain"
     assert result["resolution_source"] == "no_confident_source"
+
+
+def _candidate(session_id: str, combined_score: float, low_confidence: bool = False) -> dict:
+    return {
+        "session_id": session_id,
+        "entity_overlap_score": combined_score,
+        "dense_similarity": 0.0,
+        "combined_score": combined_score,
+        "low_confidence": low_confidence,
+    }
+
+
+def test_deduplicate_session_claims_leaves_non_colliding_picks_untouched():
+    candidate_scores = {
+        "key-1": {"ranked_candidates": [_candidate("session-a", 10.0)]},
+        "key-2": {"ranked_candidates": [_candidate("session-b", 5.0)]},
+    }
+
+    result = deduplicate_session_claims(candidate_scores)
+
+    assert result["key-1"]["top_candidate_session_id"] == "session-a"
+    assert result["key-2"]["top_candidate_session_id"] == "session-b"
+    assert result["key-1"]["low_confidence"] is False
+    assert result["key-2"]["low_confidence"] is False
+
+
+def test_deduplicate_session_claims_higher_score_wins_the_shared_session():
+    candidate_scores = {
+        "key-low": {"ranked_candidates": [_candidate("session-x", 4.0)]},
+        "key-high": {"ranked_candidates": [_candidate("session-x", 9.0)]},
+    }
+
+    result = deduplicate_session_claims(candidate_scores)
+
+    assert result["key-high"]["top_candidate_session_id"] == "session-x"
+    assert result["key-high"]["combined_score"] == 9.0
+
+
+def test_deduplicate_session_claims_loser_falls_back_to_next_confident_candidate():
+    candidate_scores = {
+        "key-low": {
+            "ranked_candidates": [_candidate("session-x", 4.0), _candidate("session-y", 3.0)]
+        },
+        "key-high": {"ranked_candidates": [_candidate("session-x", 9.0)]},
+    }
+
+    result = deduplicate_session_claims(candidate_scores)
+
+    assert result["key-high"]["top_candidate_session_id"] == "session-x"
+    assert result["key-low"]["top_candidate_session_id"] == "session-y"
+    assert result["key-low"]["low_confidence"] is False
+
+
+def test_deduplicate_session_claims_loser_with_no_alternative_becomes_low_confidence():
+    candidate_scores = {
+        "key-low": {"ranked_candidates": [_candidate("session-x", 4.0)]},
+        "key-high": {"ranked_candidates": [_candidate("session-x", 9.0)]},
+    }
+
+    result = deduplicate_session_claims(candidate_scores)
+
+    assert result["key-low"]["top_candidate_session_id"] is None
+    assert result["key-low"]["low_confidence"] is True
+
+
+def test_deduplicate_session_claims_ignores_rows_with_no_confident_candidate():
+    candidate_scores = {
+        "key-nihil": {"ranked_candidates": [], "nihil_actum": True},
+        "key-unconfident": {"ranked_candidates": [_candidate("session-z", 1.0, low_confidence=True)]},
+    }
+
+    result = deduplicate_session_claims(candidate_scores)
+
+    assert result["key-nihil"] == candidate_scores["key-nihil"]
+    assert result["key-unconfident"]["ranked_candidates"][0]["low_confidence"] is True
+    assert "top_candidate_session_id" not in result["key-unconfident"]

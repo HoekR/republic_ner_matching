@@ -26,8 +26,8 @@
 > | | criterion | baseline (2026-09-23) |
 > |---|---|---|
 > | Global, primary | ≥ 50% of ceiling separated (≥ 5,822) | **MET** — 8,015 = 68.8% of ceiling (41.9% of all 19,120; 53.9% of 14,861 HTR-reachable) |
-> | Global, stretch | ≥ 75% of ceiling (≥ 8,733) | not met — gap 718 resolutions |
-> | Global, spans | ≥ 6 qualifying spans totalling ≥ 180 days | not met — gap=2: 4 spans / 177 days (closest); gap=1: 1 span / 43 days; gap=0: 0 spans (longest 12/43/60 calendar days) |
+> | Global, stretch | ≥ 75% of ceiling (≥ 8,733) | not met — gap 718 resolutions. **Greenlit 2026-09-23** to pursue via the S6 segmentation DP (`docs/DECISIONS.md`), the one credible untried lever after uniqueness-policy and `position_scores` fixes both measured flat. |
+> | Global, spans | ≥ 6 qualifying spans totalling ≥ 180 days | not met — gap=2: 4 spans / 177 days (closest); gap=1: 1 span / 43 days; gap=0: 0 spans (longest 12/43/60 calendar days). **Downgraded 2026-09-23 (`docs/DECISIONS.md`) from a readiness gate to a tracked-but-non-blocking metric** — the actual downstream consumer only needs per-resolution placement (the Global primary/stretch rows), not 30-day contiguous coverage. Do not scope work specifically to move this row; a placement-quality fix that happens to help it (e.g. the S6 DP) is fine, but nothing should block on it alone. |
 > | Local | any inventory-year reaching ≥ 50% of its own ceiling is banked as done and used as the worked example to extend from | — |
 >
 > **2026-09-23 jump (1,961 → 8,015) was a data-hygiene fix, not new modeling.**
@@ -1366,6 +1366,44 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   as its own session rather than defaulting into it. Full test suite (474 passed) and
   `data_io.check` clean; registered `metrics_ke_kf_window_drift_diagnostic` in
   `data_manifest.toml`.
+
+  **Session 2026-09-23 (uniqueness policy built and measured -- mechanism confirmed, headline
+  metrics unmoved).** Checked first whether the collision was specific to `candidate_scoring` or
+  also present in ledger-direct `T`/`E` rows: both collide (`candidate_scoring` 123/129
+  `resolved_auto` rows collision-involved; `ledger_direct` 87/1,109) -- scoped the fix to
+  `candidate_scoring` only, matching the traced mechanism; `T`/`E` collisions are out of scope
+  (no ranked list to fall back to, and a shared session across adjacent ledger dates via
+  overlapping inventory metadata can't be ruled out as legitimate without separate work).
+
+  Added `deduplicate_session_claims()` (`scripts/s4_day_status_resolution.py`, 6 new tests,
+  16/16 passing): a global greedy pass over every (row, ranked-candidate) pair sorted by
+  descending `combined_score` -- highest score claims its row and session first; a later pair
+  naming an already-claimed row or session is skipped, which *is* "fall back to next candidate"
+  since that row's next-ranked pair sits later in the same sorted list. Reuses the already-scored
+  `ranked_candidates` on `s4_candidate_scoring_predictions` -- no rescoring. `resolve_row()`
+  itself is unchanged.
+
+  Re-ran the full chain twice (`s4_day_status_resolution` -> `s4_resolution_concordance` -> Tier
+  O metrics -> `s4_corpus_paragraph_predictions` -> `s4_resolution_concordance` -> Tier O metrics
+  again, since `axis_for_date` reads `resolved_session_id` back out of concordance -- all cheap,
+  <15s total). **Collision mechanism fixed as measured:** corpus-wide collision dates 153 -> 132
+  (-13.7%), `weak_separation` collision share 27.6% -> 23.9% (123/445 -> 102/426). **Headline
+  metrics did not move:** Global-primary separation 8,015/11,644 = 68.8% of ceiling -- identical
+  to the already-recorded baseline; spans@30 unchanged (4 spans/177 days at gap=2);
+  `metrics_span_gap_map`'s `weak_separation` day count held at 430 across both passes despite 75
+  days' resolved axis changing content. Recorded via `svz.py decision` (2026-09-23, "Uniqueness
+  policy wired into resolve_row(); re-measured -- real but partial effect").
+
+  **Reading it:** collision-freeness at the day-status level was necessary to rule out as a
+  confound but was not itself the lever on Global spans -- a date that stops colliding still
+  inherits whatever `segment_gap`'s in-gap DP does with its now-uncontested session, and that
+  placement-quality layer is what the three prior `position_scores` experiments (Group B/C) and
+  the pairwise span-gap bridging result already found near-exhausted. This is a second,
+  independent confirmation of the same standing conclusion: **placement quality on
+  `weak_separation` days is the binding constraint on Global spans, not which session a date maps
+  to.** Do not expect extending this uniqueness policy to `ledger_direct` collisions to move the
+  headline numbers either, absent new evidence it targets placement quality specifically. Full
+  test suite (481 passed, 10 skipped) and `data_io.check` clean; no manifest changes.
 
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
