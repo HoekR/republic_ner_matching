@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import sys
 from collections import Counter
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -245,25 +246,33 @@ def find_inter_solid_gaps(day_frame: pd.DataFrame) -> list[dict[str, Any]]:
 def longest_under_bridge(
     day_frame: pd.DataFrame,
     *,
-    bridge_class: str,
+    bridge_class: str | tuple[str, ...],
 ) -> dict[str, Any]:
     """Recompute gap=0 solid runs treating ``bridge_class`` non-solids as transparent.
+
+    ``bridge_class`` may be a single class name or a tuple of class names bridged
+    together in one counterfactual, to test whether classes that don't move the
+    metric alone do so jointly (e.g. two interrupter classes that sit adjacent to
+    each other in the calendar, so removing only one still leaves its neighbor
+    breaking the run).
 
     Transparent days do not break a run and do not count as solid; the run still
     must start and end on a true solid day (``find_solid_runs`` semantics via a
     temporary ``is_solid`` mask that keeps bridged days non-solid but removes them
     from the series for gap purposes).
     """
+    classes = (bridge_class,) if isinstance(bridge_class, str) else tuple(bridge_class)
     work = day_frame.copy()
     # Drop bridged non-solids from the session-day sequence so adjacent solids
-    # across that class become contiguous for gap=0 run finding.
-    keep = work["is_solid"].astype(bool) | (work["nonsolid_class"] != bridge_class)
+    # across these classes become contiguous for gap=0 run finding.
+    bridged_mask = work["nonsolid_class"].isin(classes)
+    keep = work["is_solid"].astype(bool) | ~bridged_mask
     trimmed = work.loc[keep].reset_index(drop=True)
     runs = find_solid_runs(trimmed, max_gap=0)
     summary = summarize_runs(runs, max_gap=0)
     return {
-        "bridge_class": bridge_class,
-        "n_days_bridged": int((work["nonsolid_class"] == bridge_class).sum()),
+        "bridge_class": list(classes) if len(classes) > 1 else classes[0],
+        "n_days_bridged": int(bridged_mask.sum()),
         "longest_calendar_days": summary["longest_calendar_days"],
         "global_spans_n_spans": summary["global_spans_n_spans"],
         "global_spans_days_covered": summary["global_spans_days_covered"],
@@ -302,6 +311,14 @@ def summarize_geography(
 
     bridges = [longest_under_bridge(day_frame, bridge_class=c) for c in NONSOLID_CLASSES]
 
+    # Pairwise combined bridges among classes actually present, to check whether
+    # a class that moves nothing alone (e.g. missing_htr) does so jointly with
+    # another — evidence the classes are calendar-adjacent rather than independent.
+    populated_classes = [c for c in NONSOLID_CLASSES if class_totals.get(c, 0) > 0]
+    pairwise_bridges = [
+        longest_under_bridge(day_frame, bridge_class=pair) for pair in combinations(populated_classes, 2)
+    ]
+
     # Collapse is "implicated" only if bridging weak_separation still fails AND
     # a material share of breaking gaps contain a severe-collapse day.
     weak_bridge = next(b for b in bridges if b["bridge_class"] == "weak_separation")
@@ -337,6 +354,7 @@ def summarize_geography(
             (day_frame["is_solid"].astype(bool) & day_frame["is_severe_collapse"].astype(bool)).sum()
         ),
         "bridge_counterfactuals": bridges,
+        "bridge_counterfactuals_pairwise": pairwise_bridges,
         "severe_collapse_implicated": severe_collapse_implicated,
         "recommended_focus": (
             "revisit_severe_collapse_autopsy"
@@ -345,10 +363,13 @@ def summarize_geography(
         ),
         "note": (
             "Inter-solid gaps are non-solid session-days between consecutive solid days "
-            "in the Tier O series. Bridge counterfactuals drop one nonsolid_class from the "
-            "series and recompute gap=0 solid runs. severe_collapse_implicated is true only "
-            "when bridging weak_separation still leaves longest < 30d AND ≥25% of breaking "
-            "gaps contain a severe-collapse day."
+            "in the Tier O series. Bridge counterfactuals drop one nonsolid_class (or, in "
+            "bridge_counterfactuals_pairwise, two classes jointly) from the series and "
+            "recompute gap=0 solid runs — a class that moves nothing alone but does so "
+            "jointly with another is evidence the two classes sit calendar-adjacent to "
+            "each other, not that either is independently harmless. severe_collapse_"
+            "implicated is true only when bridging weak_separation still leaves "
+            "longest < 30d AND ≥25% of breaking gaps contain a severe-collapse day."
         ),
     }
 
@@ -464,6 +485,15 @@ def main() -> None:
             f"  bridge {bridge['bridge_class']}: "
             f"longest={bridge['longest_calendar_days']} "
             f"spans@30={bridge['global_spans_n_spans']} "
+            f"bridged_days={bridge['n_days_bridged']}"
+        )
+    for bridge in meta["bridge_counterfactuals_pairwise"]:
+        print(
+            f"  bridge {bridge['bridge_class']}: "
+            f"longest={bridge['longest_calendar_days']} "
+            f"spans@30={bridge['global_spans_n_spans']} "
+            f"days_covered={bridge['global_spans_days_covered']} "
+            f"criterion_met={bridge['global_spans_criterion_met']} "
             f"bridged_days={bridge['n_days_bridged']}"
         )
 

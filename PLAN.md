@@ -1268,6 +1268,48 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   (Global-spans bridge ceiling stays 12 calendar days even bridging every `weak_separation` day) —
   see `docs/ITERATION_POLICY.md` before picking either up.
 
+  **Session 2026-09-23 (span-gap geography — pairwise bridging still falls short).**
+  Picked up `svz.py review`'s own recommendation: map why solid days (693/1,594) fail
+  to form contiguous ≥30-day Global-spans (stretch criterion needs ≥6 spans/≥180 days;
+  currently 4 spans/177 days at gap=2). Generalized
+  [scripts/metrics_span_gap_map.py](../../scripts/metrics_span_gap_map.py)'s existing
+  single-class bridge counterfactual (`longest_under_bridge`) to accept multiple classes
+  jointly (4 new tests, 7/7 passing), then tested every pairwise combination of the three
+  populated interrupter classes (`missing_htr` 329 days, `nihil_actum` 127, `weak_separation`
+  445).
+
+  **Single-class bridges** (unchanged mechanism, re-run on the post-concordance-refresh
+  693-solid-day series): `nihil_actum` alone moves longest 12→31 calendar days (1 span, just
+  over the 30d threshold) from bridging only 127 days — the cheapest, most effective single
+  lever. `missing_htr` alone moves **nothing** (still 12d) despite being the largest class.
+  `weak_separation` alone reaches 20d.
+
+  **Pairwise bridges — the decisive result.** `missing_htr` + `nihil_actum` bridged together
+  (456 days — every day with *no genuine evidence of an algorithmic failure*: either no
+  business was conducted, or no HTR text exists to judge against) still only reaches 31d / 1
+  span — short of the stretch criterion. Only `missing_htr` + `weak_separation` jointly clears
+  it: 51d longest, **9 spans / 366 days, criterion met** — but that requires bridging
+  `weak_separation`, which is a *real, measured* placement-quality gap, not an evidence gap.
+
+  **Reading it:** even the most generous defensible relaxation (treat every day with no basis
+  to judge failure as non-breaking) isn't sufficient — `weak_separation` days must also
+  improve for the stretch criterion to be reachable. This confirms, from an independent angle
+  (span geography rather than the gold-day `position_scores` harness), the same conclusion the
+  three exhausted `position_scores` experiments already pointed to: **placement quality on
+  `weak_separation` days is the binding constraint, not data/axis coverage.** Recorded via
+  `svz.py metric`/`svz.py decision` (2026-09-23, "Span-gap pairwise bridging: even the most
+  generous defensible relaxation falls short of the Global-spans stretch criterion").
+  Registered output unchanged (`metrics_span_gap_map`, re-run, `data_io.check` clean).
+
+  **Next:** the two remaining candidate levers on `weak_separation` placement quality are both
+  already flagged as multi-session investments needing an explicit go/no-go, not a default
+  pickup — (a) per-paragraph `.find()`-relocated Group-B evidence (fixes the flat-id
+  granularity mismatch diagnosed 2026-09-23), or (b) the full two-sided entity-overlap
+  consolidation table (also proposed 2026-09-23). Neither should be started without deciding
+  it's worth committing a multi-session investment to — otherwise, bank the current state
+  (Global-primary criterion MET at 68.8% of ceiling; stretch criteria not met) as this cycle's
+  result. Re-run `svz.py review` before picking either up.
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,

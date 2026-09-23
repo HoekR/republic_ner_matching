@@ -172,6 +172,112 @@ def test_bridge_weak_separation_joins_solids():
     assert bridged["n_days_bridged"] == 1
 
 
+def test_longest_under_bridge_pairwise_synergy():
+    """Two adjacent interrupter classes that each fail alone can join jointly."""
+    frame = pd.DataFrame(
+        [
+            {
+                "enriched_date": "1626-01-10",
+                "is_solid": True,
+                "nonsolid_class": None,
+                "separated_count": 1,
+                "k_e_signal": 2,
+            },
+            {
+                "enriched_date": "1626-01-11",
+                "is_solid": False,
+                "nonsolid_class": "missing_htr",
+                "separated_count": 0,
+                "k_e_signal": 0,
+            },
+            {
+                "enriched_date": "1626-01-12",
+                "is_solid": False,
+                "nonsolid_class": "weak_separation",
+                "separated_count": 0,
+                "k_e_signal": 2,
+            },
+            {
+                "enriched_date": "1626-01-13",
+                "is_solid": True,
+                "nonsolid_class": None,
+                "separated_count": 1,
+                "k_e_signal": 2,
+            },
+        ]
+    )
+    missing_only = longest_under_bridge(frame, bridge_class="missing_htr")
+    assert missing_only["longest_calendar_days"] == 1
+    weak_only = longest_under_bridge(frame, bridge_class="weak_separation")
+    assert weak_only["longest_calendar_days"] == 1
+    joint = longest_under_bridge(frame, bridge_class=("missing_htr", "weak_separation"))
+    assert joint["longest_calendar_days"] == 4
+    assert joint["n_days_bridged"] == 2
+    assert joint["bridge_class"] == ["missing_htr", "weak_separation"]
+
+
+def test_summarize_geography_includes_pairwise_bridges():
+    day_frame = annotate_days(
+        pd.DataFrame(
+            [
+                {
+                    "enriched_date": "1626-01-10",
+                    "k_e_signal": 2,
+                    "day_status": "resolved_auto",
+                    "is_nihil_actum": False,
+                    "invariant_ok": True,
+                    "separated_share": 1.0,
+                    "is_solid": True,
+                    "separated_count": 2,
+                },
+                {
+                    "enriched_date": "1626-01-11",
+                    "k_e_signal": 0,
+                    "day_status": "missing_htr",
+                    "is_nihil_actum": False,
+                    "invariant_ok": True,
+                    "separated_share": 0.0,
+                    "is_solid": False,
+                    "separated_count": 0,
+                },
+                {
+                    "enriched_date": "1626-01-12",
+                    "k_e_signal": 2,
+                    "day_status": "resolved_auto",
+                    "is_nihil_actum": False,
+                    "invariant_ok": True,
+                    "separated_share": 0.0,
+                    "is_solid": False,
+                    "separated_count": 0,
+                },
+                {
+                    "enriched_date": "1626-01-13",
+                    "k_e_signal": 2,
+                    "day_status": "resolved_auto",
+                    "is_nihil_actum": False,
+                    "invariant_ok": True,
+                    "separated_share": 1.0,
+                    "is_solid": True,
+                    "separated_count": 2,
+                },
+            ]
+        ),
+        drift_dates=set(),
+        collapse_dates=set(),
+    )
+    gaps = find_inter_solid_gaps(day_frame)
+    meta = summarize_geography(
+        day_frame,
+        gaps,
+        parent_meta={"n_solid_days": 2},
+        n_severe_collapse_days=0,
+        n_drift_candidates=0,
+    )
+    pairwise = {tuple(b["bridge_class"]): b for b in meta["bridge_counterfactuals_pairwise"]}
+    assert ("missing_htr", "weak_separation") in pairwise
+    assert pairwise[("missing_htr", "weak_separation")]["longest_calendar_days"] == 4
+
+
 def test_summarize_geography_recommended_focus():
     day_frame = annotate_days(
         pd.DataFrame(

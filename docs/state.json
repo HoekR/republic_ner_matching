@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-23 14:55",
+  "last_updated": "2026-09-23 15:05",
   "active_focus": "Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.",
   "tasks": [
     {
@@ -1269,6 +1269,18 @@
         {
           "date": "2026-09-23",
           "value": "0.588"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_pairwise_bridge_missing_htr_weak_separation_spans30",
+      "label": "Pairwise bridge counterfactual (missing_htr + weak_separation jointly, gap=0): 9 spans@30 / 366 days covered, criterion_met=True (>=6 spans AND >=180 days). Neither class alone moves the metric (missing_htr alone: longest=12 unchanged; weak_separation alone: longest=20). Higher is better.",
+      "value": "9",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "9"
         }
       ]
     }

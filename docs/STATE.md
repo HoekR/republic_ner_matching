@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-09-23 14:55
+Last updated: 2026-09-23 15:05
 
 ```mermaid
 flowchart TD
@@ -179,6 +179,7 @@ Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 pr
 - **s6-anchor-chain-alignment — Sum of (with-evidence TP - baseline TP) across days whose predicted cuts actually changed, 19-21 scoreable gold days, paragraph tol0. Group B: -21 across 11 divergent days (all worse). Group C (re-measured same way this session): -2 across 8 divergent days (6 same, 2 worse, 0 better). Lower magnitude is better/more neutral. Confirms Group B's regression is ~10x larger than Group C's, traced to flat_id-level (not paragraph-level) evidence granularity -- see docs/DECISIONS.md correction.:** -21
 - **s6-anchor-chain-alignment — Two-sided check, 40-day random sample (seed=42): of 243 entity_surface_matches rows flagged 'new' (not already in the rebuilt place/org/per_overlap tables for that flat resolution), only 4 (1.6%) match a SPECIFIC enriched resolution's own resolved entity set (places+orgs+persons via resolve_enriched_entities) anywhere in that day's candidate pool; 239 (98.4%) are floating -- no enriched resolution that day claims the name at all. Higher is better (more grounded, fewer false anchors). Sanity-checked against a raw example (1626-01-19): genuinely-grounded enriched entities are small specific place names (Oudenbosch, Kempenland, Zevenbergen); the floating flagged names are large common geographic terms (Holland, Zeeland, Engeland, Amsterdam, Groningen) that read as incidental context mentions, not resolution subjects.:** 0.016
 - **s6-anchor-chain-alignment — Grounded Group-B (matches filtered to entities resolve_enriched_entities confirms the day's own enriched resolutions actually claim) position_scores, 19/21 scoreable gold days, paragraph tol0 F1. Baseline (no evidence)=0.644, ungrounded Group-B=0.555, grounded Group-B=0.588 (tol1 0.790->0.784, tol2 0.807->0.824). Grounding recovers ~30% of the regression but does not close it -- still net negative at tol0. 101/181 (56%) of ungrounded Group-B's flagged paragraphs survive day-level grounding, far above the 1.6% grounded share found in the corpus-wide 40-day two-sided sample, because day-level grounding only checks whether SOME enriched resolution that date claims the name, not the specific paragraph's true owner resolution -- a coarser, more permissive check. Higher is better, compare against 0.644 baseline not 1.0.:** 0.588
+- **s6-anchor-chain-alignment — Pairwise bridge counterfactual (missing_htr + weak_separation jointly, gap=0): 9 spans@30 / 366 days covered, criterion_met=True (>=6 spans AND >=180 days). Neither class alone moves the metric (missing_htr alone: longest=12 unchanged; weak_separation alone: longest=20). Higher is better.:** 9
 
 ## Blockers / Open Questions
 
