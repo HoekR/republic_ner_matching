@@ -278,6 +278,13 @@ phase = "semi"
 description = "Oracle-anchor sweep on the S6a character axis: upper bound on what any anchor-selection improvement (chaining included) can reach with the current placement model"
 parent = "s6a_char_axis_evaluation"
 
+[datasets.s6_group_b_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_position_scores_eval.jsonl"
+phase = "semi"
+description = "Baseline vs. Group-B (entity_surface_matches_1626_1630) position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Scored at PARAGRAPH granularity (tol 0/1/2 paragraphs), not character offset tolerance -- docs/DECISIONS.md 2026-09-21 'S6c target metric rescoped' already ruled out char-tolerance as the S6 target metric."
+parent = "s4_corpus_paragraph_predictions"
+
 [datasets.s4_entity_density_split_diagnostic]
 tier = "hot"
 path = "republic_ner_matching/output/s4_entity_density_split_diagnostic.jsonl"

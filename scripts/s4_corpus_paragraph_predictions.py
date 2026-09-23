@@ -105,6 +105,7 @@ def predict(
     axis: list[dict[str, Any]],
     lookup: dict[tuple[str, str], set[str]],
     idf_weights: dict[str, float],
+    position_scores: dict[int, float] | None = None,
 ) -> dict[str, Any]:
     base = {"date": date, "k_e": len(enriched_ids), "paragraph_count": len(axis), "unit": "paragraph_stream"}
     if not axis:
@@ -118,7 +119,10 @@ def predict(
     # and WindowDiff, only marginal tol1/tol2 gains -- not wired in here. Do not re-add
     # without new evidence; see that decision for the full comparison and why
     # snap_boundaries (the gold pipeline's second phrase-evidence stage) didn't rescue it.
-    positions = segment_day(len(enriched_ids), len(axis_ids), alignments)
+    # `position_scores` defaults to None (empty) so the live default is unchanged; it exists
+    # so scripts/s6_group_b_position_scores_eval.py can pass Group-B evidence through this
+    # exact codepath without duplicating it -- see that script before wiring anything live.
+    positions = segment_day(len(enriched_ids), len(axis_ids), alignments, position_scores)
     return {
         **base,
         "status": "predicted",

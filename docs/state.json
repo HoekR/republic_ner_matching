@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-23 13:43",
+  "last_updated": "2026-09-23 14:41",
   "active_focus": "Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.",
   "tasks": [
     {
@@ -1221,6 +1221,42 @@
         {
           "date": "2026-09-23",
           "value": "0.822"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_position_scores_gold_tol0_paragraph_f1",
+      "label": "Group-B (entity_surface_matches) position_scores wired into segment_day, corpus predictor codepath, 19/21 scoreable gold days, PARAGRAPH tol0 F1 (not char tolerance per 2026-09-21 rescope). Baseline (no evidence) tol0=0.644/tol1=0.790/tol2=0.807; Group-B tol0=0.555/tol1=0.790/tol2=0.840. Lower is worse at tol0 -- net negative at the primary granularity, same failure mode as Group-C phrase hits (2026-09-21): entity mentions signal presence, not resolution-opening position, so the phrase_weight/dispersion tradeoff pulls cuts toward entity-dense paragraphs regardless of whether they open a resolution.",
+      "value": "0.555",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.555"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_vs_group_c_divergent_day_tp_delta",
+      "label": "Sum of (with-evidence TP - baseline TP) across days whose predicted cuts actually changed, 19-21 scoreable gold days, paragraph tol0. Group B: -21 across 11 divergent days (all worse). Group C (re-measured same way this session): -2 across 8 divergent days (6 same, 2 worse, 0 better). Lower magnitude is better/more neutral. Confirms Group B's regression is ~10x larger than Group C's, traced to flat_id-level (not paragraph-level) evidence granularity -- see docs/DECISIONS.md correction.",
+      "value": "-21",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "-21"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "entity_surface_matches_two_sided_grounding_rate",
+      "label": "Two-sided check, 40-day random sample (seed=42): of 243 entity_surface_matches rows flagged 'new' (not already in the rebuilt place/org/per_overlap tables for that flat resolution), only 4 (1.6%) match a SPECIFIC enriched resolution's own resolved entity set (places+orgs+persons via resolve_enriched_entities) anywhere in that day's candidate pool; 239 (98.4%) are floating -- no enriched resolution that day claims the name at all. Higher is better (more grounded, fewer false anchors). Sanity-checked against a raw example (1626-01-19): genuinely-grounded enriched entities are small specific place names (Oudenbosch, Kempenland, Zevenbergen); the floating flagged names are large common geographic terms (Holland, Zeeland, Engeland, Amsterdam, Groningen) that read as incidental context mentions, not resolution subjects.",
+      "value": "0.016",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.016"
         }
       ]
     }

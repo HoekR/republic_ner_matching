@@ -1092,6 +1092,141 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   criteria via the already-scoped Group-B wiring, or bank this session's result — clear chat and
   re-run `svz.py review` before picking.
 
+  **Session 2026-09-23 (Group-B position_scores wired and measured — negative, matching
+  Group-C).** Ran the scoped Group-B test. Added an optional `position_scores` parameter to
+  `s4_corpus_paragraph_predictions.predict()` (default `None`, live behavior unchanged) and
+  built [scripts/s6_group_b_position_scores_eval.py](../../scripts/s6_group_b_position_scores_eval.py)
+  (+ `tests/test_s6_group_b_position_scores_eval.py`, 3/3 passing) to score Group B
+  (`entity_surface_matches_1626_1630`) through `predict()`'s own codepath, restricted to the
+  19/21 scoreable gold days, before any corpus-wide rerun — same discipline the Group-C test
+  used. Each axis paragraph's own `flat_id` matches `entity_surface_matches_1626_1630`'s
+  `resolution_id` directly (no join dataset needed); bonus = best `match_score` in that
+  paragraph, normalized to 0–1, fed into `segment_day` exactly as Group-C's phrase-hit bonus
+  was.
+
+  **Metric corrected before running:** the user flagged that character-offset tolerance
+  (`tol0/50/150`) is the wrong granularity for this repo and should not be the target — this
+  was already decided in `docs/DECISIONS.md` (2026-09-21, "S6c target metric rescoped") but the
+  session had drifted back toward proposing it. Scored at **paragraph** tol 0/1/2 instead
+  (matching `evaluate_s4_paragraph_axis.py`'s own units), with tol0 (exact paragraph match) as
+  the headline — see [[feedback_no_tolerance_metrics]] memory, saved this session so the
+  correction persists.
+
+  **Result: negative at the primary granularity, same failure mode as Group C.** Baseline
+  (no evidence) tol0=0.644 / tol1=0.790 / tol2=0.807; with Group B, tol0=**0.555** (worse) /
+  tol1=0.790 (flat) / tol2=0.840 (better). Recorded via `svz.py metric`
+  (`group_b_position_scores_gold_tol0_paragraph_f1=0.555`) and `svz.py decision` (2026-09-23
+  "Group-B position_scores wiring measured negative, not wired into live predictor"). `predict()`'s
+  new `position_scores` parameter stays unused by default.
+
+  **Reading the result:** entity presence isn't a resolution-*opening* signal the way an
+  opening phrase is — `entity_surface_matches` records what's mentioned anywhere in a
+  resolution's text, not where the next resolution starts — so feeding it through the same
+  bonus-vs-even-split tradeoff `segment_gap` uses for phrase hits pulls cuts toward
+  entity-dense paragraphs regardless of whether they open anything. Two independent evidence
+  sources (B and C) have now failed the same way through the same scoring mechanism, which
+  weighs more heavily against the mechanism than against either evidence source individually.
+  **Densifying `weak_separation` via `position_scores` tuning is likely exhausted** without a
+  qualitatively different in-gap signal (start-specific evidence only, or per-entity role
+  weighting — both already named untried in the 2026-09-18 split-POC session notes, though
+  those were measured on the blocked line-level/char-offset track, not this one). Full test
+  suite (462 passed) and `data_io.check` clean; registered `s6_group_b_position_scores_eval` in
+  `data_manifest.toml`. **Next:** re-run `svz.py review` for the next track rather than
+  continuing to tune `position_scores` by default.
+
+  **Session 2026-09-23 (correcting the "mechanism exhausted" overreach — user-requested
+  re-check).** The user pushed back on the claim above that Group B and Group C "fail the same
+  way through the same mechanism" as implausible and asked for concrete examples. Right to push:
+  comparing actual predicted *positions* (not just F1) per day, restricted to the same
+  19–21 scoreable gold days, through `predict()`'s real codepath:
+
+  - **Group B:** 11/19 days change prediction, **all 11 strictly worse** — net **-21**
+    true-positive cuts (e.g. 16→12 correct cuts on 1630-03-20, 13→11 on 1626-04-04).
+  - **Group C** (re-measured the same way, not just quoted from 2026-09-21): 8/21 days change,
+    6 same-TP / 2 worse / 0 better — net **-2** true-positive cuts. An order of magnitude
+    milder, not "the same failure."
+
+  **Root cause of Group B's larger damage, found by inspecting 1626-01-08 directly:**
+  `entity_surface_matches_1626_1630` is keyed by **flat resolution id**, not paragraph id. A
+  flat resolution's HTR text commonly spans several axis paragraphs (verified: `resolution-12`
+  spans 4 paragraphs, `resolution-2` spans 3, on that one day) — every sub-paragraph of one
+  resolution gets the *identical* bonus under the naive flat_id join, so the signal has zero
+  power to say which of those paragraphs is the actual cut. Combined with near-saturated match
+  rates (12/13 resolutions matched at 85–100% confidence that day), the bonus is a near-flat
+  high plateau across almost the whole axis — it nudges an already-good even-split default
+  toward arbitrary high-score paragraphs uncorrelated with true boundaries. Group C's phrase
+  hits, despite similarly high paragraph coverage, are computed *at* paragraph granularity to
+  begin with, which is the more likely reason its damage stays small.
+
+  Recorded via `svz.py metric` (`group_b_vs_group_c_divergent_day_tp_delta=-21`) and
+  `svz.py decision` (2026-09-23, "Correction: Group-B and Group-C position_scores regressions
+  are not the same magnitude or mechanism" — retracts the earlier "mechanism exhausted"
+  framing). **Reading it correctly: position_scores evidence can be near-neutral (Group C) or
+  plausibly beneficial when genuinely paragraph-localized — the dominant fixable variable is
+  Group B's flat_id-level granularity mismatch, not the mechanism itself.** Candidate next
+  steps, not yet attempted: (a) relocate Group B evidence to the specific paragraph containing
+  the matched entity text via `.find()` (the approach `s4_fuzzy_surface_form_scan.py` /
+  `s4_bundled_split_poc.py` already use), instead of the whole flat resolution; (b) an oracle
+  version of Group B (bonus only on the true gold paragraph) to check the ceiling before
+  investing in (a); (c) only let evidence override the even-split default when it is locally
+  *differential* (high here, low next door), not a flat high plateau, since that plateau shape
+  is exactly what hurt here.
+
+  **Session 2026-09-23 (why Group B is ungrounded — traced to source, and a consolidation
+  proposal).** The user reframed the finding above further: `entity_surface_matches` answers
+  "is this entity present in the text" (a presence indicator), not "does a resolution start
+  here" — a genuine category mismatch, and asked whether the already-adopted
+  `build_windowed_overlap.py` rebuild (+13.4% place / +4.0% org, "adopt-windowed-overlap-
+  rebuild", done 2026-09-19/21) already covers this. **It does not — they are two different
+  enrichment mechanisms.** `build_windowed_overlap.py` recovers matches via a tag-text
+  *variant registry* harvested from the annotation layer's own co-occurring spellings (e.g.
+  editorial "Engeland" ↔ HTR "Engelant" sharing entity_id `L0001860`); `entity_surface_matches`
+  recovers matches via a `FuzzyPhraseSearcher` *fuzzy* pass, a different technique entirely.
+  Confirmed by grep: neither `build_windowed_overlap.py` nor `build_per_overlap.py` references
+  `entity_surface_matches` at all — the fuzzy layer never reaches `align_session`'s `lookup`.
+  It *is* however already wired correctly elsewhere: `build_alignment_new.py::resolve_shared_
+  entities` calls `matched_entity_names(resolved["places"], flat_text, f_id, surface_cache)` —
+  a genuinely **two-sided** check (a *specific* enriched resolution's own known names, tested
+  against a *specific* flat text) that is exactly what Group A's real anchors need and exactly
+  what my `position_scores` wiring skipped.
+
+  **One-sided headroom, measured:** of `entity_surface_matches`' 18,698 rows, **8,458 (45.2%)**
+  name a canonical entity not already present in the current (rebuilt) `place/org/
+  per_overlap_1626_1630` tables for that flat resolution's paragraphs — real, substantial gap.
+
+  **Two-sided grounding, measured (user-requested, the decisive check):** sampled 40 random
+  dates (seed=42) across the full corpus, resolved each date's enriched resolutions' own known
+  entities via `resolve_enriched_entities` (unmodified, already-proven code), and checked how
+  many of 243 sampled "new" rows match *any specific* enriched resolution that day. **Only 4/243
+  (1.6%) are grounded; 98.4% float unattached.** Sanity-checked directly (1626-01-19): the
+  genuinely-grounded enriched entities are small, specific place names (Oudenbosch, Kempenland,
+  Zevenbergen); the floating "new" names are large, common geographic/political terms (Holland,
+  Zeeland, Engeland, Amsterdam, Groningen, Algiers) that plausibly appear as incidental context
+  in nearly any resolution's narration, not as that resolution's own subject. Recorded via
+  `svz.py metric` (`entity_surface_matches_two_sided_grounding_rate=0.016`) and `svz.py decision`
+  (2026-09-23, "entity_surface_matches' one-sided 'new' recoveries are almost entirely
+  ungrounded"). **This retroactively explains the earlier `position_scores` regression**: a
+  signal that's 98.4% ungrounded fires as near-uniform noise, exactly the near-saturated
+  high-plateau pattern diagnosed on 1626-01-08 two sessions up.
+
+  **Consolidation proposed (not yet started):** the user proposed one unequivocal entity-overlap
+  layer to replace the four currently-scattered matching computations (`build_windowed_overlap.py`
+  canonical+variant+tag_text, `build_per_overlap.py` same for PER, `entity_surface_matches`'s
+  fuzzy pass, and the never-consumed `s4_fuzzy_surface_form_scan.py` full-dictionary scan) with
+  one genuinely two-sided table both `align_session`/`lookup` and `build_alignment_new.py::
+  resolve_shared_entities` read, so they can no longer silently diverge. This session's grounding
+  check is direct evidence *for* that design: any consolidated table must require two-sided
+  grounding by construction, or ~98% of a naive fuzzy pass would need to be treated as
+  anchor-quality evidence when it demonstrably is not. **Not started — scoping only.** Proposed
+  phased sequence: (1) build the unified table additively with a legacy-comparison mode, (2)
+  migrate `align_session`/`lookup` to read it and re-verify gold-day + a cheap corpus sanity
+  check, (3) migrate `build_alignment_new.py::resolve_shared_entities` to the same table,
+  retiring the bespoke `matched_entity_names`/`surface_cache` path, (4) re-run the full
+  downstream chain and confirm the Global separation headline (currently 68.8%, MET) doesn't
+  regress before accepting. Open question for next session: build this now, or write it up as a
+  proper `docs/steps/STEP_*.md` guide first given it's multi-session and touches the
+  already-accepted-final `alignment_1626_1630.parquet` pipeline.
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,
