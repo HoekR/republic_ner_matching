@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-09-22 17:59
+Last updated: 2026-09-23 13:43
 
 ```mermaid
 flowchart TD
@@ -79,7 +79,7 @@ flowchart TD
 - [/] fuzzy-surface-form-scan: Corpus-wide fuzzy surface-form scan (s4_fuzzy_surface_form_scan.py) -- recover entities the tagger missed — Registered 2026-09-19 (docs/APPROACH_OVERVIEW.md layer 0c). Built and launched same day as weekend batch work; was not in state.json at all until now. Full-dictionary FuzzyTokenSearcher scan (LOC/PER/ORG, index_vocabulary_pairs=False, levenshtein_threshold 0.85, 4-char min match) over all 21,519 paragraph_axis_1626_1630 paragraphs, flagging already_known vs newly_recovered against entity_surface_matches_1626_1630. Est 7-9h, checkpointed/resumable. LEVERAGE IS UNPROVEN and was questioned the same session: the cheaper scoped version (entity_surface_matches, layer 0b) already tested this lever in s4_bundled_split_poc and gave only a modest lift (0/27 -> 3/27 tol50). Output currently feeds nothing. Next action when it finishes: record newly_recovered count as a metric, then decide whether any downstream consumer justifies it -- do not assume it is progress.
 - [x] interior-cut-evaluation-harness: Extend the boundary evaluation harness to credit sub-paragraph (interior) cuts — DONE 2026-09-20 via S6a (scripts/s6a_char_axis_evaluation.py, 14/14 tests). The harness now scores at character coordinates: gold (paragraph_stream_index, char_offset) composes to one integer axis per day by pure concatenation (no separator -- gold paragraph_boundary cuts carry char_offset == len(paragraph), so a paragraph-final cut composes to exactly the next paragraph's start). compute_boundary_prf needed no change, only this adapter. Interior/sub-paragraph cuts are therefore no longer structurally invisible: s4_bundled_split_poc.py and s4_llm_split_poc.py results can now be scored on the same axis as the main baseline at tol 50/150 chars. Registered output: s6a_char_axis_evaluation.
 - [x] adopt-windowed-overlap-rebuild: Adopt build_windowed_overlap.py's variant-aware rebuild as canonical place/org overlap; build the equivalent fuzzy pass for PER — 2026-09-19: place/org canonical overlap swapped to variant-aware rebuild. 2026-09-21: PER canonical overlap swapped (build_per_overlap.py extended, +415 rows). 2026-09-21: downstream re-run done (build_alignment_new.py 11:43, s4_corpus_paragraph_predictions.py 11:44) against all three swapped tables. 2026-09-21: checked build_alignment_new.py's own headline confidence_tier distribution pre- vs post-swap -- tier1_anchor 5725->5730, tier2_* 4734->4708, tier3_* 2883->2904 out of 13342 unchanged total; largest single-tier delta 26 rows (0.19pp). Headline tier stats barely moved; the swap's real effect showed up in S6b's anchor-supply measurement (insufficient_entity_anchors abstentions 815->777) instead. Accepted as final -- see docs/DECISIONS.md 2026-09-21.
-- [/] s6-anchor-chain-alignment: S6 -- multi-channel anchor chaining at character coordinates — 2026-09-22 span-gap map: solid=221, breaking=171, dominant=weak_separation, severe_collapse_implicated=True, bridge weak_separation longest=12.
+- [/] s6-anchor-chain-alignment: S6 -- multi-channel anchor chaining at character coordinates — 2026-09-23: axis_for_date fixed (prefers concordance resolved_auto session over a non-empty same-day stub). Re-ran predictions -> span-gap map -> severe-collapse autopsy in sequence: severe-collapse 92->83 days, breaking-gap share 25.15%->23.39% (below 0.25, severe_collapse_implicated now False), coverage unchanged (1140 predicted/454 missing_htr).
 - [x] metrics-nihil-actum-invariant: Tier V: nihil-actum invariant check — Built scripts/metrics_nihil_actum_invariant.py. Concordance+ledger check: invariant_passed=True, 127 nihil days, 0 violations. Emits shared per-day K_e series (k_e_signal=0 on nihil) for Tier D/O.
 - [x] metrics-separation-span-table: Tier O: consecutive-day separation span table — Built scripts/metrics_separation_span_table.py. Separated=1961 (16.8% of ceiling); solid_days=221/1594; Global spans@30 unmet at gap 0/1/2 (longest 6/9/9 calendar days).
 - [x] metrics-ke-drift-diagnostic: Tier D: per-day K_e drift-comparison diagnostic — Built scripts/metrics_ke_drift_diagnostic.py on Tier V day series. 203 drift candidates at |dev|>=10 vs ±3d neighbor median; 0 blocked by V. Candidates are suspects, not proven errors.
@@ -88,7 +88,7 @@ flowchart TD
 
 ## Active Focus
 
-Span-gap map done: severe-collapse implicated (43/171 breaking gaps). Next: S6c severe-collapse autopsy on the 92 recomputed days; bridge ceiling shows converting weak_separation to solid (not merely bridging) is still required for Global spans.
+Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.
 
 ## Key Intermediate Results & Metrics
 
@@ -145,7 +145,7 @@ Span-gap map done: severe-collapse implicated (43/171 breaking gaps). Next: S6c 
 - **s6-anchor-chain-alignment — S6c segmentation DP on nearly 3x the predicted days (19 vs 7), was 0.500 pre-S6c:** 0.503
 - **s6-anchor-chain-alignment — was 777 pre-S6c; eliminated entirely (1059 = 282 pre-existing + all 777 recovered):** 0
 - **s6-anchor-chain-alignment — 1059/1059 days with an axis now predict (535 missing_htr, structural, untouched):** 1.0
-- **s6-anchor-chain-alignment — 79/1059 predicted days have 7+ resolutions collapsed onto one paragraph -- low-localization coverage, not a bug:** 0.075
+- **s6-anchor-chain-alignment — Predicted days with 7+ resolutions collapsed onto one paragraph (83/1140) after the axis_for_date fix; was 92/1140=0.0807 pre-fix, 79/1059=0.075 before the concordance-fallback wiring:** 0.0728 (stagnant, Δ-0.002)
 - **s6-anchor-chain-alignment — was 535 pre-wiring; 81 days recovered via resolution_concordance_1626_1630's resolved_session_id:** 454
 - **s6-anchor-chain-alignment — S6b prerequisite: resolutions_flat session -> raw session content-fingerprint match rate (substring containment on 'para'-class text), registered as s6b_session_fingerprint_match, replacing unregistered scratch. 1059/1511 matched, 0 ambiguous, 659/1059 drifted (non-zero offset). Higher is better.:** 0.701
 - **s6-anchor-chain-alignment — session_day_find (S6b Group-D channel): 25/25 sampled hits genuine at FuzzyPhraseSearcher threshold 0.95+ignorecase, 154 hits/130 sessions vs regex baseline's unvalidated 210/167 on the same session-text universe. Higher is better (this is a precision spot-check, not corpus coverage).:** 1.0
@@ -163,8 +163,18 @@ Span-gap map done: severe-collapse implicated (43/171 breaking gaps). Next: S6c 
 - **metrics-bottleneck-diagnostic — bottleneck recommended_focus (decision aid):** algorithm_redesign
 - **s6-anchor-chain-alignment — session_date_verified corpus-wide: 939 anchors / 891 of 1240 days (71.9%):** 0.719
 - **s6-anchor-chain-alignment — Tier O span-gap map: inter-solid breaking gaps (171) among 221 solid days; 49 adjacent solid pairs. Dominant interrupter weak_separation (125/171), then missing_htr (38), nihil_actum (8).:** 171
-- **s6-anchor-chain-alignment — Share of breaking gaps that contain an S6c severe-collapse day (43/171). Implication threshold was 0.25.:** 0.2515
+- **s6-anchor-chain-alignment — Share of breaking gaps that contain an S6c severe-collapse day (40/171) after axis_for_date fix; was 0.2515 (43/171) -- drops below the 0.25 implication threshold:** 0.2339 (regressing, Δ-0.018)
 - **s6-anchor-chain-alignment — Bridge counterfactual: drop all 917 weak_separation days from the series; longest gap=0 solid run is only 12 calendar days (still 0 spans@30). No single-class bridge reaches Global spans.:** 12
+- **s6-anchor-chain-alignment — S6c severe-collapse autopsy: days with max>=7 resolutions on one paragraph start (83/1140, after the 2026-09-23 axis_for_date fix; was 92/1140):** 83 (regressing, Δ-9.000)
+- **s6-anchor-chain-alignment — Share of severe-collapse days where ceil(k_e/P)>=7 (25/83) after axis_for_date fix -- structural even under optimal assignment; was 0.3478 (32/92):** 0.3012 (regressing, Δ-0.047)
+- **s6-anchor-chain-alignment — Share of severe-collapse days with paragraph_count>=k_e (10/83) after axis_for_date fix; was 0.1087 (10/92):** 0.1205 (improving, Δ+0.012)
+- **s6-anchor-chain-alignment — All 92 severe-collapse days are Tier O weak_separation nonsolids (0 solid):** 1.0
+- **s6-anchor-chain-alignment — Of 92 severe-collapse days, 9 prefer a thin same-calendar-date axis over a richer concordance-resolved session on a neighboring date (axis_for_date bug):** 9
+- **s6-anchor-chain-alignment — Of 92 severe-collapse days, 15 have P<=1 on both calendar axis and resolved session (real short/blob HTR, often inventory 4562):** 15
+- **s6-anchor-chain-alignment — PLAN.md Global-primary metric after re-running resolution_concordance_1626_1630 (stale since 2026-09-17) against the current S6c predictor: 8015/11644 separated (was 1961/11644=16.8%). Higher is better. Global-primary criterion (>=50%) now met; stretch (>=75%) not yet (gap ~718).:** 0.688
+- **s6-anchor-chain-alignment — Tier O solid days out of 1594 after concordance refresh (was 221/1594). Higher is better.:** 693
+- **s6-anchor-chain-alignment — Global spans@30 gap=2 days_covered after concordance refresh (was 0; n_spans=4, criterion is >=6 spans AND >=180 days). Higher is better -- 177 is just short of the 180-day stretch.:** 177
+- **s6-anchor-chain-alignment — Share of remaining 445 weak_separation days (was 917) that are headroom_available (ceiling>=0.5, not axis-capped) per metrics_weak_separation_headroom_diagnostic, after the concordance refresh. Higher is better (means placement-quality work, not axis granularity, is still the live lever).:** 0.822
 
 ## Blockers / Open Questions
 

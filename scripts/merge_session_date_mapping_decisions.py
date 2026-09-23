@@ -55,8 +55,8 @@ def validate_decision(decision: dict[str, Any], row: dict[str, Any]) -> None:
             raise ValueError(f"{key}: selected session is not an inventory-local candidate")
         if row["status_code"] in {"-1", "+1"} and not str(decision.get("note", "")).strip():
             raise ValueError(f"{key}: nearby approval requires a note")
-    elif selected is not None:
-        raise ValueError(f"{key}: only approvals may select a session")
+    # Defer/no_match: the review UI may leave a candidate highlighted; ignore it.
+    # merged_records already nulls selected_session_id for non-approvals.
 
 
 def merged_records(ledger: pd.DataFrame, decisions: list[dict[str, Any]], reviewer: str, merged_at: str) -> list[dict[str, Any]]:

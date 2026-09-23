@@ -49,6 +49,22 @@ def test_last_file_order_wins_and_unreviewed_evidence_is_preserved():
     assert records[1]["evidence_field"] == "preserve me too"
 
 
+def test_defer_may_carry_highlighted_candidate_but_merge_nulls_it():
+    """Review UI can leave a candidate selected when deferring; merge must ignore it."""
+    decisions = [
+        {
+            "session_date_key": "session-3185|1626-01-01",
+            "ledger_status": "-1",
+            "action": "defer",
+            "selected_session_id": "session-3185-num-1",
+            "note": "still looking",
+        }
+    ]
+    records = merged_records(_ledger(), decisions, "RK", "2026-09-01T00:00:00+00:00")
+    assert records[0]["review_status"] == "deferred"
+    assert records[0]["selected_session_id"] is None
+
+
 def test_merge_is_idempotent_for_fixed_inputs_and_timestamp():
     decisions = [{"session_date_key": "session-3185|1626-01-01", "ledger_status": "-1", "action": "no_match", "selected_session_id": None, "note": "not present"}]
 

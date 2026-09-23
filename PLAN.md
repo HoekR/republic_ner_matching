@@ -23,12 +23,21 @@
 > ceiling, never against a notional 100%. Full metric-tier breakdown (which channel each
 > diagnostic feeds, and what's proposed but not yet computed): `docs/METRICS.md`.
 >
-> | | criterion | baseline (2026-09-22) |
+> | | criterion | baseline (2026-09-23) |
 > |---|---|---|
-> | Global, primary | ≥ 50% of ceiling separated (≥ 5,822) | 1,961 = 16.8% of ceiling |
-> | Global, stretch | ≥ 75% of ceiling (≥ 8,733) | — |
-> | Global, spans | ≥ 6 qualifying spans totalling ≥ 180 days | measured 2026-09-22: 0 spans @30d (gap 0/1/2; longest 6/9/9) |
+> | Global, primary | ≥ 50% of ceiling separated (≥ 5,822) | **MET** — 8,015 = 68.8% of ceiling (41.9% of all 19,120; 53.9% of 14,861 HTR-reachable) |
+> | Global, stretch | ≥ 75% of ceiling (≥ 8,733) | not met — gap 718 resolutions |
+> | Global, spans | ≥ 6 qualifying spans totalling ≥ 180 days | not met — gap=2: 4 spans / 177 days (closest); gap=1: 1 span / 43 days; gap=0: 0 spans (longest 12/43/60 calendar days) |
 > | Local | any inventory-year reaching ≥ 50% of its own ceiling is banked as done and used as the worked example to extend from | — |
+>
+> **2026-09-23 jump (1,961 → 8,015) was a data-hygiene fix, not new modeling.**
+> `resolution_concordance_1626_1630` — the dataset every separation metric reads — was frozen
+> 2026-09-17, three `s4_corpus_paragraph_predictions` rebuilds behind (S6c's DP eliminating 777
+> `insufficient_entity_anchors` abstentions, the concordance-fallback wiring, and the
+> `axis_for_date` fix, all 2026-09-21/23). Re-running the "pure assembly" concordance script
+> (26s, no new alignment logic) against current predictions is what moved the number. See
+> `docs/DECISIONS.md` 2026-09-23 "`resolution_concordance_1626_1630` was stale, gating the entire
+> Tier O separation baseline".
 >
 > A **span** is a run of consecutive solid session-days (≥ 50% of that day's resolutions separated)
 > tolerating ≤ 1 non-solid day; it qualifies at ≥ 30 calendar days. Report spans at gap ∈ {0,1,2}
@@ -991,6 +1000,97 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   whether — per the earlier `session_day_find` precedent and the standing S6 Step 1 /
   anchor-supply findings — it's confirmed low-yield and the severe-collapse angle should
   be picked up instead.
+
+  **Session 2026-09-22/23 (severe-collapse autopsy + `axis_for_date` fix).** Outside this
+  conversation, the severe-collapse angle above was picked up instead of `session_date_verified`:
+  `scripts/s6c_severe_collapse_autopsy.py` was built and run (92/1,140 predicted days with 7+
+  resolutions on one paragraph start; cause mix `pigeonhole_forced` 32, `axis_requires_repeats` 50,
+  `room_on_axis` 10 — see `docs/DECISIONS.md` 2026-09-22 "S6c severe-collapse autopsy"), then a
+  spot-check of the worst days found `axis_for_date` (`scripts/s4_corpus_paragraph_predictions.py`)
+  preferring a thin same-calendar-day stub over a richer concordance-resolved session on a
+  neighboring date for 9/92 of them — a real selector bug, not missing HTR (`docs/DECISIONS.md`
+  2026-09-22 "axis_for_date must not treat non-empty same_day as a day cutoff").
+
+  This session implemented that fix: `axis_for_date` now prefers the concordance
+  `resolved_auto` session over a non-empty same-day stub, falling back to the same-day axis only
+  when no resolved session is recorded or its axis is empty (6 tests updated/added,
+  `tests/test_s4_corpus_paragraph_predictions.py`, 8/8 passing). Re-ran the full chain —
+  `s4_corpus_paragraph_predictions` → `metrics_span_gap_map` → `s6c_severe_collapse_autopsy` —
+  and confirmed the spot-check exactly: severe-collapse days **92 → 83** (max pile-up 25 → 16),
+  breaking gaps containing a collapse day **43 → 40** (25.15% → 23.39%, `severe_collapse_implicated`
+  **True → False** against the 0.25 threshold, reversing the 2026-09-22 reopen call on refreshed
+  data). Coverage itself is unchanged (1,140 predicted / 454 `missing_htr`) — of the 1,057 days now
+  routed through the resolved-session path, only **77** actually change axis content; the other 980
+  resolve to the same underlying session either way, so the headline "days affected" number is 77,
+  not 1,057. Global-spans bridge-ceiling reasoning is unaffected (still 0 spans@30, longest 12
+  calendar days after bridging `weak_separation`). Recorded via `svz.py metric`/`svz.py decision`/
+  `svz.py update`/`svz.py focus` (2026-09-23; see `docs/DECISIONS.md` "axis_for_date fixed and
+  remeasured").
+
+  **Along the way:** found and restored an unrelated accidental revert of
+  `plans/SHORT_RESOLUTION_SIDE_PLAN.md` (its working-tree copy had lost the entire Step 1–4
+  execution record and the Step 7 `CLOSE` decision — restored from HEAD, no content change beyond
+  that).
+
+  **Next:** `severe_collapse_implicated` is now `False` on refreshed data, so the autopsy's own
+  reopening rationale no longer holds — re-run `svz.py review` to pick the next track rather than
+  continuing the severe-collapse thread by default. Densifying `weak_separation` (917 days) toward
+  solid remains the only lever shown to move Global spans; nothing in this session changed that.
+
+  **Session 2026-09-23 (scoping the `weak_separation` lever — no code run).** Traced what
+  "densify `weak_separation`" actually touches before committing a session to it.
+  `s4_corpus_paragraph_predictions.py`'s `predict()` calls `s6c_gap_segmentation.segment_day(...)`
+  with **no `position_scores`** for the corpus run — when a gap has more resolutions than
+  paragraphs, the DP splits evenly with zero tie-breaking evidence, which is what produces
+  non-separated (shared-start or >3-paragraph-extent) resolutions. Of the two deferred
+  `position_scores` channels, Group C (`s4_opening_phrase_candidates` phrase hits) was already
+  wired in and killed on gold days (2026-09-21, tol0 F1 0.644 → 0.622: do not retry). **Group B**
+  (`entity_surface_matches_1626_1630` — already a computed dataset, no search needed) has never
+  been wired in at all; `s6c_gap_segmentation.py`'s own docstring still calls it "deferred, not
+  overlooked." `s4_fuzzy_surface_form_scan.py` (the separate no-metric track `svz.py review`
+  flags) is a different, much heavier 7-9h full-dictionary recovery job and is not a prerequisite
+  for this — don't conflate the two.
+
+  **Next:** before any corpus-wide re-run, repeat the 2026-09-21 Group-C methodology on Group B:
+  wire `entity_surface_matches_1626_1630` into `segment_day`'s `position_scores` and score it
+  cheaply through the corpus predictor's own codepath restricted to the 19/21 scoreable gold days
+  (`evaluate_s4_paragraph_axis.py`'s harness). Only if that shows a real gain does a full
+  `s4_corpus_paragraph_predictions` re-run (cheap, no search) become worth running, followed by a
+  fresh `metrics_span_gap_map` / `weak_separation` count to see whether it actually moved.
+
+  **Session 2026-09-23 (concordance staleness found — Global, primary criterion now met).**
+  Before scoping the Group-B `position_scores` wiring above, built a cheap diagnostic
+  (`scripts/metrics_weak_separation_headroom_diagnostic.py`, 5/5 tests) to check whether
+  `weak_separation` days are even reachable given axis coarseness: per day,
+  `structural_ceiling_share = min(1, paragraph_count / k_e_signal)` is a strict upper bound on
+  `separated_share`. First run: 91.4% of the 917 `weak_separation` days were `headroom_available`
+  (ceiling ≥ 0.5) — but median `separated_share` on those days was exactly **0.0**, even on days
+  with `paragraph_count == k_e_signal` (ceiling 1.0). Too implausible to be a placement-quality
+  gap, so traced it to source instead of scoping S6e on it: `resolution_concordance_1626_1630`
+  (every Tier O metric's input) was built **2026-09-17**, three `s4_corpus_paragraph_predictions`
+  rebuilds behind (S6c's DP eliminating 777 `insufficient_entity_anchors` abstentions and the
+  `axis_for_date` fix, both 2026-09-21/23). A sampled date showed the live prediction record was
+  `status=predicted` while concordance still carried `paragraph_prediction_status=abstained` for
+  every resolution that date.
+
+  Re-ran `scripts/s4_resolution_concordance.py` (its own docstring: pure assembly, no new
+  matching/alignment logic; 26s) then the full Tier O chain (`metrics_nihil_actum_invariant` →
+  `metrics_separation_span_table` → `metrics_span_gap_map` → `s6c_severe_collapse_autopsy` →
+  the new headroom diagnostic). **No algorithm or modeling work — a stale-cache fix alone moved
+  the PLAN.md headline from 1,961/11,644 = 16.8% to 8,015/11,644 = 68.8% of ceiling**, clearing
+  the **Global, primary criterion (≥50%)** outright (stretch ≥75% not yet met, gap 718). Solid
+  days 221 → 693/1,594. Global spans@30: gap=2 now has 4 spans / 177 days (was 0/0) — short of
+  the ≥6-spans/≥180-days criterion but close; gap=0/1 still 0/≤1 spans. `severe_collapse_implicated`
+  stays `False`. Recorded via `svz.py metric`/`svz.py decision` (2026-09-23 "`resolution_concordance_1626_1630`
+  was stale, gating the entire Tier O separation baseline"). Full test suite and `data_io.check`
+  clean; registered `metrics_weak_separation_headroom_diagnostic` in `data_manifest.toml`.
+
+  Re-run on fresh data: `weak_separation` days dropped 917 → 445, of which 82.2% are still
+  `headroom_available` (mean headroom 0.65, down from the spurious 0.90) — the Group-B
+  `position_scores` wiring planned above is still a live, real lever on the *smaller* remaining
+  population, not obsoleted by this fix. **Next:** either push for the 75%-stretch / 180-day-span
+  criteria via the already-scoped Group-B wiring, or bank this session's result — clear chat and
+  re-run `svz.py review` before picking.
 
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
@@ -2013,6 +2113,7 @@ the corrections list is fetched directly from MySQL.
 | `metrics_ke_drift_diagnostic`                  | `output/metrics_ke_drift_diagnostic.jsonl`                  | semi    |
 | `metrics_separation_span_table`                | `output/metrics_separation_span_table.jsonl`                | semi    |
 | `metrics_span_gap_map`                         | `output/metrics_span_gap_map.jsonl`                         | semi    |
+| `s6c_severe_collapse_autopsy`                  | `output/s6c_severe_collapse_autopsy.jsonl`                  | semi    |
 | `metrics_bottleneck_diagnostic`                | `output/metrics_bottleneck_diagnostic.jsonl`                | semi    |
 
 S4a completed 2026-09-01: registered both outputs in `data_manifest.toml` and

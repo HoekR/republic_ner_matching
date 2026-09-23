@@ -502,6 +502,20 @@ phase = "semi"
 description = "Tier O span-gap geography: classifies non-solid days between consecutive solid days, bridge counterfactuals per interrupter class, and whether S6c severe-collapse days are implicated in Global spans failure."
 parent = "metrics_separation_span_table"
 
+[datasets.s6c_severe_collapse_autopsy]
+tier = "hot"
+path = "republic_ner_matching/output/s6c_severe_collapse_autopsy.jsonl"
+phase = "semi"
+description = "S6c severe-collapse autopsy: per enriched calendar day with max-on-paragraph >= 7, pigeonhole floor vs observed pile-up, mutually exclusive cause class, and Tier O nonsolid flags; implicated breaking-gap rows from metrics_span_gap_map."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.metrics_weak_separation_headroom_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_weak_separation_headroom_diagnostic.jsonl"
+phase = "semi"
+description = "Tier O weak_separation headroom diagnostic: per-day structural ceiling on separated_share (min(1, paragraph_count/k_e_signal)), splitting structurally_capped (no algorithm can reach solid) from headroom_available (a placement-quality fix could) among weak_separation days."
+parent = "metrics_span_gap_map"
+
 [datasets.metrics_bottleneck_diagnostic]
 tier = "hot"
 path = "republic_ner_matching/output/metrics_bottleneck_diagnostic.jsonl"

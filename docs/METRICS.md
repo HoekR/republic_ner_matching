@@ -193,12 +193,13 @@ Every line in `docs/STATE.md`'s "Key Intermediate Results & Metrics" section, by
 | V | metrics-nihil-actum-invariant — invariant_passed (1=pass): 1 |
 | V | metrics-nihil-actum-invariant — nihil_share_of_days (127/1594): 0.0797 |
 | D | metrics-ke-drift-diagnostic — n_drift_candidates (|dev|>=10 vs ±3d neighbor median): 203 |
-| O | metrics-separation-span-table — separated_count (reproduces PLAN baseline): 1961 |
-| O | metrics-separation-span-table — separated_share_of_ceiling: 0.1684 |
-| O | metrics-separation-span-table — n_solid_days (share>=0.5 on k_e_signal): 221 |
-| O | metrics-separation-span-table — Global spans@30 gap=0 (n_spans / days_covered): 0/0 |
-| O | metrics-separation-span-table — Global spans@30 gap=1: 0/0 |
-| O | metrics-separation-span-table — Global spans@30 gap=2: 0/0 |
+| O | metrics-separation-span-table — separated_count (post 2026-09-23 concordance refresh, was 1961): 8015 |
+| O | metrics-separation-span-table — separated_share_of_ceiling (Global-primary >=0.5 now MET, was 0.1684): 0.6883 |
+| O | metrics-separation-span-table — n_solid_days (share>=0.5 on k_e_signal, was 221): 693 |
+| O | metrics-separation-span-table — Global spans@30 gap=0 (n_spans / days_covered, unchanged): 0/0 |
+| O | metrics-separation-span-table — Global spans@30 gap=1 (was 0/0): 1/43 |
+| O | metrics-separation-span-table — Global spans@30 gap=2 (was 0/0; criterion needs >=6/>=180): 4/177 |
+| O | metrics-weak-separation-headroom-diagnostic — headroom_available_share of remaining 445 weak_separation days (post-refresh): 0.822 |
 | P | metrics-bottleneck-diagnostic — oracle_ceiling coverage (interpolate_positions): 0.263 |
 | P | metrics-bottleneck-diagnostic — real_performance coverage (NW + same model): 0.368 |
 | P | metrics-bottleneck-diagnostic — recommended_focus (1=algorithm_redesign): algorithm_redesign |
@@ -220,3 +221,40 @@ Every line in `docs/STATE.md`'s "Key Intermediate Results & Metrics" section, by
   unlocks Global spans — bridging all 917 `weak_separation` days only raises longest
   to 12 calendar days. Converting weak_separation days *into* solids (higher
   `separated_share`), not merely bridging them, remains necessary for ≥30d runs.
+- **S6c severe-collapse autopsy (2026-09-22, `s6c_severe_collapse_autopsy`):** 92/1,140
+  predicted days (8.1%). Cause mix: `pigeonhole_forced` 32, `axis_requires_repeats` 50,
+  `room_on_axis` 10. All 92 are Tier O `weak_separation` nonsolids (0 solid). Mean excess
+  over pigeonhole floor 4.3; max pile-up 25. Closed as diagnostic — densify
+  `weak_separation` rather than retune S6c for the collapse tail.
+- **Severe-collapse spot-check (2026-09-22):** of 92 days, **9** ignore a richer
+  concordance-resolved session (neighbor date) in favor of a thin same-calendar
+  stub (`axis_for_date` order); **15** are genuinely thin on both calendar and
+  resolved session (often inventory 4562 single-paragraph blobs); **56** have a
+  short axis with no richer session. Missing-text is real for the thin strata;
+  the 9 are a selector bug, not absent HTR.
+- **`axis_for_date` fixed and remeasured (2026-09-23):** prefers the concordance
+  `resolved_auto` session over a non-empty same-calendar-day stub (falls back to the
+  stub only when no resolved session exists or its axis is empty). Coverage unchanged
+  (1,140 predicted / 454 `missing_htr`); of those, 1,057 now route through the
+  resolved-session path but only **77** actually change axis content (the rest resolve
+  to the same session either way). Re-running the full chain (predictions → span-gap
+  map → severe-collapse autopsy) confirms the spot-check exactly: severe-collapse days
+  **92 → 83** (max pile-up 25 → 16), breaking gaps containing a collapse day **43 → 40**
+  (25.15% → 23.39%, `severe_collapse_implicated` **True → False** against the 0.25
+  threshold). Bridge-ceiling reasoning is unchanged — still 0 spans@30 under every
+  interrupter class, longest 12 calendar days after bridging `weak_separation`.
+- **`resolution_concordance_1626_1630` was stale, gating the whole Tier O baseline
+  (2026-09-23).** A new headroom diagnostic (`scripts/metrics_weak_separation_headroom_diagnostic.py`
+  — per-day `structural_ceiling_share = min(1, paragraph_count/k_e_signal)`, a strict upper
+  bound on `separated_share`) found 91% of `weak_separation` days had ample axis room but
+  `separated_share ≈ 0` regardless — implausible as a placement-quality signal. Root cause:
+  `resolution_concordance_1626_1630` (every Tier O metric's input) was built 2026-09-17, three
+  `s4_corpus_paragraph_predictions` rebuilds behind (S6c's DP, the concordance-fallback wiring,
+  and the `axis_for_date` fix above). Re-ran `scripts/s4_resolution_concordance.py` (pure
+  assembly, no new alignment logic, 26s) and the full Tier O chain: **separated_count 1,961 →
+  8,015 (16.8% → 68.8% of ceiling, Global-primary criterion now MET)**, solid days 221 → 693,
+  spans@30 gap=2 0/0 → 4 spans/177 days (still short of the 6-spans/180-days criterion).
+  `severe_collapse_implicated` stays `False`. See `docs/DECISIONS.md` 2026-09-23. Re-run headroom
+  diagnostic on fresh data: `weak_separation` days 917 → 445, of which 82.2% remain
+  `headroom_available` (mean headroom 0.65) — the Group-B `position_scores` wiring already
+  scoped in `PLAN.md` is still a live lever on the smaller remaining population.

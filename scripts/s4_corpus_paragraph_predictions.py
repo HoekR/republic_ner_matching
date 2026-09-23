@@ -79,13 +79,24 @@ def axis_for_date(
     axis_by_session: dict[str, list[dict[str, Any]]],
     session_by_date: dict[str, str],
 ) -> list[dict[str, Any]]:
-    """Same-calendar-day paragraphs when present; otherwise the concordance-resolved session's
-    paragraphs, which may be filed under a different calendar date in `paragraph_axis_1626_1630`."""
-    same_day = axis_by_date.get(date, [])
-    if same_day:
-        return same_day
+    """The concordance-resolved session's paragraphs when one exists; otherwise same-calendar-day
+    paragraphs.
+
+    `session_by_date` only holds dates with `day_status == "resolved_auto"` -- the accepted-final
+    day-mapping track (`resolution_concordance_1626_1630`). A non-empty same-day axis is not by
+    itself proof the sitting belongs on that calendar date: `resolutions_flat`'s session numbering
+    has drifted from the archive (`docs/DECISIONS.md` 2026-09-21 "S4f review"), so a thin
+    same-calendar stub can coexist with a richer session that concordance has already resolved to a
+    neighboring date. Preferring the resolved session over an unconditional same-day check corrects
+    that (`docs/DECISIONS.md` 2026-09-22 "axis_for_date must not treat non-empty same_day as a day
+    cutoff"). Falls back to the same-calendar-day axis when no resolved session is recorded for this
+    date, or its axis is empty (a dataset gap, not evidence the calendar date is wrong)."""
     session_id = session_by_date.get(date)
-    return axis_by_session.get(session_id, []) if session_id else []
+    if session_id:
+        resolved_axis = axis_by_session.get(session_id, [])
+        if resolved_axis:
+            return resolved_axis
+    return axis_by_date.get(date, [])
 
 
 def predict(
@@ -142,10 +153,23 @@ def main() -> None:
         for date in grouped_enriched()
         if not axis_by_date.get(date) and axis_by_session.get(session_by_date.get(date, ""))
     )
+    # "Overridden" only counts days where the resolved session's axis actually differs in
+    # content from the same-day stub -- for most resolved_auto dates the two agree (the
+    # resolved session IS that date's own session, just reached via a different key), so
+    # comparing axis_ids rather than mere truthiness avoids inflating this figure with
+    # cosmetic routing changes (docs/DECISIONS.md 2026-09-22).
+    overridden = sum(
+        1
+        for date in grouped_enriched()
+        if (same_day := axis_by_date.get(date))
+        and (resolved := axis_by_session.get(session_by_date.get(date, "")))
+        and [r["axis_id"] for r in same_day] != [r["axis_id"] for r in resolved]
+    )
     print(f"Wrote {len(predictions)} corpus-day predictions to {output}")
     print(f"Status counts: {dict(Counter(item['status'] for item in predictions))}")
     print(f"Abstentions: {dict(Counter(item['reason'] for item in predictions if item['status'] == 'abstained'))}")
     print(f"Days recovered via resolution_concordance_1626_1630's resolved_session_id (no same-day axis otherwise): {recovered}")
+    print(f"Days where the resolved session's axis differs from the same-day stub (docs/DECISIONS.md 2026-09-22): {overridden}")
 
 
 if __name__ == "__main__":

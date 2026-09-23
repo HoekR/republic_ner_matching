@@ -1,7 +1,7 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-22 17:59",
-  "active_focus": "Span-gap map done: severe-collapse implicated (43/171 breaking gaps). Next: S6c severe-collapse autopsy on the 92 recomputed days; bridge ceiling shows converting weak_separation to solid (not merely bridging) is still required for Global spans.",
+  "last_updated": "2026-09-23 13:43",
+  "active_focus": "Discovered + fixed: resolution_concordance_1626_1630 was stale (2026-09-17, 3 predictor rebuilds behind). Re-ran it + full Tier O chain: separated_share_of_ceiling 16.8% -> 68.8% (Global-primary criterion now met), solid_days 221 -> 693/1594, spans@30 gap=2 4 spans/177d (was 0). Next: decide whether to push for the 75% stretch / 180-day span criterion (headroom diagnostic says 82.2% of remaining weak_separation days are headroom_available, not axis-capped -- a placement-quality fix e.g. S6e still has room) or bank this as the session's result. Clear chat.",
   "tasks": [
     {
       "id": "S0",
@@ -178,8 +178,8 @@
       "id": "s6-anchor-chain-alignment",
       "title": "S6 -- multi-channel anchor chaining at character coordinates",
       "status": "inprogress",
-      "notes": "2026-09-22 span-gap map: solid=221, breaking=171, dominant=weak_separation, severe_collapse_implicated=True, bridge weak_separation longest=12.",
-      "next_action": "Severe-collapse autopsy on the ~92 predicted days with >=7 resolutions on one paragraph start; measure how many sit in breaking gaps and whether fixing them moves separated_share across 0.5. Parallel note: densifying weak_separation (917 days) is the span lever; autopsy alone cannot reach 30d (bridge ceiling 12d).",
+      "notes": "2026-09-23: axis_for_date fixed (prefers concordance resolved_auto session over a non-empty same-day stub). Re-ran predictions -> span-gap map -> severe-collapse autopsy in sequence: severe-collapse 92->83 days, breaking-gap share 25.15%->23.39% (below 0.25, severe_collapse_implicated now False), coverage unchanged (1140 predicted/454 missing_htr).",
+      "next_action": "severe_collapse_implicated is now False on refreshed data -- the autopsy's own reopening rationale no longer holds. Re-check docs/ITERATION_POLICY.md / svz.py review for the next track: densifying weak_separation (917 days) toward solid remains the only lever shown to move Global spans (bridge ceiling stays 12 calendar days even after this fix).",
       "goal": "A segmentation DP that raises predicted-day coverage and/or the 0.828 lumped paragraph-level score on the 947 open gaps, without depending on resolving B/C anchors to enriched indices first (already shown not to be the binding constraint).",
       "cost": "multi-session",
       "blocks": [
@@ -847,12 +847,16 @@
     {
       "scope": "s6-anchor-chain-alignment",
       "name": "corpus_severe_collapse_share",
-      "label": "79/1059 predicted days have 7+ resolutions collapsed onto one paragraph -- low-localization coverage, not a bug",
-      "value": "0.075",
+      "label": "Predicted days with 7+ resolutions collapsed onto one paragraph (83/1140) after the axis_for_date fix; was 92/1140=0.0807 pre-fix, 79/1059=0.075 before the concordance-fallback wiring",
+      "value": "0.0728",
       "history": [
         {
           "date": "2026-09-21",
           "value": "0.075"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.0728"
         }
       ]
     },
@@ -1063,12 +1067,16 @@
     {
       "scope": "s6-anchor-chain-alignment",
       "name": "span_gap_severe_collapse_share",
-      "label": "Share of breaking gaps that contain an S6c severe-collapse day (43/171). Implication threshold was 0.25.",
-      "value": "0.2515",
+      "label": "Share of breaking gaps that contain an S6c severe-collapse day (40/171) after axis_for_date fix; was 0.2515 (43/171) -- drops below the 0.25 implication threshold",
+      "value": "0.2339",
       "history": [
         {
           "date": "2026-09-22",
           "value": "0.2515"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.2339"
         }
       ]
     },
@@ -1081,6 +1089,138 @@
         {
           "date": "2026-09-22",
           "value": "12"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_days",
+      "label": "S6c severe-collapse autopsy: days with max>=7 resolutions on one paragraph start (83/1140, after the 2026-09-23 axis_for_date fix; was 92/1140)",
+      "value": "83",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "92"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "83"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_pigeonhole_forced_share",
+      "label": "Share of severe-collapse days where ceil(k_e/P)>=7 (25/83) after axis_for_date fix -- structural even under optimal assignment; was 0.3478 (32/92)",
+      "value": "0.3012",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.3478"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.3012"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_room_on_axis_share",
+      "label": "Share of severe-collapse days with paragraph_count>=k_e (10/83) after axis_for_date fix; was 0.1087 (10/92)",
+      "value": "0.1205",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.1087"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.1205"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_weak_separation_share",
+      "label": "All 92 severe-collapse days are Tier O weak_separation nonsolids (0 solid)",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_richer_session_ignored",
+      "label": "Of 92 severe-collapse days, 9 prefer a thin same-calendar-date axis over a richer concordance-resolved session on a neighboring date (axis_for_date bug)",
+      "value": "9",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "9"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_genuinely_thin",
+      "label": "Of 92 severe-collapse days, 15 have P<=1 on both calendar axis and resolved session (real short/blob HTR, often inventory 4562)",
+      "value": "15",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "15"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "separated_share_of_ceiling_post_concordance_refresh",
+      "label": "PLAN.md Global-primary metric after re-running resolution_concordance_1626_1630 (stale since 2026-09-17) against the current S6c predictor: 8015/11644 separated (was 1961/11644=16.8%). Higher is better. Global-primary criterion (>=50%) now met; stretch (>=75%) not yet (gap ~718).",
+      "value": "0.688",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.688"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "solid_days_post_concordance_refresh",
+      "label": "Tier O solid days out of 1594 after concordance refresh (was 221/1594). Higher is better.",
+      "value": "693",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "693"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "global_spans_gap2_days_covered_post_refresh",
+      "label": "Global spans@30 gap=2 days_covered after concordance refresh (was 0; n_spans=4, criterion is >=6 spans AND >=180 days). Higher is better -- 177 is just short of the 180-day stretch.",
+      "value": "177",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "177"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "weak_separation_headroom_share_post_refresh",
+      "label": "Share of remaining 445 weak_separation days (was 917) that are headroom_available (ceiling>=0.5, not axis-capped) per metrics_weak_separation_headroom_diagnostic, after the concordance refresh. Higher is better (means placement-quality work, not axis granularity, is still the live lever).",
+      "value": "0.822",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.822"
         }
       ]
     }

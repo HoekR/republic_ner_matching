@@ -1,4 +1,5 @@
 # Short-resolution LLM alignment baselines (Step 2)
+<!-- doc-status: sidelined -->
 
 ## Overview
 
