@@ -25,10 +25,10 @@
 >
 > | | criterion | baseline (2026-09-23) |
 > |---|---|---|
-> | Global, primary | ≥ 50% of ceiling separated (≥ 5,822) | **MET** — 8,015 = 68.8% of ceiling (41.9% of all 19,120; 53.9% of 14,861 HTR-reachable) |
+> | Global, primary | ≥ 50% of ceiling separated (≥ 5,822) | **MET** — 8,015 = 68.8% of ceiling (41.9% of all 19,120; 59.2% of 13,530 HTR-reachable). *Corrected 2026-09-25: this cell previously read "53.9% of 14,861", contradicting the reporting rule below, which names 13,530. Derived from source — 19,120 total minus 5,590 resolutions on the 535 dates with no HTR paragraphs = 13,530 exactly; 14,861 matches no quantity in the data.* |
 > | Global, stretch | ≥ 75% of ceiling (≥ 8,733) | not met — gap 718 resolutions. **Greenlit 2026-09-23** to pursue via the S6 segmentation DP (`docs/DECISIONS.md`), the one credible untried lever after uniqueness-policy and `position_scores` fixes both measured flat. |
 > | Global, spans | ≥ 6 qualifying spans totalling ≥ 180 days | not met — gap=2: 4 spans / 177 days (closest); gap=1: 1 span / 43 days; gap=0: 0 spans (longest 12/43/60 calendar days). **Downgraded 2026-09-23 (`docs/DECISIONS.md`) from a readiness gate to a tracked-but-non-blocking metric** — the actual downstream consumer only needs per-resolution placement (the Global primary/stretch rows), not 30-day contiguous coverage. Do not scope work specifically to move this row; a placement-quality fix that happens to help it (e.g. the S6 DP) is fine, but nothing should block on it alone. |
-> | Local | any inventory-year reaching ≥ 50% of its own ceiling is banked as done and used as the worked example to extend from | — |
+> | Local | any inventory-year reaching ≥ 50% of its own ceiling is banked as done and used as the worked example to extend from | **MET 2026-09-24** — all 5 main annual inventories clear it: 3189 72.3%, 3187 72.3%, 3186 70.2%, 3185 68.2%, 3188 63.9% (`scripts/metrics_local_inventory_ceiling.py`). The 2 non-annual inventories (4562, 4861 — multi-year "secret resolution" series, structurally near-zero same-day HTR under this axis) do not, and are not the worked-example candidates this criterion targets. |
 >
 > **2026-09-23 jump (1,961 → 8,015) was a data-hygiene fix, not new modeling.**
 > `resolution_concordance_1626_1630` — the dataset every separation metric reads — was frozen
@@ -59,6 +59,10 @@
 > `docs/APPROACH_OVERVIEW.md` and `README.md`. Every document and top-level section here carries a
 > `<!-- doc-status: active|future|sidelined|retired -->` marker; `uv run python scripts/svz.py doctor`
 > checks that no non-active section asserts a conflicting goal and that this marker is unique.
+>
+> **Readable summary of results, method, and lessons (for reuse on other periods):**
+> [docs/SEGMENTATION_RESULTS.md](docs/SEGMENTATION_RESULTS.md), written 2026-09-24 once Global-primary
+> and Local both cleared their targets.
 
 **Multiple tracks below compete for the same session budget.** Before picking one up, run
 `uv run python scripts/svz.py review` (or read [docs/STATE.md](docs/STATE.md)) and follow
@@ -150,7 +154,7 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   `output/boundary_gold_sample.json`. Review classified the exception days as segmentable (S),
   cross-day shift (C), or missing HTR material (M); regenerated review currently has 32
   exceptions after annotation correction. *(D1)*
-- [ ] **S4** — assemble: entity-sequence NW → cut points → snap → exact-count interpolation between
+- [X] **S4** — assemble: entity-sequence NW → cut points → snap → exact-count interpolation between
   anchors → abstain below threshold. The first flat-resolution-axis entity-NW baseline ran on all
   50 gold days and abstained on all of them (22 missing HTR, 14 insufficient resolution
   granularity, 7 insufficient entity anchors, 7 cross-day shifts). A complete annotated-stream
@@ -408,6 +412,20 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   dictionaries as local `data.bak/` copies -- not confirmed against a
   canonical warm-tier path, see manifest description). Both scripts handed
   off for the user to run; results not yet in hand.
+
+  **Session 2026-09-23 (S4 closed).** Both open items above from the 2026-09-18 session note
+  were already resolved the same day (boundary F1 stagnation is a structural ceiling from gold's
+  own duplicate `paragraph_stream_index` slots; the 2 missing-record gold dates are trivial
+  `k_e == 1`/`missing_htr` days, not bugs) but S4's `state.json` entry and `docs/STATE.md` "Next
+  Actions" kept listing them as open. All live segmentation development since (`predict_day`/
+  `predict`, S6a char axis, S6b anchor harvest, S6c segmentation DP) was carried out and
+  metric-tracked under `s6-anchor-chain-alignment`, itself closed 2026-09-23 with Global-primary
+  MET. Closed S4 as `done` in `state.json` (docs/DECISIONS.md 2026-09-23); read
+  `s6-anchor-chain-alignment`'s entries above for current segmentation numbers, not S4's own.
+  Same session, closed the orphaned `fuzzy-surface-form-scan` track too: its 189,764-row scan
+  (167,599 newly_recovered, 88.3%) was already consumed as `s6b_anchor_harvest.py` Group B and
+  tested five ways in `position_scores`, all net negative vs. the no-evidence baseline — the
+  answer its own goal asked for existed under a different task id and was never written back.
 - [X] **S5** — evaluation adapter completed: [scripts/evaluate_s4_paragraph_axis.py](scripts/evaluate_s4_paragraph_axis.py)
   excludes C/M days from quality denominators, reports coverage separately, and writes
   `output/s5_paragraph_axis_evaluation.jsonl` (verified via
@@ -417,7 +435,9 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   [sequence_review_ui.py](sequence_review_ui.py) is deferred — it depends on the next S4
   iteration (expanded phrase inventory) changing the abstention set, so wiring the UI now would
   be rework. *(S0, S3, S4)*
-- [ ] **S6** — **multi-channel anchor chaining at character coordinates.** Guide:
+- [X] **S6** — **multi-channel anchor chaining at character coordinates.** Closed 2026-09-23,
+  Global-primary MET (68.8% of ceiling), `position_scores` tuning exhausted (see session note
+  below). Guide:
   [docs/steps/STEP_S6_anchor_chain_alignment.md](docs/steps/STEP_S6_anchor_chain_alignment.md).
   Corrects a coordinate drift, not the alignment idea: §6.3 of
   [docs/SEGMENTATION_TRANSFER.md](docs/SEGMENTATION_TRANSFER.md) already specified that cut points
@@ -1486,6 +1506,18 @@ onto HTR positions, then snap to the nearest opening formula / `para_start`.
   and switch tracks per `svz.py review`, per
   [docs/ITERATION_POLICY.md](docs/ITERATION_POLICY.md).
 
+  **Session 2026-09-23 (track closed -- lever (b) not attempted).** Asked the user for the
+  go/no-go above. Decision: do not attempt lever (b). Five independent `position_scores`
+  variants (Group B: blanket, day-grounded, relocated, exact-relocated, candidate-grounded) and
+  Group C's own phrase-hit evidence all failed the same way through the same bonus-vs-even-split
+  mechanism in `segment_gap` -- strong enough evidence the mechanism itself, not the evidence
+  source, is the limiting factor that a sixth variant is unlikely to recover the baseline.
+  Global-primary (>=50% of ceiling) is already MET at 68.8% (8,015/11,644); the stretch bar
+  (>=75%) stays open but this track will not pursue it further. **S6 / `s6-anchor-chain-alignment`
+  closed `done`** (`docs/DECISIONS.md`, `docs/state.json`). **Next session:** pick a different
+  track per `svz.py review` (candidates: Track B soundex/Levenshtein reranker, Track C
+  FuzzyTokenSearcher context matching, or the HOE classifier `other`-bucket work).
+
 **Key shift in ground truth.** Pair verdicts are algorithm-dependent artefacts that expire whenever
 the candidate generator changes — the structural reason the labelling loop never accumulated.
 Boundary annotations are algorithm-independent facts, yield `K_e − 1` labels per day instead of one,
@@ -1493,6 +1525,34 @@ and merge with the 245 upstream `res_start` records. **Boundaries, not verdicts,
 
 **Deferred:** role-typed entity overlap; structured LLM judge redesign (measure it first via D2);
 TRIFECTA layering (reduced to its evaluation discipline only); entity-noise simulation.
+
+---
+
+## Inventory-stream reframing and collision avoidance (opened 2026-09-25)
+<!-- doc-status: active -->
+
+> **Canonical document: [plans/COLLISION_AVOIDANCE_TRACK.md](plans/COLLISION_AVOIDANCE_TRACK.md).**
+> A pointer only — the goal above is unchanged and this track does **not** restate its targets or
+> its denominators. Registered in `docs/state.json` as `inventory-stream-collision-avoidance`.
+
+Opened out of [plans/POST_MORTEM_CODE_CHECK.md](plans/POST_MORTEM_CODE_CHECK.md), separate from the
+closed `s6-anchor-chain-alignment` (which tested *what evidence feeds* `position_scores` and
+exhausted that lever). This track tests *what unit the problem is posed on*: whether treating each
+inventory as one continuous resolution stream, with session openings as interior landmarks rather
+than the calendar day as a hard partition, recovers separations the per-day framing declares
+structurally impossible. Motivating measurement: collisions outweigh extent as a loss channel 4:1,
+and recomputing the pigeonhole bound per inventory stream instead of per day gives 14,258 against
+the day partition's 11,644 — 2,614 resolutions declared impossible by the partition, not the archive.
+
+Step status (details, tables and caveats in the track doc):
+
+| Step | Status |
+| --- | --- |
+| 1 — landmark density in the HTR stream (the gate) | **done 2026-09-25, PASSED** — openings are near-universal in the raw HTR (`date` region in 100% of 1,690 raw sessions, first region 99.8%) and localizable on the paragraph axis for 86.0% of 1,316 flat sessions; content-verified landmarks are strictly order-preserving in all five annual inventories while 80–99% of session *labels* are offset. Locality cost 2.13 dates/segment; headroom +1,329 raw but only **+342** once the 535 no-HTR dates cannot borrow a neighbour's paragraphs. Dataset `landmark_density_eval`. |
+| 2 — length-proportional placement prior | **done 2026-09-25, NEGATIVE** — hypothesis directionally true (ρ≈0.3) but a deterministic proportional allocation is worse than uniform; `segment_gap`'s uniform `ideal` stays. Dataset `length_prior_eval`. |
+| 3 — order-constrained alignment over all entities | **designed 2026-09-25, ready to build — take this next.** Its "settle the scoring design first" blocker is dissolved by a parameter-free formulation: today's NW aligns the *resolution* sequence with entities as a per-cell bag, so hypothesis 5 is untestable in the current code; moving the sequence's unit to the entity mention and aligning it with unit-cost edit distance (traceback kept, gap asymmetry fixed) tests order in isolation. Attacks the dominant loss channel directly. |
+| 4 — close the anchor-correction loop | pending, prerequisite now satisfied by Step 1's order-preserving verified chain. An earlier note here ranked it ahead of Step 3 on readiness rather than value; corrected in the track doc. |
+| 5 — re-derive the ceiling honestly | pending. **Until it runs, the acceptance table above is not restated**; Step 1 brackets the honest bound at 11,644 < ~11,986–12,147 < 12,973–13,197 < 14,258. |
 
 ---
 

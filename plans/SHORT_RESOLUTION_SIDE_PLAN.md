@@ -143,7 +143,7 @@ Schema delivered:
   - `--sample-mode`: process only first 5 records (quick validation)
 
 ### Step 3a — Recover and retry failed summaries (authoritative gate)
-<!-- status: active -->
+<!-- status: closed 2026-09-25 — stale marker; side-plan closed at Step 7 on 2026-09-22 -->
 
 **Purpose:** Do not treat ranking, opening diagnostics, or a corpus receipt/no-decision index as authoritative while structured summaries remain below quality threshold.
 

@@ -43,6 +43,15 @@ so tiering by channel keeps the metric next to the thing that would move it.
   LLM side-plan close (`plans/SHORT_RESOLUTION_SIDE_PLAN.md` Step 7; `docs/DECISIONS.md`): built
   once, never measured, never wired into `scripts/s6b_anchor_harvest.py`. Not an active channel;
   do not re-open without a fresh measured case against current A–D baselines.
+  **Reopen condition met 2026-09-25, not yet acted on.** Step 1 of
+  `plans/COLLISION_AVOIDANCE_TRACK.md` reused this channel's `OPENING_PHRASES` unchanged as its
+  `formulaic_opening` landmark class and measured it against the current stream: openings detected
+  in 500 / 1,316 flat sessions (38.0%), of which **115 are reached by no other channel** (neither
+  the content-verified fingerprint channel nor the in-axis president/present stems). That is the
+  "fresh measured case" this retirement asked for — measured as a *landmark* channel, note, not as
+  the short-resolution aligner it was retired as. The track doc's revaluation note says re-examine,
+  do not auto-reopen; recorded here so the gate is not re-litigated from scratch. Dataset:
+  `landmark_density_eval`.
 - **Tier V — Validation/consistency invariants.** Categorically different from every other
   tier: pass/fail correctness gates, not "higher/lower is better" coverage numbers. Holds the
   nihil-actum invariant (`scripts/metrics_nihil_actum_invariant.py`) and emits the shared
@@ -91,7 +100,43 @@ so tiering by channel keeps the metric next to the thing that would move it.
 
 ## Proposed, not yet computed
 
-None currently — span-gap geography computed 2026-09-22.
+**Placement margin (a MAPQ analogue) — Tier P, proposed 2026-09-25.** Every placement currently
+carries a *provenance* tier (`tier1_anchor` / `tier2_*` / `tier3_*`): what kind of evidence produced
+it. Nothing records how *uniquely* it fits — whether the chosen paragraph beat its runner-up
+clearly or tied with four others. In read alignment that second quantity is MAPQ
+(`-10·log10 Pr{position is wrong}`, Li/Ruan/Durbin 2008), computed from the score distribution over
+competing placements, and its defining property is that a *perfect* match in a repetitive region
+scores MAPQ 0: high identity, no confidence.
+
+Why it is worth computing here:
+
+- It is the quantity the canonical goal already asks for in prose. `PLAN.md`'s framing says
+  "several resolutions sharing one paragraph is a multi-mapping read (filter, don't count as
+  progress)"; a margin score turns that sentence into a per-placement number with a threshold,
+  instead of the current post-hoc demotion when `n_share > 1`.
+- It targets the dominant loss channel. Collisions cost 4,722 of 14,472 slots (32.6%) against
+  extent's 9.9% (`plans/COLLISION_AVOIDANCE_TRACK.md` finding A), and a collision *is* a
+  multi-mapping event — a flat score surface across candidates.
+- It is orthogonal to what has already measured flat. `nw_matches_gt_rate` is 0.957 for correct
+  pairs and 0.962 for false positives: evidence-*kind* demonstrably does not separate them.
+  Ambiguity is a different axis and is untested.
+- It fits the abstention-free DP without undoing it. `segment_day` always emits `K_e − 1` cuts (the
+  design choice that took coverage to 100% of days with an axis), so an anchored cut and a
+  uniform-interpolation guess are emitted with identical standing, and 79 days (7.5%) carry 7+
+  resolutions on one paragraph. A margin separates them while keeping the coverage.
+
+Two limits to state wherever it is reported:
+
+- **Not a probability.** MAPQ is one because its score is a log-likelihood under a sequencing error
+  model. `s6c_gap_segmentation`'s cost is a heuristic even-split-vs-phrase-hit tradeoff, so a margin
+  derived from it is an *ordinal ambiguity statistic* until calibrated — bin placements by margin,
+  measure actual correctness per bin on the 50 gold days, and report the calibration curve.
+- **It measures ambiguity, not correctness.** A systematically wrong model is confidently wrong:
+  shift every placement one paragraph and the margins do not move. So it is a filter and a reporting
+  axis, never the score a placement change is judged by — the trap Step 2 of the collision-avoidance
+  track already documented when a trivial even spread beat gold's own annotations on `separated`.
+
+Span-gap geography computed 2026-09-22; nothing else outstanding.
 
 ## How this relates to the DNA analogy
 
@@ -206,11 +251,14 @@ Every line in `docs/STATE.md`'s "Key Intermediate Results & Metrics" section, by
 
 ## Known gaps
 
-- **Tier O's pigeonhole ceiling (11,644) is still unreproducible as a scripted
-  computation.** The 1,961 separated baseline is now reproduced by
-  `metrics_separation_span_table` (unique start paragraph + extent ≤ 3). The ceiling
-  figure itself remains a cited constant — see `docs/DECISIONS.md`, 2026-09-22
-  ("Backfill acceptance-criteria decision").
+- ~~Tier O's pigeonhole ceiling (11,644) is still unreproducible as a scripted
+  computation.~~ **Closed 2026-09-24.** `scripts/metrics_local_inventory_ceiling.py`
+  reproduces it exactly: `sum(min(k_e, same-calendar-day raw paragraph_count))` over
+  all 1,594 enriched-dates, with 535 no-HTR dates also matching. Same script answers
+  PLAN.md's Local criterion (any inventory ≥ 50% of its own ceiling): **MET** — all 5
+  main annual inventories clear it (63.9%–72.3%); the 2 non-annual "secret resolution"
+  inventories (4562, 4861) do not (10.5%, 0.0%), structurally near-zero same-day HTR.
+  See `docs/DECISIONS.md`, 2026-09-24.
 - **Global, spans is measured and currently unmet** at every gap ∈ {0,1,2}: zero
   qualifying ≥30-day spans (longest run 6/9/9 calendar days). Solid days exist
   (221/1,594) but do not form long contiguous runs under current paragraph attribution.
