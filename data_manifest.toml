@@ -257,6 +257,13 @@ phase = "semi"
 description = "Constraint baseline over a contiguous window: typed known points (session start, tier-1 anchor, gold boundary) chained at character coordinates, with the resolution count that must fall in each gap"
 parent = "alignment_1626_1630"
 
+[datasets.length_prior_eval]
+tier = "hot"
+path = "republic_ner_matching/output/length_prior_eval.jsonl"
+phase = "semi"
+description = "Step 2 of plans/COLLISION_AVOIDANCE_TRACK.md: does enriched summary length predict HTR extent? Per gold day and per resolution, enriched text characters vs HTR characters (composed from paragraph_axis_1626_1630 by pure concatenation plus the gold boundary char_offset, S6a convention), with Spearman/Pearson pooled and per-day; plus an anchor-free A/B of segment_gap's uniform ideal spacing against a cumulative-enriched-length-proportional prior, scored by mean absolute paragraph displacement and the separated criterion. Diagnostic only -- no tolerance-threshold F1, char offsets used to measure lengths and never to score boundary precision"
+parent = "alignment_1626_1630"
+
 [datasets.s6b_anchor_harvest]
 tier = "hot"
 path = "republic_ner_matching/output/s6b_anchor_harvest.jsonl"
@@ -530,6 +537,13 @@ phase = "semi"
 description = "Tier O consecutive-day separation span table: per-day separated_share on Tier V k_e_signal; solid-day runs at gap in {0,1,2}; qualifying spans at 7/14/30/60 calendar-day thresholds (Global, spans uses >=30)."
 parent = "metrics_nihil_actum_invariant"
 
+[datasets.metrics_local_inventory_ceiling]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_local_inventory_ceiling.jsonl"
+phase = "semi"
+description = "Tier O per-inventory pigeonhole ceiling (min(k_e, same-calendar-day raw paragraph_count from paragraph_axis_1626_1630), summed per inventory_id) and PLAN.md's Local criterion (any inventory reaching >=50% of its own ceiling); also the first scripted reproduction of the corpus-wide 11,644 ceiling constant cited in docs/DECISIONS.md 2026-09-22, closing the docs/METRICS.md 'Known gaps' item."
+parent = "resolution_concordance_1626_1630"
+
 [datasets.metrics_span_gap_map]
 tier = "hot"
 path = "republic_ner_matching/output/metrics_span_gap_map.jsonl"
@@ -557,3 +571,10 @@ path = "republic_ner_matching/output/metrics_bottleneck_diagnostic.jsonl"
 phase = "semi"
 description = "Tier P bottleneck diagnostic: oracle_ceiling (perfect gold anchors) vs real_performance (NW entity anchors) under unmodified interpolate_positions; decision aid for whether Tier A-D evidence or the placement algorithm binds."
 parent = "boundary_gold_sample"
+
+[datasets.landmark_density_eval]
+tier = "hot"
+path = "republic_ner_matching/output/landmark_density_eval.jsonl"
+phase = "semi"
+description = "Step 1 of plans/COLLISION_AVOIDANCE_TRACK.md (the track's gate): session-landmark availability in the raw HTR (date/attendance/president-present regions per raw session from s4_session_date_region_scan), localizability on the paragraph_axis_1626_1630 stream via three channels (content-verified s6b_session_fingerprint_match, in-axis president/present stems, hypothesis-4 formulaic receipt openings), order-preservation reliability of verified landmarks, and locality/headroom per landmark-bracketed segment (segment k_e and paragraphs vs the day partition, plus sum of min(k_e, paragraphs) per segment against the 11,644 day ceiling and finding C's inventory-stream bound). Diagnostic only -- no placement change, no tolerance-family metric."
+parent = "resolution_concordance_1626_1630"
