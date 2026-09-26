@@ -578,3 +578,24 @@ path = "republic_ner_matching/output/landmark_density_eval.jsonl"
 phase = "semi"
 description = "Step 1 of plans/COLLISION_AVOIDANCE_TRACK.md (the track's gate): session-landmark availability in the raw HTR (date/attendance/president-present regions per raw session from s4_session_date_region_scan), localizability on the paragraph_axis_1626_1630 stream via three channels (content-verified s6b_session_fingerprint_match, in-axis president/present stems, hypothesis-4 formulaic receipt openings), order-preservation reliability of verified landmarks, and locality/headroom per landmark-bracketed segment (segment k_e and paragraphs vs the day partition, plus sum of min(k_e, paragraphs) per segment against the 11,644 day ceiling and finding C's inventory-stream bound). Diagnostic only -- no placement change, no tolerance-family metric."
 parent = "resolution_concordance_1626_1630"
+
+[datasets.session_offset_eval]
+tier = "hot"
+path = "republic_ner_matching/output/session_offset_eval.jsonl"
+phase = "semi"
+description = "Step 6 gate of plans/COLLISION_AVOIDANCE_TRACK.md: the enriched<->HTR session offset distribution, measured across the two streams rather than argued by analogy from s6b_session_fingerprint_match's flat<->raw offsets (which are HTR-side on both sides). Per inventory, enriched sittings are ranked by date with nihil_actum dates excluded (the hard skip constraint: a nihil sitting consumes no HTR session) and paragraph_axis_1626_1630 flat sessions by flat_num; sittings the concordance resolves are pins, and each bracket between consecutive pins is classified by unresolved sittings (n_e) vs unclaimed sessions (n_h). A determined bracket (n_e == n_h) forces a pairing by monotonicity alone, and the calendar-day distance of those forced pairs is the gate -- a pair beyond one day is a correspondence the ledger's +/-1-day candidate window provably could not reach. Also records the ordinal offset per resolved sitting (context only: it conflates label drift with genuinely absent HTR because the sequences differ in length) and checks Step 6's no-insertion claim at session level via unclaimed sessions in brackets with no sitting available. Diagnostic only, no placement change, no tolerance-family metric."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.d1c_idf_band_order_eval]
+tier = "hot"
+path = "republic_ner_matching/output/d1c_idf_band_order_eval.jsonl"
+phase = "semi"
+description = "Step 3's gate in plans/COLLISION_AVOIDANCE_TRACK.md (hypothesis 5: entity order informs for common entities too, not only rare ones): D1c's Kendall tau on entity-mention order in tier-1 pairs, stratified by IDF band. Re-run rather than read off output/diagnostics_summary.json because run_diagnostics' band test (avg_idf >= 2.0 against log((total_docs+1)/(freq+1))+1) puts every name in the high band -- that run reports tau_low_idf = 0.0 on n = 0 pairs, so the stratification has never measured anything. Here: all 5,730 tier-1 pairs (no sampling), vocabulary = the >=4-character names in the three overlap tables (exactly what production's calculate_idf_weights covers), bands = mention-weighted terciles of overlap-evidence frequency, and a band's tau uses only that band's mentions inside a pair so it cannot be carried by rare mentions in the same pair. Also measures the competing explanation (shared-mention scarcity at containment 0.295 rather than alphabet density). Thresholds fixed in the script docstring before the run. Diagnostic only, no placement change, no tolerance-family metric."
+parent = "alignment_1626_1630"
+
+[datasets.separated_accuracy_eval]
+tier = "hot"
+path = "republic_ner_matching/output/separated_accuracy_eval.jsonl"
+phase = "semi"
+description = "Step 5c.1 of plans/COLLISION_AVOIDANCE_TRACK.md: accuracy of the production `separated` set (PLAN.md Global-primary, 8,015 resolutions) against the 50 hand-annotated boundary_gold_sample days, the precondition for Step 5's scaffold framing. Per resolution, the concordance's predicted paragraph_start_index vs gold's start paragraph under the canonical s6a convention (cut c opens resolution c+1; paragraph_boundary units open at index+1; out_of_range placeholders held out as unlocated), plus segment_gap's uniform spread as the null. Cohorts: separated / not-separated / by loss reason (collision, extent) / by review code. Resolution index 0 is held out of the headline because both sides place it at paragraph 0 by construction. Metrics are exact start-paragraph agreement and absolute paragraph displacement only -- no tolerance-family character metric. Also recomputes Step 2's `uniform beats gold on separated` side finding under the corrected gold convention. Diagnostic only, no placement change."
+parent = "resolution_concordance_1626_1630"

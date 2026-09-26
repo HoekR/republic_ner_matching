@@ -142,6 +142,34 @@ Schema delivered:
   - `--dry-run`: mock responses for CI/testing
   - `--sample-mode`: process only first 5 records (quick validation)
 
+### Step 3b — Freeze the authoritative summary set before ranking
+<!-- status: almost complete -->
+
+**Purpose:** Lock the summary artifact and quality gate before any ranking or boundary experiments depend on it.
+
+**Tasks:**
+
+- Run the final quality check on the saved summary output.
+- Confirm `gate_passed` coverage on the target sample; retain only the authoritative set for the next step.
+- Re-run the recovery path (`--retry-failed`) only when the saved output falls below the threshold.
+- Write the summary quality report into the dataset provenance and note parse failures separately from valid summaries.
+- Freeze the exact sample IDs used in the ranking step so dev/test arguments remain stable across runs.
+
+**Deliverable:** A persisted, quality-checked summary set plus a minimal report listing:
+
+- total records;
+- pass / fail / irrecoverable counts;
+- parse error count;
+- mean evidence length;
+- strata coverage across short vs long and opening vs non-opening cases.
+
+**Gate:** Proceed to Step 4 only when the saved summary set is authoritative (`gate_pass_rate >= 0.90` on the intended sample), or when the run is explicitly marked diagnostic and not used for promotion.
+
+**Notes:**
+- This is the final guardrail before candidate ranking.
+- It prevents ranking from running on stale or partially recovered summary output.
+- It keeps the side track on the evaluation-only path and avoids silently contaminating the deterministic baselines.
+
 ### Step 3a — Recover and retry failed summaries (authoritative gate)
 <!-- status: closed 2026-09-25 — stale marker; side-plan closed at Step 7 on 2026-09-22 -->
 

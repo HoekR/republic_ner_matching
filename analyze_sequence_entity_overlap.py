@@ -25,12 +25,13 @@ import numpy as np
 import pandas as pd
 
 from build_alignment_new import (
-    DATADIR,
+    ENRICHED_FILE,
     LOC_ANNOTATIONS_FILE,
     ORG_ANNOTATIONS_FILE,
     ORG_OVERLAP_FILE,
     OUTPUT_DIR,
     PLACE_OVERLAP_FILE,
+    RESOLUTIONS_FILE,
     SESSION_ID_PATTERN,
     align_session,
     build_paragraph_to_resolution_map,
@@ -752,8 +753,8 @@ def main() -> None:
     if not isinstance(labeled, list):
         raise ValueError("Labeled JSON must be a list of records.")
 
-    enriched_all = load_json(DATADIR / "enriched_resolutions_1626_1630_complete.json")
-    res_df = pd.read_parquet(DATADIR / "resolutions_flat.parquet")
+    enriched_all = load_json(ENRICHED_FILE)
+    res_df = pd.read_parquet(RESOLUTIONS_FILE)
     res_df["date_str"] = res_df["date"].astype(str).str[:10]
     res_df["session_id"] = res_df["id"].astype(str).str.extract(SESSION_ID_PATTERN, expand=False)
 

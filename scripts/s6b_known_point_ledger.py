@@ -96,6 +96,68 @@ def flat_id_char_starts(records: Sequence[dict[str, Any]]) -> dict[str, int]:
     return first
 
 
+def align_entity_mentions(
+    flat_mentions: Sequence[str],
+    enriched_mentions: Sequence[str],
+) -> tuple[list[tuple[int, int]], float]:
+    """Align ordered entity mentions with the Step 3 no-insertion constraint.
+
+    The enriched summary is treated as the bounded target: an extra enriched mention is not
+    allowed to appear as a gap insertion, while the flat/HDR stream may skip unmatched mentions
+    cheaply and continue the order-preserving match. This keeps the experiment parameter-free,
+    makes the traceback usable for later placement, and matches the corpus-level design choice
+    spelled out in plans/COLLISION_AVOIDANCE_TRACK.md: deletion is the norm on the enriched
+    side, while insertion is not a modelled event.
+    """
+    flat = [str(item) for item in flat_mentions]
+    enriched = [str(item) for item in enriched_mentions]
+    n = len(flat)
+    m = len(enriched)
+
+    if n == 0 or m == 0:
+        return [], 0.0 if n == 0 and m == 0 else float("inf")
+
+    inf = float("inf")
+    dp = [[inf] * (m + 1) for _ in range(n + 1)]
+    parent: list[list[tuple[str, int, int] | None]] = [[None] * (m + 1) for _ in range(n + 1)]
+    dp[0][0] = 0.0
+
+    for i in range(n + 1):
+        for j in range(m + 1):
+            if dp[i][j] == inf:
+                continue
+
+            if i < n:
+                skip_flat = dp[i][j] + 1.0
+                if skip_flat < dp[i + 1][j]:
+                    dp[i + 1][j] = skip_flat
+                    parent[i + 1][j] = ("flat_gap", i, j)
+
+            if i < n and j < m:
+                match_cost = 0.0 if flat[i] == enriched[j] else 1.0
+                next_cost = dp[i][j] + match_cost
+                if next_cost < dp[i + 1][j + 1]:
+                    dp[i + 1][j + 1] = next_cost
+                    parent[i + 1][j + 1] = ("match", i, j)
+
+    if dp[n][m] == inf:
+        return [], float("inf")
+
+    pairs: list[tuple[int, int]] = []
+    i, j = n, m
+    while i > 0 or j > 0:
+        move = parent[i][j]
+        if move is None:
+            break
+        kind, prev_i, prev_j = move
+        if kind == "match":
+            pairs.append((prev_i, prev_j))
+        i, j = prev_i, prev_j
+
+    pairs.reverse()
+    return pairs, float(dp[n][m])
+
+
 def tier1_points(rows: Sequence[Any], by_flat_id: dict[str, int]) -> list[dict[str, Any]]:
     """One known point per tier-1 anchor whose flat resolution is on this day's axis."""
     points = []

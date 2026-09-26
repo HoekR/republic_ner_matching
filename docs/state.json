@@ -1,7 +1,7 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-25 11:48",
-  "active_focus": "Lever (c) tested (cheap gap-candidate-grounded precursor to the full two-sided consolidation table): ties day-level grounding exactly (tol0 0.588=0.588, candidate_id_match_rate=1.0), still below the 0.644 no-evidence baseline. Do not build the full consolidation table. position_scores tuning now exhausted across five variants (blanket/day-grounded/relocated/exact-relocated/candidate-grounded). Next: pick up lever (b) (per-entity role/type weighting in segment_gap's cost function) via explicit go/no-go, or accept 68.8% of ceiling (Global-primary MET) as this track's outcome and switch tracks per svz.py review. Clear chat.",
+  "last_updated": "2026-09-25 13:10",
+  "active_focus": "Step 6 gate ran and did NOT pass -- the session aligner should not be built. The enriched<->HTR session mapping is already complete wherever HTR exists: 1,089/1,089 sittings pinned in 3185-3189, zero missing_htr rows there, and all 4,482 unmapped resolutions in 4562/4861 (4861 has no HTR at all). Order-forced pairings confirm the mechanism (3/3 beyond the +/-1-day window, at 20/22/36 days) on 40 of 19,120 resolutions. Next: Step 3, the entity-mention edit alignment inside s6b_known_point_ledger.py's 947 open gaps, parameter-free, under the no-insertion structural constraint, scored against 5c.1's 0.639 exact / 0.911 within-1 on gold's segmentable days. Clear chat.",
   "tasks": [
     {
       "id": "S0",
@@ -250,8 +250,8 @@
       "id": "inventory-stream-collision-avoidance",
       "title": "Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md)",
       "status": "inprogress",
-      "notes": "Step 1 (gate) PASSED 2026-09-25: session openings are near-universal in the raw HTR (date region 100% of 1,690 raw sessions, first region 99.8%, attendance 71.7%) and localizable on the paragraph_axis stream for 86.0% of 1,316 flat sessions across three complementary channels (fingerprint-verified 71.4%, formulaic openings 38.0%, in-axis president/present 18.0%). Decisive result: content-verified landmarks are strictly order-preserving in all five annual inventories (0 non-monotone steps) while 80-99% of session labels carry a non-zero offset in only 5-11 piecewise runs -- the label is wrong nearly everywhere, the order is intact everywhere. Locality cost is 2.13 dates/segment and median segment k_e 1.33x the day median; headroom is +1,329 on the 11,644 ceiling, but only +342 once the 535 no-HTR dates are barred from borrowing a neighbour's paragraphs, i.e. below the 718 Global-stretch gap. Step 2 (length-proportional prior) already closed NEGATIVE. dataset landmark_density_eval.",
-      "next_action": "Step 5a then 5c.1, then Step 3 scoped to gaps (plans/COLLISION_AVOIDANCE_TRACK.md). 5a: re-express the corpus state in alignment terms (coverage / uniquely-placed / pile-up / uncovered / unassembled-gaps) -- pure re-expression of figures already on disk, no compute. 5c.1: verify accuracy on the 8,015 separated set against the 50 gold days BEFORE freezing 68.8% as a scaffold -- 'separated' is a coverage criterion (unique start paragraph, extent <=3), not an accuracy one, and Step 2 measured a trivial uniform spread beating gold's own annotations on it (170 vs 111 on clean days). Then gap-filling IS Step 3's entity-stream edit alignment scoped to s6b_known_point_ledger's 947 open gaps (70.7% of unplaced work), replacing segment_gap's uniform interpolation rather than tuning it -- both terms of that cost (bonus via 5 position_scores variants, ideal via the length prior) are already exhausted and neither is an alignment. Does NOT restate PLAN.md's acceptance table: Tier O criteria unchanged, this is a Tier P vocabulary reported alongside.",
+      "notes": "Step 1 PASS (landmark density gate). Step 2 NEGATIVE (length prior; do not adopt). Steps 5a + 5c.1 DONE 2026-09-25: separated set is accurate enough to freeze as a scaffold except on review-code-M days (0.639 exact / 0.911 within-1 on segmentable days, beating the uniform null 2.4-2.7x). Step 6 gate DONE 2026-09-25, DID NOT PASS -- do not build the session aligner: scripts/session_offset_eval.py (15 tests) -> session_offset_eval shows the enriched<->HTR session mapping is already complete wherever there is HTR to map to. In inventories 3185-3189 every enriched sitting resolves to a session (1,089/1,089) and there are ZERO missing_htr rows; all 344 unresolved sittings / 4,482 resolutions are in 4562 (2,095) and 4861 (2,387), the non-annual series PLAN.md's Local criterion already excludes, where 4861 has no axis sessions at all. Only 3 sittings (40 resolutions) sit in order-determined brackets -- all 3 beyond the +/-1-day window at 20/22/36 days, so the mechanism is confirmed on 40 of 19,120 resolutions against a stretch gap of 718. The cited 1,137 cross_day_shift resolutions are NOT unmapped; every one carries a resolved session. Also measured: no-insertion holds at session level in the annual inventories (12/1,034) but breaks in 4562 (39). SCOPE CONSTRAINT (user, 2026-09-25, now a standing track guardrail): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it -- 184 axis sessions / 2,284 paragraphs (10.6%) dated to 1630-12-31 are barred, enforced and asserted (0 claimed today); enforcing it changed no gate quantity. The day partition excluded them for free by keying paragraph counts on enriched dates, so the 11,644 ceiling and Step 1's segment ceilings are safe, but a STREAM framing must bar them explicitly -- Step 5's pending bound re-derivation is the next thing that would hit this. Step 3's design question was settled earlier: no-insertion is a structural constraint, not a gap penalty. Open, unscoped: pin CORRECTNESS is untested (Step 6 closes 'mapping absent', not 'mapping wrong') -- cheap check is enriched date vs the content-verified raw session's date from s6b_session_fingerprint_match, 70 pinned sittings already sit >1 day from their session label; axis_for_date's neighbour fallback places resolutions on days with no HTR of their own (corpus-wide share unmeasured); length_prior_eval.py's gold adapter uses a non-canonical boundary convention (Step 2's ranking survives, its absolute numbers do not).",
+      "next_action": "Step 3: the entity-mention edit alignment scoped to s6b_known_point_ledger.py's 947 open gaps, parameter-free first (unit costs, no IDF, no anchor gate), under the no-insertion structural constraint (forbid the enriched-side gap move; make the HTR-side stay-on-same-resolution move free) rather than a gap penalty. Respect the 1630-05-14 scope bar. Fold in the stratified-by-IDF-band D1c re-run as Step 3's own gate. Score against 5c.1's baseline (exact 0.639 / within-1 0.911 on gold's segmentable days), never against separated.",
       "goal": "Establish whether posing segmentation on the inventory stream, with session openings as interior landmarks instead of the calendar day as a hard partition, recovers separations the per-day framing declares structurally impossible -- judged by collisions recovered plus a correctness check, never by separated-share alone.",
       "cost": "multi-session"
     }
@@ -1500,6 +1500,138 @@
         {
           "date": "2026-09-25",
           "value": "342"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "separated_set_exact_start_paragraph_agreement",
+      "label": "Exact start-paragraph agreement of the production separated set vs boundary gold (191 rows, 35 gold days); non-separated rows score 0.306, uniform null 0.267",
+      "value": "0.628",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.628"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "separated_set_within_1_paragraph",
+      "label": "Share of separated placements within 1 paragraph of gold (191 rows); non-separated 0.620",
+      "value": "0.869",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.869"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "placement_exact_agreement_review_code_S",
+      "label": "Exact start-paragraph agreement on gold's segmentable (S) days, 158 rows, median displacement 0; M days score 0.271 with mean displacement 5.87",
+      "value": "0.639",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.639"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "verified_session_offset_beyond_one_position",
+      "label": "Share of the 1059 content-verified flat sessions whose raw_num-flat_num offset exceeds one position (offsets run to 13; 62.2% are non-zero) -- the ledger's session candidate window is +/-1 calendar day",
+      "value": "0.466",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.466"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "enriched_nihil_days_present_in_htr_axis",
+      "label": "2 of 127 enriched nihil-actum dates appear in paragraph_axis_1626_1630 at all (112 of 127 are Sundays); HTR-side nihil/vacat markers fall on 138 other dates with zero overlap",
+      "value": "0.016",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.016"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "htr_nihil_marker_dates",
+      "label": "Standalone HTR Nihil Actum marker dates (corrected from an erroneous 138 that was 86% vacatien/prose false positives); 95 of 127 enriched nihil sittings leave no textual trace at all",
+      "value": "32",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "32"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_unresolved_share_in_non_annual_inventories",
+      "label": "Step 6 gate: share of the 344 unresolved enriched sittings (4,482 resolutions) that sit in the two non-annual 'secret resolution' inventories 4562/4861 -- 344/344. In the five main annual inventories 3185-3189 EVERY enriched sitting already resolves to an HTR session (216/216, 218/218, 276/276, 271/271, 108/108); the concordance has zero missing_htr rows there. 4861 has no axis sessions at all (191 sittings, 2,387 resolutions, nothing to align to) and 4562 has 102 sessions for 187 sittings. LOWER would be better (more of the unmapped mass reachable in the pooled inventories); 1.0 means Step 6's premise has no target in the main corpus.",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_determined_share_of_unresolved",
+      "label": "Step 6 gate: share of unresolved enriched sittings sitting in a DETERMINED bracket (equal counts of unresolved sittings and unclaimed sessions between two consecutive resolved pins, so monotonicity alone forces the pairing) -- 3/344 sittings, 40/4,482 resolutions, all in inventory 4562. Gate threshold was >=0.25, fixed before the run. Higher is better (more mass recoverable by order alone). The rest: 225 sittings/2,794 resolutions in brackets with no unclaimed session at all, 113/1,606 in deficit brackets.",
+      "value": "0.0087",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.0087"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_forced_pairings_beyond_candidate_window",
+      "label": "Step 6 gate: share of order-forced enriched<->HTR session pairings whose calendar-day distance exceeds the ledger's +/-1-day candidate window -- 3/3, at 20, 22 and 36 days. Higher means the window is what blocks the correspondence. The MECHANISM Step 6 proposed is confirmed (order reaches pairings the date label provably cannot), but the population it applies to is 3 sittings / 40 resolutions against a Global-stretch gap of 718, so it does not carry the step.",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_sessions_with_no_enriched_sitting",
+      "label": "Step 6 no-insertion check AT SESSION LEVEL (the design notes required verifying it, not carrying the resolution-level claim over on faith): axis flat sessions bracketed by claimed sessions on BOTH sides with no enriched sitting available to claim them -- 51 of the 1,132 sessions IN SCOPE (4.5%), namely 3186:2, 3187:4, 3188:5, 3189:1, 4562:39. LOWER is better. So no-insertion is nearly clean in the annual inventories (12/1,034, 1.2%) but NOT exactly true, and 4562 breaks it. Scope note (user, 2026-09-25): the enriched edition ends 1630-05-14, so the 184 axis sessions dated after it (3189:180, 4562:4, 2,284 paragraphs = 10.6% of the axis) are barred from the stream entirely and are not counted here; 0 of them are claimed by any sitting today.",
+      "value": "51",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "51"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_axis_sessions_barred_past_edition_end",
+      "label": "Scope constraint (user, 2026-09-25): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it. Axis sessions dated after that end, barred from the stream: 184 of 1,316 (3189:180, 4562:4), carrying 2,284 paragraphs = 10.6% of the 21,519-paragraph axis. This is why 3189 shows 289 axis sessions against 108 enriched sittings. Claimed by a sitting today: 0 -- scripts/session_offset_eval.py asserts it, so a widened axis_for_date fallback would trip rather than silently place resolutions past the end of the edition. Enforcing the bar changed no gate quantity (3 forced pairings, 100% beyond window, 51 no-insertion sessions, verdict unchanged), which is the robustness check on the Step 6 finding. Already safe upstream: metrics_local_inventory_ceiling and landmark_density_eval both key paragraph counts on enriched dates, so the 11,644 day ceiling and Step 1's segment ceilings never included this material.",
+      "value": "184",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "184"
         }
       ]
     }

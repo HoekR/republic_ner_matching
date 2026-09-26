@@ -88,3 +88,15 @@ def test_gap_rows_carry_the_kinds_of_both_endpoints():
     first, second = gaps_of(build_chain(k_e=2, total_chars=1000, interior=interior))
     assert first["left_kinds"] == ["session_start"] and first["right_kinds"] == ["gold_boundary"]
     assert second["right_kinds"] == ["session_end"]
+
+
+def test_entity_mentions_align_in_order_with_flat_side_skips_but_no_enriched_side_gaps():
+    from scripts.s6b_known_point_ledger import align_entity_mentions
+
+    pairs, cost = align_entity_mentions(["Holland", "Zeeland", "Utrecht"], ["Holland", "Utrecht"])
+    assert pairs == [(0, 0), (2, 1)]
+    assert cost == 1.0
+
+    pairs, cost = align_entity_mentions(["Holland", "Zeeland"], ["Holland", "Vriesland", "Zeeland"])
+    assert pairs == []
+    assert cost == float("inf")

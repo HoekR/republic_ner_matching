@@ -25,6 +25,11 @@ S6c's closure verdict is not reopened or reinterpreted.
   Per `docs/SEGMENTATION_RESULTS.md` §5 "define the metric before the method".
 - No tolerance-family metrics as targets (`feedback_no_tolerance_metrics`); collision, coverage,
   and gold-correctness only.
+- **The enriched edition ends 1630-05-14; do not extend beyond it** (user, 2026-09-25). The HTR axis
+  runs to 1630-12-31, so 184 sessions / 2,284 paragraphs (10.6%) are out of scope. The day partition
+  excluded them for free by keying on enriched dates; **a stream framing does not**, so any step that
+  pools paragraphs along an inventory must bar them explicitly. Measured and enforced under Step 6
+  finding 5.
 
 ## Findings already in hand (free gates, 2026-09-25)
 
@@ -249,7 +254,13 @@ This touches only the default that fires when evidence is absent — i.e. exactl
 responsible for finding A — and does not involve the entity-density mechanism that sank Group B.
 
 ### Step 3 — Order-constrained alignment over all entities
-<!-- status: designed 2026-09-25 — ready to build, gate defined -->
+<!-- status: blocked 2026-09-25 — gate no_data; control has only 26 common-band pairs -->
+
+**Gate checkpoint (2026-09-25).** The IDF-band D1c tests pass, and the real common-band tau is
+0.809 versus 0.103 for the deliberately mismatched control. The control has only 26 common-band
+pairs, below the fixed minimum of 50, so the verdict is **`no_data`**, not a pass or fail. Do not
+build the entity-stream aligner or weaken the threshold; obtain a defensible control with at least
+50 common-band pairs before reopening this step.
 
 Hypothesis 5. Note this is **not** a rerun of the closed Group-B experiments: those fed entity
 *density* into `position_scores` and failed because density clusters multiple resolutions onto the
@@ -323,7 +334,43 @@ IDF, no gap tuning, no anchor gate, so it tests order in isolation with nothing 
   fewer mentions than the HTR, so unit symmetric costs (`gap_penalty=0.1` on both `up` and `left`,
   `build_alignment_new.py:944-945`) let gap cost dominate and the result becomes uninterpretable.
   Minimum viable fix: cheap HTR-side skips, or normalise by the longer sequence. This is the one
-  default that must not be inherited.
+  default that must not be inherited. **Direction is level-specific — do not carry one level's
+  asymmetry to the other:** at the *entity-mention* level HTR-side skips are cheap (the summary
+  drops detail the HTR keeps); at the *resolution* level the asymmetry inverts, see the next bullet.
+- **Resolution level: deletion is the norm, insertion is not a modelled event** (user, 2026-09-25;
+  "this is where it differs from aDNA procedures" — aDNA reads carry genuine insertions, editorial
+  summaries of a fixed archive do not). An *enriched* resolution with no distinct HTR unit is
+  routine: that is 81.1% under-segmentation (S1-D1), the deletion case. The converse — an HTR
+  resolution whose content appears in no enriched resolution — has never been observed.
+
+  Checked against gold rather than accepted on assertion (2026-09-25, artifacts on disk, no replay):
+  `boundary_gold_sample`'s instructions are *"place K_e − 1 boundary cut points over the ordered
+  flat_ids/paragraph stream"*, and its slot vocabulary is `kind ∈ {cut, start, end_of_last_resolution}`
+  with `has_trailing_spillover` (13 slots) and `starts_mid_resolution` (3 days). **There is no
+  annotation category for an HTR span belonging to no enriched resolution.** The ground truth's own
+  design is a surjection of the stream onto exactly `K_e` contiguous spans, with cross-day spillover
+  as the only escape — so the no-insertion prior is not merely consistent with gold, it is gold's
+  construction.
+
+  **The trap: a penalty alone is the wrong encoding, because `K_f > K_e` is common.** On 10 of the
+  50 gold days the flat stream has *more* records than the day has resolutions (1626-11-16: 47 flat
+  vs 14 enriched; 1626-10-27: 26 vs 11). Under a strict one-to-one NW those surplus flat records
+  *must* take enriched-side gaps, so raising the insertion penalty does not suppress them — it buys
+  them off by forcing surplus records into **wrong substitutions** with enriched resolutions they do
+  not belong to. The surplus is HTR **over**-segmentation (one resolution split across several flat
+  records), the mirror of the 81.1% under-segmentation, and neither is an insertion.
+
+  **Therefore encode it as a structural constraint, not a cost.** The model must be able to express
+  *many-to-one in both directions* — a run of consecutive HTR units attaching to one enriched
+  resolution at low cost, and a run of consecutive enriched resolutions attaching to one HTR unit —
+  while an HTR unit attaching to *nothing* is disallowed outright rather than made expensive. That
+  is a monotone many-to-many (stepwise) alignment, not Levenshtein with reweighted gaps. Concretely
+  for the first experiment: keep unit costs, but forbid the enriched-side gap move and give the
+  HTR-side "stay on the same enriched resolution" move zero or near-zero cost. **Consequence for the
+  prior-art menu below: `concave gap cost` is promoted from optional to the natural fit** — a
+  concave penalty is exactly "one long run of unmatched-but-attached HTR material costs little more
+  than a short one", which is this corpus's shape. Semi-global (free end gaps) stays the right
+  treatment for the cross-day spillover that gold does mark.
 - **Accept as-is: transposition over-penalisation.** Levenshtein charges 2 edits for a swap, while
   D1c measured a 2–3 position transposition band (Kendall τ 0.638, 64.3% of tier-1 pairs at τ ≥ 0.8).
   So the metric systematically over-penalises reordering the corpus says is routine. This biases
@@ -424,7 +471,7 @@ from confident alignments can amplify bias if the confident set is skewed (tier-
 concentrate on entity-rich resolutions). Needs a held-out check, not just convergence.
 
 ### Step 5 — Restate the state in alignment terms, then re-derive the bound
-<!-- status: pending — rescoped 2026-09-25 (user), was "re-derive the ceiling honestly" -->
+<!-- status: 5a + 5c.1 done 2026-09-25; bound re-derivation still pending — rescoped 2026-09-25 (user), was "re-derive the ceiling honestly" -->
 
 Originally scoped as re-deriving the pigeonhole bound alone. Widened on the observation that the
 alignment is now good enough over most of the corpus to be treated as a **scaffold** rather than as
@@ -469,6 +516,84 @@ scoreable gold days, not corpus-wide.
 1. **Verify before freezing.** Gap-filling around unverified anchors propagates error both ways — a
    wrong anchor corrupts the gap on each side of it. Gold exists; measuring accuracy on the
    separated set is cheap and is the precondition for treating 68.8% as scaffold rather than claim.
+
+   <!-- status: done 2026-09-25 — CONDITION MET, scaffold framing cleared -->
+
+   **Result.** `scripts/separated_accuracy_eval.py` (+ `tests/test_separated_accuracy_eval.py`,
+   20/20 passing) → dataset `separated_accuracy_eval`. 35 of the 50 gold days scored (13 have no
+   axis at all, 2 have no paragraph attribution); 421 scoreable rows, 312 of them with a
+   gold-located start. Scored by exact start-paragraph agreement and absolute paragraph
+   displacement — no tolerance-family metric. Resolution index 0 is held out of every cohort
+   (35 rows): both the concordance and gold put it at paragraph 0 by construction, so scoring it
+   would hand each cohort a free hit.
+
+   | cohort | n | exact | within 1 | mean displacement | uniform-null exact | uniform-null displacement |
+   |---|---|---|---|---|---|---|
+   | all attributed | 312 | 0.503 | 0.772 | 2.32 | 0.189 | 3.58 |
+   | **separated** | 191 | **0.628** | **0.869** | **1.86** | 0.267 | 2.86 |
+   | not separated | 121 | 0.306 | 0.620 | 3.03 | 0.066 | 4.72 |
+
+   **1. `separated` does carry an accuracy signal — it is not only a coverage criterion.** A
+   separated placement is right **twice as often** as a non-separated one (0.628 vs 0.306 exact)
+   and its errors are much tighter (0.869 vs 0.620 within one paragraph; mean displacement 1.86 vs
+   3.03, median 0 vs 1). The loss-reason split behaves the same way in both directions: collision
+   losses score 0.299 exact and extent losses 0.357, against the separated set's 0.628. So
+   selecting on `separated` genuinely selects better placements, which is what the scaffold
+   framing needs. This does **not** retract §5b — `separated` still cannot *rank* placement rules
+   (see finding 3), but it can *select* placements, and those are different jobs.
+
+   **2. Production beats the uniform null decisively, on correctness.** This is the answer §5b left
+   open: Step 2 had only shown uniform winning on `separated`, a metric it games. Scored by
+   correctness instead, `segment_gap`'s own output beats an even spread by **2.4×** on the
+   separated cohort (0.628 vs 0.267) and **2.7×** overall (0.503 vs 0.189). The placement carries
+   real alignment signal; the earlier result was an artifact of the metric, not a statement about
+   the model.
+
+   **3. Step 2's side finding survives the gold-convention correction, but narrowed.** Recomputed
+   on the 15 gold days where every resolution is located (144 resolutions): gold's own annotations
+   score **103** separated, production **104**, uniform **115**. Uniform still out-scores ground
+   truth, so the guardrail stands unchanged — but production lands *on top of* gold rather than
+   above it, i.e. it is not gaming the criterion. (Step 2 reported 170 vs 111 on a differently
+   defined day subset; the numbers are not directly comparable. See the convention note below.)
+
+   **4. The corpus splits sharply by gold's own review code, and the split is the expected one.**
+
+   | review code | rows | exact | within 1 | mean displacement | uniform-null exact |
+   |---|---|---|---|---|---|
+   | S (segmentable) | 158 | 0.639 | 0.911 | **0.72** | 0.335 |
+   | C (cross-day shift) | 58 | 0.517 | 0.845 | 0.79 | 0.069 |
+   | M (missing HTR) | 96 | 0.271 | 0.500 | **5.87** | 0.021 |
+
+   On the days gold calls segmentable, the model puts the resolution in **the right paragraph 64%
+   of the time and within one paragraph 91% of the time, median displacement 0**. Essentially all
+   of the corpus-wide degradation is the M cohort, whose mean displacement is 8× the S cohort's.
+   Note these M rows *do* receive placements: `axis_for_date` falls back to a resolved neighbouring
+   session when the calendar day has no HTR, so a day PLAN.md counts under the accepted
+   `missing_htr` ceiling can still be handed an axis and placed on it — badly. **That is a concrete,
+   newly-localised defect**, and it is the same class of thing as Step 1's quarantined claim
+   (no-HTR dates borrowing a neighbour's paragraphs). Worth its own item; see the note under §5d.
+
+   **Sample caveat, stated so the numbers are not over-read.** The gold sample is stratified by
+   `|K_e − K_f|` and deliberately over-weights hard days: 25 of the 35 scored days are `diff_3plus`,
+   against 2 at `diff_0`. These figures are therefore pessimistic relative to the corpus, not
+   optimistic. Reassuringly the separated share of scoreable gold rows (59.4%) tracks the
+   corpus-wide separated share of attributed slots (57.5%, finding A), so the cohort split itself
+   is not unrepresentative.
+
+   **Convention correction found while building this** (recorded because it affects an existing
+   result, not to reopen it). `scripts/length_prior_eval.py`'s `gold_starts` — Step 2's gold
+   adapter — reads `boundaries[j]` as resolution *j*'s start. The canonical convention, already
+   implemented in `scripts/s6a_char_axis_evaluation.py` and used here, is that cut *c* opens
+   resolution *c+1*, that a `paragraph_boundary` slot sits at the *end* of its paragraph and so
+   opens `index + 1`, and that `end_of_last_resolution` (13 slots) and leading `start` slots (8
+   days) are not cuts at all. Step 2's A/B therefore scored both arms against a shifted reference.
+   Its *ranking* conclusion (uniform beats proportional) is likely robust — both arms were shifted
+   identically — but its absolute displacements are inflated and its `gold_separated_ceiling` is
+   distorted. **Do not re-open Step 2 on this alone; do re-derive its numbers if anything is ever
+   built on them.**
+
+   **Verdict: condition 1 is met. The separated set is accurate enough to act as a scaffold**, with
+   the qualification that the scaffold is trustworthy on S/C days and not on M days.
 2. **Keep the two gap classes apart.** The 947 anchor-to-anchor gaps are a *filling* problem; the
    535 no-HTR dates are a *no template at all* problem. Conflating them is exactly what inflated the
    Step 1 ceiling by 947 (see Step 1's quarantined claim).
@@ -482,6 +607,255 @@ Step 3's local alignment scoped to the 947 gaps rather than a separate step. The
 that was this step's original whole scope becomes its last item, and Step 1 already brackets it:
 11,644 (day) < ~11,986–12,147 (verified landmarks, no-HTR isolated) < 12,973–13,197 (no-HTR
 absorbed) < 14,258 (free reallocation).
+
+**5a and 5c.1 are both done (2026-09-25).** 5a is the table in §5a, written from figures already on
+disk; 5c.1 is the measurement recorded under condition 1 above. The scaffold framing is cleared,
+with one carve-out and one new item:
+
+- **Carve-out: exclude review-code-M days from the scaffold.** 5c.1 finding 4 measured mean
+  displacement 5.87 paragraphs on days with no same-day HTR, against 0.72 on segmentable days.
+  Freezing those as anchors is precisely the "wrong anchor corrupts the gap on each side" failure
+  condition 1 exists to prevent. Condition 2 (keep the two gap classes apart) already says to hold
+  the 535 no-HTR dates as their own class; 5c.1 turns that from hygiene into a measured requirement.
+- **New item, not yet scoped: `axis_for_date`'s neighbour fallback places resolutions on days that
+  have no HTR of their own.** The fallback is deliberate and correct for the case it was written
+  for (`docs/DECISIONS.md` 2026-09-22, a thin same-calendar stub coexisting with a richer resolved
+  session), but its output on M days is measurably poor, and those placements flow into the
+  concordance and therefore into the separated count. Whether to suppress them, or to keep them and
+  mark them low-confidence, is a real decision with a headline-number consequence — not a bug to
+  fix silently. Size it before acting: 96 of 421 scoreable gold rows are M, but the corpus-wide
+  share is unmeasured.
+
+Next: **Step 3**, the entity-stream edit alignment scoped to `s6b_known_point_ledger.py`'s 947 open
+gaps, built under the no-insertion structural constraint recorded in Step 3's bullets — and scored
+against 5c.1's numbers as the baseline to beat (exact 0.639 / within-1 0.911 on S days), never
+against `separated`.
+
+### Step 6 — Session-level sequence alignment between the two streams
+<!-- status: done 2026-09-25 — GATE DID NOT PASS; do not build the aligner. Premise overturned below. -->
+
+**Result (2026-09-25).** `scripts/session_offset_eval.py` (+ `tests/test_session_offset_eval.py`,
+13/13 passing) → dataset `session_offset_eval`. Thresholds were fixed in the script docstring before
+the run. Verdict **INCONCLUSIVE** on those thresholds, and the reason matters more than the verdict:
+**Step 6's factual premise does not hold for the main corpus.**
+
+Sessions dated after the enriched edition ends are barred from the stream (see finding 5), so
+these are in-scope counts:
+
+| inventory | sittings | resolved | axis sessions (in scope) | unresolved | unclaimed sessions |
+|---|---|---|---|---|---|
+| 3185 | 216 | **216** | 184 | 0 | 0 |
+| 3186 | 218 | **218** | 200 | 0 | 2 |
+| 3187 | 276 | **276** | 275 | 0 | 4 |
+| 3188 | 271 | **271** | 266 | 0 | 5 |
+| 3189 | 108 | **108** | 109 | 0 | 1 |
+| 4562 | 187 | 34 | 98 | 153 | 67 |
+| 4861 | 191 | 0 | 0 | 191 | — |
+
+**1. In the five annual inventories every enriched sitting already resolves to an HTR session**
+(1,089/1,089), and the concordance carries **zero `missing_htr` rows** there. All 344 unresolved
+sittings — all 4,482 resolutions — are in 4562 (2,095) and 4861 (2,387): the two non-annual "secret
+resolution" series PLAN.md's Local criterion already excludes as structurally HTR-poor. 4861 has no
+axis sessions at all, so no aligner can reach it; 4562 has 102 sessions for 187 sittings and is the
+outlier finding C excluded from pooling and Step 1 found carrying the only 15 non-monotone landmarks.
+
+**2. The motivating "29.4% of the corpus" decomposes into two things that are not alike.** Of the
+cited 5,619, the 4,482 `missing_htr` are the mass in 1 above; the 1,137 `cross_day_shift` on 74 dates
+are **not unmapped at all** — every one carries a `resolved_session_id`, to a session whose date label
+differs. 69 of those 74 dates are in the annual inventories. Whether those pins are *correct* is a
+different question this diagnostic does not answer (see the caveat below).
+
+**3. The mechanism is confirmed, on a population too small to carry the step.** Three sittings
+(40 resolutions, all 4562) sit in *determined* brackets, where equal counts of unresolved sittings and
+unclaimed sessions between two pins force the pairing by monotonicity alone. All **3 of 3** are beyond
+the ±1-day window — at **20, 22 and 36 days**. So order does reach correspondences the date label
+provably cannot, exactly as hypothesised. It reaches 40 of 19,120 resolutions, against a
+Global-stretch gap of 718.
+
+**4. The no-insertion claim, verified at session level as the design notes required rather than
+carried over on faith: nearly true, not exactly.** 51 of the 1,132 in-scope axis sessions (4.5%) are
+bracketed by claimed sessions on both sides with no enriched sitting available to claim them —
+3186:2, 3187:4, 3188:5, 3189:1, **4562:39**. Outside 4562 that is 12 sessions (1.2%). So the
+constraint is safe to encode in the annual inventories and is broken by 4562, the same inventory that
+breaks order preservation. Do not assume it; it is now measured.
+
+**5. Scope constraint, confirmed by the user 2026-09-25 and now enforced: the enriched edition ends
+1630-05-14, and the alignment does not extend beyond it.** The HTR axis runs to 1630-12-31 and carries
+**2,284 paragraphs (10.6% of 21,519) over 184 sessions** past that date — 180 in 3189, 4 in 4562.
+That is why 3189 shows 289 axis sessions against 108 sittings.
+
+`session_offset_eval.py` now drops those sessions from the stream before bracketing (cut-off read
+from the data, not hardcoded) and **asserts that no sitting resolves into them**. Today that count is
+**0**, so the bar costs nothing and exists to catch a widened `axis_for_date` fallback later. Two
+checks behind the enforcement:
+
+- *It changes no gate quantity* — 3 forced pairings, 100% beyond window, 51 no-insertion sessions,
+  same verdict. The Step 6 finding is robust to it. What it does change are denominators: axis
+  sessions 1,316 → 1,132 and unclaimed sessions 263 → **79**.
+- *Upstream is already safe.* `metrics_local_inventory_ceiling` and `landmark_density_eval` both key
+  paragraph counts on enriched dates (`date_sequence` joins `paragraph_count` on `enriched_date`), so
+  the 11,644 day ceiling, finding C's 14,258 and Step 1's segment ceilings never included this
+  material. 3189's 1,579 paragraphs in finding C's table is exactly its in-scope count.
+
+**The trap this guards, and why it is not hypothetical.** 3189's 180 post-edition sessions are
+*trailing*, so bracket geometry isolated them anyway. 4562's 4 are **not** — they sit inside ordinary
+brackets, where without the bar they could be offered to an unresolved sitting dated years earlier
+(the regression test forces exactly such a pairing at >900 days). Any future work that pools an
+inventory's paragraphs along the stream — finding C's framing, and Step 5's pending bound
+re-derivation — must apply this bar explicitly, because the day partition applied it for free and a
+stream framing does not. A naive "sum all axis paragraphs per inventory" would hand 3189 3,858
+paragraphs instead of 1,579.
+
+*Method note:* a first pass counted the trailing sessions as no-insertion violations, inflating that
+figure from 51 to 232. Read the span before counting the surplus.
+
+**Read the ordinal offset with its conflation, not as drift.** The per-sitting
+`htr_ordinal − enriched_ordinal` runs to −32 (3185) with 94% beyond ±1, but the two sequences have
+genuinely different lengths, so the offset absorbs multiply-claimed sessions as well as any drift.
+It is reported as context. The decisive quantities are 1–4. (The 67 sessions claimed by 2+ sittings
+are consistent with the 68 already recorded under the 2026-09-23 cross-date uniqueness policy — not
+a new finding.)
+
+**Caveat, stated so the verdict is not over-read.** That a sitting is *pinned* does not mean it is
+pinned *correctly*. This closes "the session mapping is **absent**" as a motivation for Step 6; it
+does not settle "the session mapping is **wrong**". A cheap follow-up exists and is not done: for
+pinned sittings, compare the enriched date against the date of the *content-verified raw* session
+(`s6b_session_fingerprint_match`) rather than against the flat label the concordance already used.
+70 pinned sittings already resolve to a session whose label is more than a day away, so the
+population to check is identifiable.
+
+**Consequence: Step 3 is next**, which is where the track's own gate said it would go if Step 6
+closed — reached by a different route than the gate anticipated.
+
+<!-- Original proposal below, kept as the record of what was tested. -->
+<!-- status: proposed 2026-09-25 (user) — checked as genuinely missing, not already built -->
+
+**Hypothesis 7 (user, 2026-09-25).** Align the *enriched sitting sequence* against the *HTR session
+sequence* as sequences, and use the matched session openings as anchors in the resolution stream.
+Posed as "if we do not already have it" — so the first thing done was checking. **We do not.**
+
+#### What exists, and why none of it is this
+
+| artifact | what it aligns | why it is not Step 6 |
+|---|---|---|
+| `scripts/s6b_session_fingerprint_match.py` | `resolutions_flat` sessions ↔ raw `sessions_json` sessions | Both sides are **HTR**. Content-verified and order-preserving, but it never touches the enriched edition. |
+| `session_date_status_1626_1630` (S4a–S4e ledger) | enriched date → HTR session | A **date-keyed lookup**, not a sequence alignment. Candidates come from the same calendar day plus a **±1-day** window (`-1`/`+1`/`?`), and those 603 nearby rows are review-only and were never auto-assigned. |
+| `session_chain_alignment.py` | enriched resolutions ↔ flat paragraphs, **within one calendar day** | Resolution-level inside a day, chained across days for border hints. The session correspondence is an input to it, not its output. |
+| `s6b_known_point_ledger.py` group D | session start/end sentinels | Uses session boundaries as anchors *once the session is known*. Assumes the answer Step 6 would produce. |
+
+So the enriched→HTR session correspondence is currently established by **date label plus a ±1-day
+window**, and everything downstream inherits whatever that produces.
+
+#### Why this is likely the binding constraint, not a refinement
+
+1. **Session numbering demonstrably drifts far beyond ±1.** From
+   `s6b_session_fingerprint_match`'s 1,059 content-verified flat sessions: 400 (37.8%) sit at
+   offset 0, but **659 (62.2%) carry a non-zero `raw_num − flat_num` offset and 494 (46.6%) are
+   more than one position away** — the distribution runs out to 13, with clusters at 5 (120
+   sessions), 8 (51) and 13 (42). A ±1-day candidate window cannot reach an offset of 5, let alone
+   13. *Scope note: this offset is measured flat↔raw, both HTR-side, so it evidences the
+   **mechanism** rather than the enriched↔HTR gap directly — quantifying that gap is Step 6's own
+   first deliverable.*
+2. **The mass affected is large and is exactly the unplaced mass.** In
+   `resolution_concordance_1626_1630`: 4,482 resolutions on 344 `missing_htr` dates and 1,137 on 74
+   `cross_day_shift` dates — **5,619 resolutions, 29.4% of all 19,120**, sit on dates whose session
+   mapping is absent or already known to be wrong. The Global-stretch gap is 718.
+3. **Step 1 already proved the precondition.** Verified landmarks are order-preserving: **zero**
+   non-monotone steps across inventories 3185–3189, with drift piecewise-constant over runs of
+   11–42 sessions. Labels are wrong nearly everywhere; order is intact everywhere. That is exactly
+   and only what a monotone sequence alignment needs, and it is already measured.
+4. **It is the principled fix for 5c.1's worst cohort.** `axis_for_date` currently answers "this
+   date has no HTR" by borrowing a neighbouring session's axis, which 5c.1 measured at mean
+   displacement 5.87 paragraphs. Step 6 replaces the borrow with an actual answer to *which session
+   this sitting is*.
+
+#### Relation to Step 3 — these are at different levels and Step 6 is upstream
+
+Step 3 improves placement **within** a session that has already been identified. If the session
+identification is wrong, Step 3 fills the wrong gap more precisely. On the numbers above, Step 6
+governs 29.4% of the corpus that Step 3 cannot reach at all, and it makes Step 3's own inputs
+trustworthy. **Recommendation: Step 6 before Step 3.** Both remain in scope; this is an ordering
+call, not a substitution, and Step 3's design work (the no-insertion constraint) is already banked.
+
+#### Design notes carried over
+
+- **Same no-insertion structure, same check needed at this level.** An enriched sitting with no HTR
+  session is routine (lost or unscanned material → deletion). An HTR session that is no sitting of
+  this body should not exist. Verify before encoding, exactly as the resolution-level claim was
+  verified against gold — do not assume it transfers.
+- **Use content, not labels** — the lesson `s6b_session_fingerprint_match` already established
+  HTR-side, and the one Step 1 turned into this track's mechanism.
+- **LIS over noisy anchors** (MUMmer/NUCmer, Step 3's prior-art menu) is the standard treatment for
+  extracting a maximal colinear subset, and inventory 4562's 15 non-monotone verified landmarks are
+  the case that needs it.
+
+**First deliverable, before any aligner is built:** measure the enriched↔HTR session offset
+distribution the way finding 1 measures the flat↔raw one, so the ±1-window claim is evidenced
+across the streams rather than argued by analogy. Cheap, and it is also the gate — if enriched↔HTR
+offsets are overwhelmingly within ±1, Step 6 closes for the price of one diagnostic.
+
+#### Nihil-actum as an alignment signal (user, 2026-09-25) — checked, and it redirects
+
+Proposed as a two-sided anchor class. The signal **does** exist on both sides, but they are **not
+the same class**, so it should not be wired in as an anchor. Measured directly from artifacts on
+disk, no replay:
+
+- **Enriched side: 127 dates**, `status == "nihil_actum"` in `resolution_concordance_1626_1630`,
+  literal text `Nihil Actum`, exactly one row each (`k_e_signal = 0` per Tier V,
+  `scripts/metrics_nihil_actum_invariant.py`).
+- **These are a calendar artifact, not a content event: 112 of the 127 (88%) are Sundays.** The
+  remaining 15 are scattered, presumably feast days. For contrast, all seven weekdays are otherwise
+  evenly represented across the enriched date series (227–228 each). The body did not sit on
+  Sundays and the edition records the non-sitting.
+- **Only 2 of the 127 appear in `paragraph_axis_1626_1630` at all.** A day with no sitting produced
+  no text, so there is nothing on the HTR side to anchor *to*.
+- **HTR side: 32 dates, not the 138 first reported — that figure was wrong and must not be reused.**
+  A first pass counted any axis paragraph containing `nihil` / `vacat` / `niet gedaen`. Inspecting
+  the matched text shows **119 of the 138 are false positives**: every `vacat` hit (103 paragraphs)
+  is `vacatien` — per-diem **fees**, from Latin *vacatio*, in travel-expense declarations ("over
+  reiscosten ende vacatien by hem gedaen") — and every `niet gedaen` hit (16) is ordinary prose
+  ("te niet gedaen", "daerop tot desen niet gedaen"). Of the 46 `nihil` paragraphs, **32 are
+  standalone markers** (≤ 20 chars, literally `Nihil Actum`) and 14 are embedded in prose (e.g. a
+  quoted Raad van State endorsement, "geteeckent Nihil Actum"). Same-date overlap with the enriched
+  127 is still zero.
+
+**The collapse is mostly implicit** (user, 2026-09-25). A nihil sitting is normally absorbed into a
+neighbouring session with **no marker at all** — the day simply does not appear as a session and
+the surrounding text runs on. An explicit `Nihil Actum` paragraph is the minority case: **32 of 127
+(25%) leave any textual trace; 95 (75%) leave none.** Two measurements on the 32 that do:
+
+- **Position within the session:** 16 are the **last** paragraph of their flat session and 12 the
+  second-to-last — 28 of 32 within two of the end. They sit at the tail of a session's text rather
+  than opening one.
+- **Date relative to the enriched nihil day:** the nearest enriched nihil date is exactly **one day
+  earlier in 17 of 32** cases, with a wide tail (−7 ×3, then −28, −38, −60, −137, −164, −184,
+  −231). Weekdays agree: the enriched set is 88% Sunday, the HTR markers 59% **Monday**.
+
+Whether that reads as "collapsed into the previous day" or "into the next" cannot be settled from
+this alone, because the flat session's *own* date label is the drifted quantity under investigation
+(finding 1: 46.6% of sessions sit more than one position from their label). The direction is left
+open deliberately; Step 6's gate is what would resolve it.
+
+**What survives, and what is withdrawn:**
+
+1. **Keep: a hard skip constraint on the enriched stream — and the implicit-collapse finding makes
+   it essential rather than merely useful.** The 127 nihil sittings must consume **zero** HTR
+   sessions. Because 75% collapse with no marker, **the gap cannot be detected from the HTR side at
+   all** — an aligner has no local evidence that a sitting is missing there. It has to be told, a
+   priori, from the enriched side. Feeding these in stops the aligner spending an HTR session on an
+   empty sitting and shifting everything downstream by one, which matters precisely because 46.6%
+   of sessions are already mis-keyed by more than one position. This is the deletion-not-insertion
+   asymmetry recorded for Step 3, in its sharpest and most certain instance.
+2. **Withdrawn: "the HTR marker class is an independent landmark inventory."** That rested on the
+   138 figure, 86% of which was `vacatien` and prose. The 32 real markers are corroboration of the
+   collapse mechanism, not anchors. Possible small diagnostic use — the −1 / Sunday→Monday
+   concentration is a directly observable instance of the label drift Step 6's gate is sizing — but
+   they do not constrain placement, and 32 events is too thin to key an alignment on.
+
+**Method note for whoever picks this up:** the 138 figure was produced by case-folded substring
+matching and reported before the matched text was read. Read the matches before counting them —
+`vacatien` and `nihil actum` are unrelated words that share no meaning, and the error inflated the
+set 4×.
 
 ## Revaluation note
 
