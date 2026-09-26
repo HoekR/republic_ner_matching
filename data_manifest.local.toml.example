@@ -1,0 +1,8 @@
+# Machine-specific manifest overrides (copy from example, gitignored).
+# Merge order: data_manifest.toml → this file → DATA_MANIFEST_OVERRIDE env.
+
+# [tiers.warm]
+# root = "/data/storage1tb/republic"
+#
+# [datasets.ner_per_annotations]
+# path = "/data/storage1tb/annotations/annotations-layer_PER.tsv.gz"

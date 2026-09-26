@@ -21,6 +21,8 @@ from tqdm import tqdm
 import torch
 import flair
 
+from data_io import resolve
+
 # Import flair components
 from flair.data import Corpus, Sentence
 from flair.datasets import SentenceDataset
@@ -42,8 +44,7 @@ import gc
 gc.collect()
 
 # Configuration
-DATA_DIR = Path("data")
-TRAINING_PAIRS_FILE = DATA_DIR / "training_pairs_per_from_annotations.parquet"  # Clean authoritative data
+TRAINING_PAIRS_DATASET = "training_pairs_per_from_annotations"
 OUTPUT_DIR = Path("models/gysberg_delegate_ner")
 
 # Model config - optimized for macOS
@@ -56,7 +57,7 @@ LEARNING_RATE = 0.01  # Reduced learning rate
 def load_training_pairs():
     """Load PER training pairs (delegate/person names)."""
     print("Loading PER training pairs...")
-    df = pd.read_parquet(TRAINING_PAIRS_FILE)
+    df = pd.read_parquet(resolve(TRAINING_PAIRS_DATASET))
     print(f"  Loaded {len(df)} pairs")
     return df
 

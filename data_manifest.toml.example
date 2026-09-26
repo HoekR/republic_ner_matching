@@ -1,0 +1,62 @@
+# Copy to data_manifest.toml and edit paths for your machine.
+# Optional: data_manifest.local.toml (gitignored) for machine-specific overrides.
+
+[phases]
+explore = "jsonl, pkl, xlsx, ad-hoc notebooks"
+semi = "jsonl, markdown+yaml frontmatter"
+frozen = "parquet (duckdb-queryable)"
+
+[tiers.hot]
+root = "/Users/you/develop"
+mount_check = ""
+
+[tiers.warm]
+root = "/Volumes/your-warm-drive"
+mount_check = "/Volumes/your-warm-drive"
+
+[tiers.scratch]
+root = "/Volumes/your-scratch-drive/scratch"
+mount_check = "/Volumes/your-scratch-drive"
+
+[tiers.cold]
+root = "/Volumes/your-cold-archive"
+mount_check = "/Volumes/your-cold-archive"
+
+[tiers.collab]
+root = "~/SurfDrive/Republic"
+mount_check = "~/SurfDrive"
+
+[datasets.resolutions_flat]
+tier = "warm"
+path = "datasets/republic/resolutions/resolutions_flat.parquet"
+phase = "frozen"
+description = "Resolution paragraphs with dates"
+parent = ""
+
+[datasets.per_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/PER-annotations.json"
+phase = "frozen"
+description = "Person NER annotations"
+parent = ""
+
+[datasets.delegates_reference]
+tier = "warm"
+path = "datasets/republic/reference/delegates_reference.parquet"
+phase = "frozen"
+description = "One row per delegate; matcher lookup table"
+parent = ""
+
+[datasets.gnb_passport_sessions]
+tier = "scratch"
+path = "gnb_passport_sessions.jsonl"
+phase = "semi"
+description = "Filtered GNB sessions where passports were on the agenda"
+parent = "gnb_raw_resolutions"
+
+[datasets.gnb_raw_resolutions]
+tier = "cold"
+path = "archive/gnb_raw_resolutions"
+phase = "explore"
+description = "Raw GNB XML dumps"
+parent = ""

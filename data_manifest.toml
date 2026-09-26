@@ -1,0 +1,601 @@
+[phases]
+explore = "jsonl, pkl, xlsx, ad-hoc notebooks"
+semi = "jsonl, markdown+yaml frontmatter"
+frozen = "parquet (duckdb-queryable)"
+
+[tiers.hot]
+root = "/Users/rikhoekstra/develop"
+mount_check = ""
+
+[tiers.warm]
+root = "/Volumes/2tb disk"
+mount_check = "/Volumes/2tb disk"
+
+[tiers.scratch]
+root = "/Volumes/Extreme SSD/scratch"
+mount_check = "/Volumes/Extreme SSD"
+
+[tiers.collab]
+root = "/Users/rikhoekstra/Nextcloud2/Republic"
+mount_check = "/Users/rikhoekstra/Nextcloud2"
+
+[datasets.sessions_json_source]
+tier = "warm"
+path = "datasets/republic/source/sessions_json-2026-02-27.tar.gz"
+phase = "frozen"
+description = "Sessions JSON source archive (tar.gz)"
+parent = ""
+
+[datasets.session_index_all]
+tier = "warm"
+path = "datasets/republic/index/session_index_all.parquet"
+phase = "frozen"
+description = "Session index (all years)"
+parent = "sessions_json_source"
+
+[datasets.resolutions_flat]
+tier = "warm"
+path = "datasets/republic/resolutions/resolutions_flat.parquet"
+phase = "frozen"
+description = "Resolution paragraphs with dates"
+parent = ""
+
+[datasets.per_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/PER-annotations.json"
+phase = "frozen"
+description = "Person NER annotations"
+parent = ""
+
+[datasets.loc_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/LOC-annotations.json"
+phase = "frozen"
+description = "Location NER annotations"
+parent = ""
+
+[datasets.delegates_reference]
+tier = "warm"
+path = "datasets/republic/reference/delegates_reference.parquet"
+phase = "frozen"
+description = "One row per delegate; matcher lookup table"
+parent = ""
+
+[datasets.patterns_reference]
+tier = "warm"
+path = "datasets/republic/reference/patterns_reference.parquet"
+phase = "frozen"
+description = "Pattern inventory for variant lookup"
+parent = ""
+
+[datasets.alignment_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/alignment_1626_1630.parquet"
+phase = "frozen"
+description = "Frozen milestone sequence alignment for 1626-1630 enriched resolutions to flat HTR resolutions"
+parent = "resolutions_flat"
+
+[datasets.training_pairs_per_from_annotations]
+tier = "hot"
+path = "republic_ner_matching/data/derived/training_pairs_per_from_annotations.parquet"
+phase = "frozen"
+description = "PER (delegate name) training pairs rebuilt from annotations with corrected character offsets"
+parent = "per_annotations"
+
+[datasets.training_pairs_loc_from_annotations]
+tier = "hot"
+path = "republic_ner_matching/data/derived/training_pairs_loc_from_annotations.parquet"
+phase = "frozen"
+description = "LOC (place name) training pairs rebuilt from annotations with corrected character offsets"
+parent = "loc_annotations"
+
+[datasets.entity_surface_matches_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/entity_surface_matches_1626_1630.parquet"
+phase = "frozen"
+description = "Per-flat-resolution LOC/PER canonical entity names confirmed present in that resolution's text (1626-1630 only). Candidates shortlisted from LOC-/PER-annotations.json entity_id co-occurrence (offsets ignored, known unreliable), confirmed by exact substring or per-resolution FuzzyPhraseSearcher fallback against resolutions_flat text -- built once so matched_entity_names becomes a lookup instead of a per-call dictionary scan."
+parent = "loc_annotations"
+
+[datasets.persoon_functie]
+tier = "warm"
+path = "datasets/republic/gnb/persoon_functie.json"
+phase = "frozen"
+description = "GNB_artikel person register (Id_persoon -> full biographical record: naam, geslachtsnaam, functienaam, date range); source of persons_info and persoon_functie_sanitized.csv"
+parent = ""
+
+[datasets.persons_info]
+tier = "warm"
+path = "datasets/republic/gnb/persons_info.json"
+phase = "frozen"
+description = "Id_persoon -> fullname/short_name lookup, derived from persoon_functie; used to resolve enriched resolutions' person id-references to canonical names"
+parent = "persoon_functie"
+
+[datasets.instituten_lookup_cleaned]
+tier = "warm"
+path = "datasets/republic/gnb/instituten_lookup_cleaned.csv"
+phase = "frozen"
+description = "GNB_artikel institution register (ID_instelling -> naam); resolves enriched resolutions' 'institutions' id-references (distinct id space from ORG-entities.json)"
+parent = ""
+
+[datasets.persons_info_with_surfaces_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/persons_info_with_surfaces_1626_1630.parquet"
+phase = "frozen"
+description = "Id_persoon -> canonical name plus pre-mined HTR surface-name variants (XML/PER-annotation/flat-text buckets) for 1626-1630, built by extract_xml_person_surfaces.py"
+parent = "persons_info"
+
+[datasets.inventory_metadata]
+tier = "warm"
+path = "datasets/republic/reference/inventory_metadata.json"
+phase = "frozen"
+description = "Republic inventory metadata"
+parent = ""
+
+[datasets.ner_per_annotations]
+tier = "hot"
+path = "Downloads/annotations-unaggregated/annotations-layer_PER.tsv.gz"
+phase = "explore"
+description = "Unaggregated PER NER export (TSV)"
+parent = ""
+
+[datasets.gnb_passport_sessions]
+tier = "scratch"
+path = "gnb_passport_sessions.jsonl"
+phase = "semi"
+description = "Filtered GNB sessions where passports were on the agenda"
+parent = "gnb_raw_resolutions"
+
+[datasets.gnb_raw_resolutions]
+tier = "warm"
+path = "data"
+phase = "explore"
+description = "Legacy Republic archives on warm drive (pagexml, sessions_json)"
+parent = ""
+
+[datasets.boundary_gold_sample]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_sample.json"
+phase = "semi"
+description = "Hand-annotated session-day boundary gold for segmentation transfer"
+parent = "resolutions_flat"
+
+[datasets.boundary_gold_exception_review]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_exception_review.csv"
+phase = "explore"
+description = "Manual exception classifications for boundary-gold session days"
+parent = "boundary_gold_sample"
+
+[datasets.s4_resolution_baseline_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_resolution_baseline_predictions.jsonl"
+phase = "semi"
+description = "S4 entity-sequence Needleman-Wunsch baseline at flat-resolution granularity"
+parent = "boundary_gold_sample"
+
+[datasets.org_annotations]
+tier = "warm"
+path = "datasets/republic/annotations/ORG-annotations.json"
+phase = "frozen"
+description = "Organisation NER annotations"
+parent = ""
+
+[datasets.boundary_gold_paragraph_axis]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_paragraph_axis.jsonl"
+phase = "semi"
+description = "Complete annotated-day flat paragraph axis with resolved entity-annotation coverage"
+parent = "resolutions_flat"
+
+[datasets.paragraph_axis_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/output/paragraph_axis_1626_1630.jsonl"
+phase = "semi"
+description = "Complete 1626-1630 flat paragraph axis with resolved entity-annotation coverage"
+parent = "resolutions_flat"
+
+[datasets.enriched_resolutions_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/enriched_resolutions_1626_1630_complete.json"
+phase = "frozen"
+description = "Normative enriched resolutions for 1626-1630"
+parent = ""
+
+[datasets.s4_corpus_paragraph_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_corpus_paragraph_predictions.jsonl"
+phase = "semi"
+description = "Corpus-scale S4 entity-NW segmentation predictions on the 1626-1630 paragraph axis"
+parent = "paragraph_axis_1626_1630"
+
+[datasets.place_overlap_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/place_overlap_1626_1630.xlsx"
+phase = "explore"
+description = "Enriched-to-HTR paragraph place overlap candidates for 1626-1630. Adopted 2026-09-19: variant/tag_text-aware rebuild from build_windowed_overlap.py --window-days 0 (strict superset of prior literal-substring build, legacy_only=0, +1265 rows; see docs/DECISIONS.md 2026-09-19). Prior content backed up to data/derived/legacy_backup/place_overlap_1626_1630.pre_rebuild_2026-09-19.xlsx."
+parent = "loc_annotations"
+
+[datasets.org_overlap_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/org_overlap_1626_1630.xlsx"
+phase = "explore"
+description = "Enriched-to-HTR paragraph organisation overlap candidates for 1626-1630. Adopted 2026-09-19: variant/tag_text-aware rebuild from build_windowed_overlap.py --window-days 0 (strict superset of prior literal-substring build, legacy_only=0, +55 rows; see docs/DECISIONS.md 2026-09-19). Prior content backed up to data/derived/legacy_backup/org_overlap_1626_1630.pre_rebuild_2026-09-19.xlsx."
+parent = "org_annotations"
+
+[datasets.per_overlap_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/per_overlap_1626_1630.xlsx"
+phase = "explore"
+description = "Enriched-to-HTR paragraph person overlap candidates for 1626-1630. Adopted 2026-09-21: variant/tag_text-aware rebuild from build_per_overlap.py --window-days 0 (strict superset of prior literal-substring build on the volgnr+paragraph_id+name key, legacy_only=0, +415 rows; see docs/DECISIONS.md 2026-09-21). Prior content backed up to data/derived/legacy_backup/per_overlap_1626_1630.pre_rebuild_2026-09-21.xlsx."
+parent = "per_annotations"
+
+[datasets.s4_paragraph_axis_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_paragraph_axis_predictions.jsonl"
+phase = "semi"
+description = "S4 entity-sequence Needleman-Wunsch predictions on the boundary-gold paragraph axis"
+parent = "boundary_gold_paragraph_axis"
+
+[datasets.s5_paragraph_axis_evaluation]
+tier = "hot"
+path = "republic_ner_matching/output/s5_paragraph_axis_evaluation.jsonl"
+phase = "semi"
+description = "Eligibility-aware S5 evaluation of S4 paragraph-axis boundary predictions"
+parent = "s4_paragraph_axis_predictions"
+
+[datasets.s6a_char_axis_evaluation]
+tier = "hot"
+path = "republic_ner_matching/output/s6a_char_axis_evaluation.jsonl"
+phase = "semi"
+description = "S6a character-coordinate re-scoring of S4 boundary predictions, with per-day folded-anchor groups and the paragraph-vs-character reachable-position ceiling"
+parent = "s4_paragraph_axis_predictions"
+
+[datasets.s6b_known_point_ledger]
+tier = "hot"
+path = "republic_ner_matching/output/s6b_known_point_ledger.jsonl"
+phase = "semi"
+description = "Constraint baseline over a contiguous window: typed known points (session start, tier-1 anchor, gold boundary) chained at character coordinates, with the resolution count that must fall in each gap"
+parent = "alignment_1626_1630"
+
+[datasets.length_prior_eval]
+tier = "hot"
+path = "republic_ner_matching/output/length_prior_eval.jsonl"
+phase = "semi"
+description = "Step 2 of plans/COLLISION_AVOIDANCE_TRACK.md: does enriched summary length predict HTR extent? Per gold day and per resolution, enriched text characters vs HTR characters (composed from paragraph_axis_1626_1630 by pure concatenation plus the gold boundary char_offset, S6a convention), with Spearman/Pearson pooled and per-day; plus an anchor-free A/B of segment_gap's uniform ideal spacing against a cumulative-enriched-length-proportional prior, scored by mean absolute paragraph displacement and the separated criterion. Diagnostic only -- no tolerance-threshold F1, char offsets used to measure lengths and never to score boundary precision"
+parent = "alignment_1626_1630"
+
+[datasets.s6b_anchor_harvest]
+tier = "hot"
+path = "republic_ner_matching/output/s6b_anchor_harvest.jsonl"
+phase = "semi"
+description = "S6b anchor harvest table: (date, inventory, char_position, channel, group, weight, payload) rows over the 1626-1630 paragraph axis, spanning provenance groups A (tier-1 entity NW), B (entity_surface_matches_1626_1630 dictionary lookup, s4_fuzzy_surface_form_scan), C (s2_anchor_phrase_inventory, s4_opening_phrase_candidates), and D (session start/end sentinels only -- DAT date hooks and para_start are not yet included, see description in STEP_S6 guide section 2.2). Positions are unresolved to an enriched index except for group A; per-group density is reported separately from any enriched-index-pinned placement"
+parent = "alignment_1626_1630"
+
+[datasets.s6b_session_fingerprint_match]
+tier = "hot"
+path = "republic_ner_matching/output/s6b_session_fingerprint_match.jsonl"
+phase = "semi"
+description = "Content-fingerprint correspondence between resolutions_flat session ids and raw sessions_json_source sessions: one row per resolutions_flat session (150-char normalized fingerprint of its resolution text), matched by substring containment against same-inventory raw sessions' concatenated 'para'-class region text, with the uniquely-matched raw_session_id/raw_num/offset, or empty/ambiguous if none or more than one raw session contains it. 1059/1511 (70.1%) uniquely matched, 0 ambiguous, across inventories 3185/3186/3187/3188/3189/4562. Persists the 2026-09-21 S4f review's session-numbering-drift finding (previously only in unregistered scratch) as reproducible pipeline output; prerequisite for STEP_S6 section 2.2's session_date_verified anchor channel, not the channel itself"
+parent = "s4_session_date_region_scan"
+
+[datasets.s6_oracle_anchor_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/s6_oracle_anchor_diagnostic.jsonl"
+phase = "semi"
+description = "Oracle-anchor sweep on the S6a character axis: upper bound on what any anchor-selection improvement (chaining included) can reach with the current placement model"
+parent = "s6a_char_axis_evaluation"
+
+[datasets.s6_group_b_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_position_scores_eval.jsonl"
+phase = "semi"
+description = "Baseline vs. Group-B (entity_surface_matches_1626_1630) position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Scored at PARAGRAPH granularity (tol 0/1/2 paragraphs), not character offset tolerance -- docs/DECISIONS.md 2026-09-21 'S6c target metric rescoped' already ruled out char-tolerance as the S6 target metric."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.s6_group_b_grounded_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_grounded_position_scores_eval.jsonl"
+phase = "semi"
+description = "Three-way baseline vs. ungrounded Group-B vs. two-sided-GROUNDED Group-B position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Follows docs/DECISIONS.md 2026-09-23 'entity_surface_matches one-sided new recoveries are almost entirely ungrounded (1.6%)' -- tests whether restricting the bonus to matches resolve_enriched_entities confirms the day's own enriched resolutions actually claim fixes the ungrounded signal's measured regression. Scored at PARAGRAPH granularity, not character-offset tolerance."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.s6_group_b_relocated_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_relocated_position_scores_eval.jsonl"
+phase = "semi"
+description = "Three-way baseline vs. blanket Group-B vs. per-paragraph .find()-relocated Group-B position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Follows docs/DECISIONS.md 2026-09-23 'Correction: Group-B and Group-C position_scores regressions are not the same magnitude or mechanism', which traced Group-B's larger regression to entity_surface_matches_1626_1630 being keyed by flat resolution id (every sub-paragraph of a multi-paragraph resolution gets an identical bonus). Relocates each match to only the specific paragraph(s) whose own text contains it (exact substring, fuzz.partial_ratio fallback at the same threshold build_entity_surface_matches.py validated). Scored at PARAGRAPH granularity, not character-offset tolerance."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.s6_group_b_candidate_grounded_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6_group_b_candidate_grounded_position_scores_eval.jsonl"
+phase = "semi"
+description = "Four-way baseline vs. blanket Group-B vs. day-grounded Group-B vs. GAP-CANDIDATE-grounded Group-B position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Tests lever (c) from docs/state.json's 2026-09-23 next_action (the 'full two-sided entity-overlap consolidation table' direction) cheaply: grounds a match to the specific candidate enriched resolution(s) segment_day's count-constrained DP already knows occupy that gap, not any resolution active the whole day (the already-tested, only-partial day-level grounding, tol0 0.555->0.588). Non-circular -- the DP knows which resolutions fall in a gap before choosing where, from the gap's count alone. Scored at PARAGRAPH granularity, not character-offset tolerance."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.s4_entity_density_split_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/s4_entity_density_split_diagnostic.jsonl"
+phase = "semi"
+description = "Per-paragraph bundled-vs-clean gold entity-density comparison for the S4 paragraph-axis granularity-ceiling diagnostic"
+parent = "boundary_gold_paragraph_axis"
+
+[datasets.s4_bundled_split_poc]
+tier = "hot"
+path = "republic_ner_matching/output/s4_bundled_split_poc.jsonl"
+phase = "semi"
+description = "POC: interior split-point placement inside gold bundled paragraphs, scored against mid_paragraph char_offset ground truth; compares NER-only entity spans against NER-plus-dictionary-lookup augmented spans on the same 22-position batch"
+parent = "boundary_gold_paragraph_axis"
+
+[datasets.s2_anchor_phrase_inventory]
+tier = "hot"
+path = "republic_ner_matching/output/s2_anchor_phrase_inventory.json"
+phase = "semi"
+description = "Anchor-derived opening and closing phrase inventory for 1626-1630"
+parent = "alignment_1626_1630"
+
+[datasets.s4_opening_phrase_cut_evaluation]
+tier = "hot"
+path = "republic_ner_matching/output/s4_opening_phrase_cut_evaluation.jsonl"
+phase = "semi"
+description = "Opening phrase and regex hit rates evaluated at manual boundary-gold cuts"
+parent = "boundary_gold_sample"
+
+[datasets.s4_opening_phrase_candidates]
+tier = "hot"
+path = "republic_ner_matching/output/s4_opening_phrase_candidates.jsonl"
+phase = "semi"
+description = "Tier-1 derived opening phrase candidates excluding boundary-gold dates"
+parent = "alignment_1626_1630"
+
+[datasets.s4_opening_phrase_cut_evaluation_full]
+tier = "hot"
+path = "republic_ner_matching/output/s4_opening_phrase_cut_evaluation_full.jsonl"
+phase = "semi"
+description = "Opening phrase and regex hit rates evaluated at manual boundary-gold cuts using the full uncapped candidate list"
+parent = "boundary_gold_sample"
+
+[datasets.session_date_status_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/session_date_status_1626_1630.parquet"
+phase = "frozen"
+description = "Canonical inventory-aware session-date evidence ledger for 1626-1630"
+parent = "alignment_1626_1630"
+
+[datasets.session_date_status_1626_1630_review]
+tier = "hot"
+path = "republic_ner_matching/output/session_date_status_1626_1630_review.csv"
+phase = "explore"
+description = "Date-indexed review export from the 1626-1630 session-date evidence ledger"
+parent = "session_date_status_1626_1630"
+
+[datasets.session_date_status_1626_1630_heatmap]
+tier = "hot"
+path = "republic_ner_matching/output/session_date_status_1626_1630_heatmap.html"
+phase = "explore"
+description = "Diagnostic calendar heatmaps for the 1626-1630 session-date evidence ledger"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_predictions.jsonl"
+phase = "semi"
+description = "Mapping-aware S4 corpus predictions and ledger-preserving abstentions"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_review_ui]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_review_ui.html"
+phase = "explore"
+description = "Interactive review UI for non-automatic 1626-1630 session-date mappings"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_decisions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_decisions.json"
+phase = "semi"
+description = "Browser-exported human decisions for non-automatic 1626-1630 session-date mappings"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_mapping_predictions_approved]
+tier = "hot"
+path = "republic_ner_matching/output/s4_session_date_mapping_predictions_approved.jsonl"
+phase = "semi"
+description = "Ledger-preserving human-approved session-date mappings for 1626-1630"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_session_date_region_scan]
+tier = "warm"
+path = "datasets/republic/derived/s4_session_date_region_scan.jsonl"
+phase = "semi"
+description = "Raw sessions_json_source text_regions for 1626-1630 sessions (scan_id/page_id/line_id, text_region_class, and lenient president/present regex hits), extracted for a one-time archive pass so later split-point sanity checks don't need to re-stream the 10GB tar.gz. Cached on warm tier, not hot, given its size."
+parent = "sessions_json_source"
+
+[datasets.s4_candidate_scoring_predictions]
+tier = "hot"
+path = "republic_ner_matching/output/s4_candidate_scoring_predictions.jsonl"
+phase = "semi"
+description = "Ranked entity-IDF/dense-similarity candidate scores for A/X/-1/+1/?-status 1626-1630 session-date ledger rows"
+parent = "session_date_status_1626_1630"
+
+[datasets.s4_day_status_resolution]
+tier = "hot"
+path = "republic_ner_matching/output/s4_day_status_resolution.jsonl"
+phase = "semi"
+description = "One resolved day_status + optional resolved_session_id per 1626-1630 session-date ledger key (Step 4B)"
+parent = "session_date_status_1626_1630"
+
+[datasets.resolution_concordance_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/data/derived/resolution_concordance_1626_1630.parquet"
+phase = "frozen"
+description = "One row per enriched resolution (1626-01-01 through end of 1630), ordered by (date, resolution_index), with day-level status, resolved HTR session, cross-day-shift flag, and best-effort paragraph attribution (Step 4C/E)"
+parent = "s4_day_status_resolution"
+
+[datasets.htr_classified_lines_marijn]
+tier = "hot"
+path = "republicgit/ground_truth/line_classification/htr_classified_lines_marijn.csv"
+phase = "frozen"
+description = "Per-annotator (marijn) line classification ground truth (para_start/para_mid/para_end/etc), tab-delimited despite .csv extension. 1,294 checked=1 rows fall in target inventories 3185-3189, at spot-check density (2-9 sampled pages/inventory). Read with sep='\\t', not the generic data_io.load() CSV branch which assumes comma delimiter."
+parent = ""
+
+[datasets.s4_line_ground_truth_overlap_check]
+tier = "hot"
+path = "republic_ner_matching/output/s4_line_ground_truth_overlap_check.jsonl"
+phase = "semi"
+description = "Per-gold-day check of whether htr_classified_lines_marijn.csv's checked page_ids overlap the 12 structurally-abstaining gold days (line-level-segmentation blocker), joined via session_index_all + sessions_json_source page-range extraction"
+parent = "htr_classified_lines_marijn"
+
+[datasets.loc_entities]
+tier = "hot"
+path = "republic_ner_matching/data.bak/LOC-entities.json"
+phase = "frozen"
+description = "Canonical LOC entity register (id, name, geo_data, links), 2,459 entries. Local data.bak copy used as the best-available source -- not confirmed against a canonical warm-tier path (LOC-annotations.json's sibling entity dictionary, distinct from that per-mention annotation file)."
+parent = ""
+
+[datasets.per_entities]
+tier = "hot"
+path = "republic_ner_matching/data.bak/PER-entities.json"
+phase = "frozen"
+description = "Canonical PER entity register (id, name, category, labels), 8,076 entries. Local data.bak copy used as the best-available source -- not confirmed against a canonical warm-tier path."
+parent = ""
+
+[datasets.org_entities]
+tier = "hot"
+path = "republic_ner_matching/data.bak/ORG-entities.json"
+phase = "frozen"
+description = "Canonical ORG entity register (id, name, category, labels, comment, links), 341 entries. Local data.bak copy used as the best-available source -- not confirmed against a canonical warm-tier path."
+parent = ""
+
+[datasets.s4_fuzzy_surface_form_scan]
+tier = "hot"
+path = "republic_ner_matching/output/s4_fuzzy_surface_form_scan.jsonl"
+phase = "semi"
+description = "Per-paragraph LOC/PER/ORG surface-form matches found by a full-dictionary FuzzyTokenSearcher scan over every 1626-1630 paragraph_axis_1626_1630 record (not restricted to annotation-linked candidates), flagged already_known against entity_surface_matches_1626_1630 vs newly_recovered (zero prior annotation link) -- PLAN.md's deferred 'recover entities the upstream tagger missed' candidate"
+parent = "paragraph_axis_1626_1630"
+
+[datasets.s4_llm_split_poc]
+tier = "hot"
+path = "republic_ner_matching/output/s4_llm_split_poc.jsonl"
+phase = "semi"
+description = "Few-shot local-LLM (Ollama) split-point predictions on the 22 bundled gold positions from s4_bundled_split_poc's gold set, scored with the same tol50/150 harness -- tests whether reading raw text directly beats the entity-count-heuristic ceiling (0/27 tol50, 9/27 tol150 baseline; 3/27 tol50, 11/27 tol150 with dictionary augmentation)"
+parent = "boundary_gold_paragraph_axis"
+
+[datasets.short_resolution_llm_sample_manifest]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_llm_sample_manifest.jsonl"
+phase = "semi"
+description = "Frozen train/dev/test sample manifest for the short-resolution LLM alignment side plan: session-day split, HTR candidate units with position/length/segmentation/anchor strata and deterministic formula/alignment signals. Evaluation-only; does not alter production concordance."
+parent = "enriched_resolutions_1626_1630"
+
+[datasets.short_resolution_baseline_report]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_baseline_report.jsonl"
+phase = "semi"
+description = "Deterministic baseline scores for short-resolution LLM alignment: per frozen dev/test candidate, alignment tier/overlap, formula signals (open/close), positional score, and combined formula/entity score. Evaluation-only; baseline must be reproducible across comparison runs."
+parent = "short_resolution_llm_sample_manifest"
+
+[datasets.short_resolution_structured_summaries]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_structured_summaries.jsonl"
+phase = "semi"
+description = "Step 3 experiment-only structured summaries: per frozen candidate, semantic evidence (kind, actor, subject, action, is_receipt, is_opening, is_continuation, evidence_quote, uncertainty) with provenance (model, prompt_version, temperature, parse success/error, gate pass/fail). Evaluation-only; does not alter production concordance."
+parent = "short_resolution_llm_sample_manifest"
+
+[datasets.short_resolution_ranking_report]
+tier = "hot"
+path = "republic_ner_matching/output/short_resolution_ranking_report.jsonl"
+phase = "semi"
+description = "Step 4 candidate-ranking report with LLM choices, baseline rank, confidence, evidence quote, and gold outcome. Evaluation-only; does not alter production concordance."
+parent = "short_resolution_llm_sample_manifest"
+
+[datasets.metrics_nihil_actum_invariant]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_nihil_actum_invariant.jsonl"
+phase = "semi"
+description = "Tier V nihil-actum invariant: per-day K_e series from resolution_concordance_1626_1630 plus pass/fail check that nihil_actum days have zero attributed resolutions. Shared parent for Tier D K_e drift and Tier O span table; k_e_signal is 0 on nihil days."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.metrics_ke_drift_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_ke_drift_diagnostic.jsonl"
+phase = "semi"
+description = "Tier D per-day K_e drift diagnostic over the Tier V day series: ranks calendar days whose k_e_signal jumps implausibly vs ±3-day neighbor median. Nihil days excluded from candidates; dates failing the Tier V invariant are blocked."
+parent = "metrics_nihil_actum_invariant"
+
+[datasets.metrics_ke_kf_window_drift_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_ke_kf_window_drift_diagnostic.jsonl"
+phase = "semi"
+description = "Tier D windowed K_e-vs-paragraph_count (K_f proxy) shift-signature diagnostic, scoped to metrics_span_gap_map's longest weak_separation-dominated breaking gaps (not corpus-wide): per flagged window, per-day residual (k_e - paragraph_count), lag-1 autocorrelation, and count of sign-flipping adjacent day pairs, to distinguish a genuine session/date-drift signature (alternating over/under-attribution that would net out under re-mapping) from a uniform capacity shortfall (persistently positive residual, no compensating neighbor). Also holds a corpus_collision_crosstab record: resolution_concordance_1626_1630's resolved_session_id dates claimed by more than one enriched date, cross-tabbed against Tier O's weak_separation classification corpus-wide (not just the flagged windows) to size how much of the weak_separation population this mapping gap explains."
+parent = "metrics_span_gap_map"
+
+[datasets.metrics_separation_span_table]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_separation_span_table.jsonl"
+phase = "semi"
+description = "Tier O consecutive-day separation span table: per-day separated_share on Tier V k_e_signal; solid-day runs at gap in {0,1,2}; qualifying spans at 7/14/30/60 calendar-day thresholds (Global, spans uses >=30)."
+parent = "metrics_nihil_actum_invariant"
+
+[datasets.metrics_local_inventory_ceiling]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_local_inventory_ceiling.jsonl"
+phase = "semi"
+description = "Tier O per-inventory pigeonhole ceiling (min(k_e, same-calendar-day raw paragraph_count from paragraph_axis_1626_1630), summed per inventory_id) and PLAN.md's Local criterion (any inventory reaching >=50% of its own ceiling); also the first scripted reproduction of the corpus-wide 11,644 ceiling constant cited in docs/DECISIONS.md 2026-09-22, closing the docs/METRICS.md 'Known gaps' item."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.metrics_span_gap_map]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_span_gap_map.jsonl"
+phase = "semi"
+description = "Tier O span-gap geography: classifies non-solid days between consecutive solid days, bridge counterfactuals per interrupter class, and whether S6c severe-collapse days are implicated in Global spans failure."
+parent = "metrics_separation_span_table"
+
+[datasets.s6c_severe_collapse_autopsy]
+tier = "hot"
+path = "republic_ner_matching/output/s6c_severe_collapse_autopsy.jsonl"
+phase = "semi"
+description = "S6c severe-collapse autopsy: per enriched calendar day with max-on-paragraph >= 7, pigeonhole floor vs observed pile-up, mutually exclusive cause class, and Tier O nonsolid flags; implicated breaking-gap rows from metrics_span_gap_map."
+parent = "s4_corpus_paragraph_predictions"
+
+[datasets.metrics_weak_separation_headroom_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_weak_separation_headroom_diagnostic.jsonl"
+phase = "semi"
+description = "Tier O weak_separation headroom diagnostic: per-day structural ceiling on separated_share (min(1, paragraph_count/k_e_signal)), splitting structurally_capped (no algorithm can reach solid) from headroom_available (a placement-quality fix could) among weak_separation days."
+parent = "metrics_span_gap_map"
+
+[datasets.metrics_bottleneck_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/metrics_bottleneck_diagnostic.jsonl"
+phase = "semi"
+description = "Tier P bottleneck diagnostic: oracle_ceiling (perfect gold anchors) vs real_performance (NW entity anchors) under unmodified interpolate_positions; decision aid for whether Tier A-D evidence or the placement algorithm binds."
+parent = "boundary_gold_sample"
+
+[datasets.landmark_density_eval]
+tier = "hot"
+path = "republic_ner_matching/output/landmark_density_eval.jsonl"
+phase = "semi"
+description = "Step 1 of plans/COLLISION_AVOIDANCE_TRACK.md (the track's gate): session-landmark availability in the raw HTR (date/attendance/president-present regions per raw session from s4_session_date_region_scan), localizability on the paragraph_axis_1626_1630 stream via three channels (content-verified s6b_session_fingerprint_match, in-axis president/present stems, hypothesis-4 formulaic receipt openings), order-preservation reliability of verified landmarks, and locality/headroom per landmark-bracketed segment (segment k_e and paragraphs vs the day partition, plus sum of min(k_e, paragraphs) per segment against the 11,644 day ceiling and finding C's inventory-stream bound). Diagnostic only -- no placement change, no tolerance-family metric."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.session_offset_eval]
+tier = "hot"
+path = "republic_ner_matching/output/session_offset_eval.jsonl"
+phase = "semi"
+description = "Step 6 gate of plans/COLLISION_AVOIDANCE_TRACK.md: the enriched<->HTR session offset distribution, measured across the two streams rather than argued by analogy from s6b_session_fingerprint_match's flat<->raw offsets (which are HTR-side on both sides). Per inventory, enriched sittings are ranked by date with nihil_actum dates excluded (the hard skip constraint: a nihil sitting consumes no HTR session) and paragraph_axis_1626_1630 flat sessions by flat_num; sittings the concordance resolves are pins, and each bracket between consecutive pins is classified by unresolved sittings (n_e) vs unclaimed sessions (n_h). A determined bracket (n_e == n_h) forces a pairing by monotonicity alone, and the calendar-day distance of those forced pairs is the gate -- a pair beyond one day is a correspondence the ledger's +/-1-day candidate window provably could not reach. Also records the ordinal offset per resolved sitting (context only: it conflates label drift with genuinely absent HTR because the sequences differ in length) and checks Step 6's no-insertion claim at session level via unclaimed sessions in brackets with no sitting available. Diagnostic only, no placement change, no tolerance-family metric."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.d1c_idf_band_order_eval]
+tier = "hot"
+path = "republic_ner_matching/output/d1c_idf_band_order_eval.jsonl"
+phase = "semi"
+description = "Step 3's gate in plans/COLLISION_AVOIDANCE_TRACK.md (hypothesis 5: entity order informs for common entities too, not only rare ones): D1c's Kendall tau on entity-mention order in tier-1 pairs, stratified by IDF band. Re-run rather than read off output/diagnostics_summary.json because run_diagnostics' band test (avg_idf >= 2.0 against log((total_docs+1)/(freq+1))+1) puts every name in the high band -- that run reports tau_low_idf = 0.0 on n = 0 pairs, so the stratification has never measured anything. Here: all 5,730 tier-1 pairs (no sampling), vocabulary = the >=4-character names in the three overlap tables (exactly what production's calculate_idf_weights covers), bands = mention-weighted terciles of overlap-evidence frequency, and a band's tau uses only that band's mentions inside a pair so it cannot be carried by rare mentions in the same pair. Also measures the competing explanation (shared-mention scarcity at containment 0.295 rather than alphabet density). Thresholds fixed in the script docstring before the run. Diagnostic only, no placement change, no tolerance-family metric."
+parent = "alignment_1626_1630"
+
+[datasets.separated_accuracy_eval]
+tier = "hot"
+path = "republic_ner_matching/output/separated_accuracy_eval.jsonl"
+phase = "semi"
+description = "Step 5c.1 of plans/COLLISION_AVOIDANCE_TRACK.md: accuracy of the production `separated` set (PLAN.md Global-primary, 8,015 resolutions) against the 50 hand-annotated boundary_gold_sample days, the precondition for Step 5's scaffold framing. Per resolution, the concordance's predicted paragraph_start_index vs gold's start paragraph under the canonical s6a convention (cut c opens resolution c+1; paragraph_boundary units open at index+1; out_of_range placeholders held out as unlocated), plus segment_gap's uniform spread as the null. Cohorts: separated / not-separated / by loss reason (collision, extent) / by review code. Resolution index 0 is held out of the headline because both sides place it at paragraph 0 by construction. Metrics are exact start-paragraph agreement and absolute paragraph displacement only -- no tolerance-family character metric. Also recomputes Step 2's `uniform beats gold on separated` side finding under the corrected gold convention. Diagnostic only, no placement change."
+parent = "resolution_concordance_1626_1630"

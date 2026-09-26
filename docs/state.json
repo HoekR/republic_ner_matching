@@ -1,0 +1,1648 @@
+{
+  "project": "republic-ner-matching",
+  "last_updated": "2026-09-25 13:10",
+  "active_focus": "Step 6 gate ran and did NOT pass -- the session aligner should not be built. The enriched<->HTR session mapping is already complete wherever HTR exists: 1,089/1,089 sittings pinned in 3185-3189, zero missing_htr rows there, and all 4,482 unmapped resolutions in 4562/4861 (4861 has no HTR at all). Order-forced pairings confirm the mechanism (3/3 beyond the +/-1-day window, at 20/22/36 days) on 40 of 19,120 resolutions. Next: Step 3, the entity-mention edit alignment inside s6b_known_point_ledger.py's 947 open gaps, parameter-free, under the no-insertion structural constraint, scored against 5c.1's 0.639 exact / 0.911 within-1 on gold's segmentable days. Clear chat.",
+  "tasks": [
+    {
+      "id": "S0",
+      "title": "Boundary evaluation harness",
+      "status": "done",
+      "notes": "Implemented boundary P/R/F1 at tolerance t, WindowDiff/P_k, and exact-count satisfaction; gold-data adapter remains part of S4 evaluation."
+    },
+    {
+      "id": "S1",
+      "title": "Zero-annotation diagnostics",
+      "status": "done",
+      "notes": "D1, D1c, D2, and D2b completed; findings support segmentation-transfer framing."
+    },
+    {
+      "id": "S2",
+      "title": "Anchor phrase inventory",
+      "status": "done",
+      "notes": "Harvested 1626-1630 opening/closing phrases to output/s2_anchor_phrase_inventory.json."
+    },
+    {
+      "id": "S3-tooling",
+      "title": "Boundary gold tooling",
+      "status": "done",
+      "notes": "Built sample generator, annotation UI, and merge script. Upstream res_start has zero target-inventory overlap."
+    },
+    {
+      "id": "S3-annotation",
+      "title": "Manual boundary annotation",
+      "status": "done",
+      "notes": "All 50 days annotated and merged. Exception review distinguishes segmentable, cross-day-shift, and missing-HTR cases."
+    },
+    {
+      "id": "S4",
+      "title": "Segmentation assembly (paragraph-axis baseline)",
+      "status": "done",
+      "notes": "CLOSED 2026-09-23. Both 2026-09-18 open items resolved same day (docs/DECISIONS.md): boundary F1 stagnation is a structural ceiling from gold's own duplicate paragraph_stream_index slots, and the 2 missing-record gold dates are trivial k_e=1/missing_htr days, not bugs. All live segmentation development since (predict_day/predict, S6a char axis, S6b anchor harvest, S6c segmentation DP) was carried out and metric-tracked under s6-anchor-chain-alignment, closed 2026-09-23 with Global-primary MET (68.8% of ceiling). Current segmentation numbers live under that task id; this entry is historical."
+    },
+    {
+      "id": "S4a",
+      "title": "Session-date inputs",
+      "status": "done",
+      "notes": "Composite inventory-date key defined and registered; data_io.check passes for all S4 inputs."
+    },
+    {
+      "id": "S4b",
+      "title": "Session-date ledger",
+      "status": "done",
+      "notes": "4,916 inventory-date rows: T=1,012, A=4, E=97, X=3, N=3,800."
+    },
+    {
+      "id": "S4c",
+      "title": "Nearby session candidates",
+      "status": "done",
+      "notes": "+/-1-day candidates recorded without auto-assignment."
+    },
+    {
+      "id": "S4d",
+      "title": "Session status heatmap",
+      "status": "done",
+      "notes": "Per-inventory-year calendar heatmap rendered."
+    },
+    {
+      "id": "S4e",
+      "title": "Session-key consumers",
+      "status": "done",
+      "notes": "Review export and mapping-aware corpus segmentation consumer both produced."
+    },
+    {
+      "id": "S5",
+      "title": "Evaluation and review routing",
+      "status": "done",
+      "notes": "scripts/evaluate_s4_paragraph_axis.py excludes C/M days, reports coverage separately. Routing abstentions to sequence_review_ui.py still deferred pending the next real S4 iteration."
+    },
+    {
+      "id": "line-level-segmentation",
+      "title": "Line-level cut points for the 12 structurally-abstaining gold days",
+      "status": "blocked",
+      "notes": "Per SEGMENTATION_TRANSFER.md section 9's fallback trigger. BLOCKED 2026-09-18, corrected 2026-09-18: canonical htr_classified_lines.csv has zero rows in inventories 3185-3189; the marijn-variant file has 1,294 checked rows in the right inventories but at spot-check density (2-9 pages/inventory), unmapped to dates. The page-to-date join is NOT a cheap check (see docs/DECISIONS.md 2026-09-18 'Correct line-level-segmentation blocker'): no manifest dataset maps (inventory, scan/page) to date -- session_index_all.parquet and session_date_status_1626_1630 are both session-level only. Doing the join needs a new extraction step over the unextracted 10 GB sessions_json-2026-02-27.tar.gz. Next action: scope and register a targeted page-range extraction from that archive before attempting the overlap check, or drop this track -- do not treat it as a quick lookup."
+    },
+    {
+      "id": "track-b-name-matching",
+      "title": "Track B -- soundex/Levenshtein reranker for person-name matching",
+      "status": "done",
+      "notes": "CLOSED 2026-09-23 by user judgment call (not expected to pay off), before any design or implementation work started. See docs/DECISIONS.md 2026-09-23."
+    },
+    {
+      "id": "track-c-fuzzy-search-context",
+      "title": "Track C -- FuzzyTokenSearcher context/role matching",
+      "status": "done",
+      "notes": "CLOSED 2026-09-24 without starting. Design-only Track C (FuzzyTokenSearcher context/role matching), doc-status:future in PLAN.md, never part of the active segmentation-transfer goal. S6b/S6c already tested the same class of fuzzy/phrase evidence against the actual canonical goal (position_scores, 5 variants) and found it net negative. See docs/DECISIONS.md 2026-09-24."
+    },
+    {
+      "id": "entity-resolution-fix",
+      "title": "Entity resolution fix (persons/orgs/places id->name bugs, build_alignment_new.py)",
+      "status": "done",
+      "notes": "Fixed silent id-as-name bugs for persons and institutions; built entity_surface_matches_1626_1630 cache (18,698 rows) for orthography fallback. Known limitation not fixed here -> excel-overlap-builder-audit."
+    },
+    {
+      "id": "excel-overlap-builder-audit",
+      "title": "Audit place/org/per_overlap_1626_1630.xlsx builders for the same literal-substring bug",
+      "status": "done",
+      "notes": "Confirmed the literal-substring bug for all three builders (see docs/DECISIONS.md 2026-09-19). Place +13.4% (1265/9428), org +4.0% (55/1363) rows recoverable via build_windowed_overlap.py's existing --compare-legacy rebuild, both zero-regression (legacy_only=0). Per confirmed by code inspection (no fuzzy pass in build_per_overlap.py); no rebuild script exists yet for it.",
+      "next_action": "Re-run the overlap builders on a sample of dates with the entity-resolution-fix text fallback applied, and diff entity counts against the current xlsx outputs.",
+      "goal": "n/a - closed",
+      "cost": "cheap",
+      "blocks": [
+        "S4",
+        "short-resolution-alignment",
+        "resolution-concordance-completeness",
+        "entity-resolution-fix"
+      ]
+    },
+    {
+      "id": "resolution-concordance-completeness",
+      "title": "Resolution concordance completeness (N-status gaps, candidate scoring, window-widen)",
+      "status": "done",
+      "notes": "Accepted as final 2026-09-18 (docs/DECISIONS.md): 70.7% resolved_auto, 28.6% missing_htr (structural ceiling, 49.7% of ledger has no HTR within +/-14d), 0.6% nihil_actum. Window-widen to +/-7d unlocked zero new confident matches. Closed track, not open for further work."
+    },
+    {
+      "id": "hoe-classifier-other-bucket",
+      "title": "HOE classifier -- reduce the 'other' bucket (31% unclassified)",
+      "status": "done",
+      "notes": "RETIRED 2026-09-24. hoe_classify.py pipeline is done end-to-end and produced the 16-category breakdown cited in PLAN.md ('other' ~1.32M rows/31%), but neither input needed to continue (raw ~/Downloads/annotations-unaggregated/annotations-layer_HOE.tsv.gz source, nor the pipeline's own prior data/hoe_vocab.parquet output) exists on this machine -- the only local hoe_vocab.parquet (data.bak/, 26MB) is from an unrelated older 6-category scheme, not usable. Re-run compute itself is cheap (~13 min single-threaded for the fuzzy-fallback stage, benchmarked directly) -- data availability, not compute, is the blocker. Retired rather than left open pending a data-location task with no owner. See docs/DECISIONS.md 2026-09-24."
+    },
+    {
+      "id": "ner-finetuning-original-goal",
+      "title": "GysBERT multi-class NER fine-tuning (original project goal, Phase 2+)",
+      "status": "done",
+      "notes": "RETIRED 2026-09-24 (state.json synced to match PLAN.md's own canonical-goal text, which already called this retired). GysBERT multi-class NER fine-tuning would train on spans from the same ~50-55%-recall upstream tagger its own training data comes from, so it cannot close its own recall gap; output is unrelated to the current segmentation-transfer goal. Phase 1 data prep (21K LOC + 13K PER training pairs) remains on disk; no Phase 2 planned. See docs/DECISIONS.md 2026-09-24."
+    },
+    {
+      "id": "short-resolution-alignment",
+      "title": "Short-resolution alignment (align_short_resolutions.py) -- decide: wire into concordance or retire",
+      "status": "done",
+      "notes": "RETIRED 2026-09-22 with the LLM side-plan close (plans/SHORT_RESOLUTION_SIDE_PLAN.md Step 7). Formulaic align_short_resolutions.py stays an orphan: never measured, never wired into s6b_anchor_harvest A-D, never consumed by concordance. Closing the LLM ranking track removes the only active reason to keep Tier E on the board; do not wire-in without a new measured case. Script may remain in-repo as historical reference.",
+      "goal": "Retired — no Tier E wire-in without a fresh measured case.",
+      "cost": "cheap",
+      "next_action": ""
+    },
+    {
+      "id": "fuzzy-surface-form-scan",
+      "title": "Corpus-wide fuzzy surface-form scan (s4_fuzzy_surface_form_scan.py) -- recover entities the tagger missed",
+      "status": "done",
+      "notes": "CLOSED 2026-09-23. Full-dictionary FuzzyTokenSearcher scan (LOC/PER/ORG) over all 21,519 paragraph_axis_1626_1630 paragraphs completed 2026-09-21: 189,764 rows, 167,599 (88.3%) newly_recovered vs entity_surface_matches_1626_1630. Leverage was tested under s6-anchor-chain-alignment (this scan feeds s6b_anchor_harvest.py Group B): every position_scores variant using it regressed below the 0.644 no-evidence baseline, and it closed only 2.3% of insufficient_entity_anchors abstentions (a category S6c eliminated entirely by other means). Same negative verdict the scoped entity_surface_matches version already got. See docs/DECISIONS.md 2026-09-23.",
+      "goal": "",
+      "cost": "multi-session"
+    },
+    {
+      "id": "interior-cut-evaluation-harness",
+      "title": "Extend the boundary evaluation harness to credit sub-paragraph (interior) cuts",
+      "status": "done",
+      "notes": "DONE 2026-09-20 via S6a (scripts/s6a_char_axis_evaluation.py, 14/14 tests). The harness now scores at character coordinates: gold (paragraph_stream_index, char_offset) composes to one integer axis per day by pure concatenation (no separator -- gold paragraph_boundary cuts carry char_offset == len(paragraph), so a paragraph-final cut composes to exactly the next paragraph's start). compute_boundary_prf needed no change, only this adapter. Interior/sub-paragraph cuts are therefore no longer structurally invisible: s4_bundled_split_poc.py and s4_llm_split_poc.py results can now be scored on the same axis as the main baseline at tol 50/150 chars. Registered output: s6a_char_axis_evaluation.",
+      "next_action": "Extend the S0 harness to score interior char-offset cuts alongside paragraph-index cuts, then re-score the existing 22-position gold set through it.",
+      "goal": "A boundary metric that can distinguish a correct sub-paragraph cut from a wrong one, so interior-cut work (s4_bundled_split_poc, s4_llm_split_poc) can register as tracked S4 progress instead of staying an isolated diagnostic.",
+      "cost": "session",
+      "blocks": [
+        "S4"
+      ]
+    },
+    {
+      "id": "adopt-windowed-overlap-rebuild",
+      "title": "Adopt build_windowed_overlap.py's variant-aware rebuild as canonical place/org overlap; build the equivalent fuzzy pass for PER",
+      "status": "done",
+      "notes": "2026-09-19: place/org canonical overlap swapped to variant-aware rebuild. 2026-09-21: PER canonical overlap swapped (build_per_overlap.py extended, +415 rows). 2026-09-21: downstream re-run done (build_alignment_new.py 11:43, s4_corpus_paragraph_predictions.py 11:44) against all three swapped tables. 2026-09-21: checked build_alignment_new.py's own headline confidence_tier distribution pre- vs post-swap -- tier1_anchor 5725->5730, tier2_* 4734->4708, tier3_* 2883->2904 out of 13342 unchanged total; largest single-tier delta 26 rows (0.19pp). Headline tier stats barely moved; the swap's real effect showed up in S6b's anchor-supply measurement (insufficient_entity_anchors abstentions 815->777) instead. Accepted as final -- see docs/DECISIONS.md 2026-09-21.",
+      "next_action": "Re-run downstream consumers (build_alignment_new.py, s4_paragraph_axis_baseline.py, s4_corpus_paragraph_predictions.py) against the now-swapped place/org/per overlap tables and check whether headline tier/confidence stats move.",
+      "goal": "Canonical overlap tables include the variant/fuzzy recovery, and downstream tier/confidence stats reflect it (or a measured reason not to adopt). DONE: adopted, re-run, measured -- stats barely move, and that's now on record rather than assumed.",
+      "cost": "cheap",
+      "blocks": [
+        "S4",
+        "short-resolution-alignment"
+      ]
+    },
+    {
+      "id": "s6-anchor-chain-alignment",
+      "title": "S6 -- multi-channel anchor chaining at character coordinates",
+      "status": "done",
+      "notes": "2026-09-23: position_scores tuning closed. Five variants of Group-B evidence (blanket/day-grounded/relocated/exact-relocated/gap-candidate-grounded) and Group-C phrase-hit evidence all tested below the 0.644 no-evidence paragraph-tol0 baseline -- the bonus-vs-even-split mechanism in segment_gap, not the evidence source, is the limiting factor. Lever (b) (per-entity role/type weighting) was the last untried lever; user chose not to attempt it and accepted the current S6c result as final. Global-primary criterion (>=50% of ceiling) is MET at 68.8% (8,015/11,644); stretch (>=75%) is not met and this track will not close that gap further.",
+      "next_action": "None -- track closed. Global-stretch gap (~718 resolutions) stays open but is not being pursued via S6c/position_scores; a future session would need a qualitatively different in-gap signal (not another position_scores variant) if this is revisited.",
+      "goal": "Global-primary >=50% of ceiling (MET, 68.8%); stretch >=75% not pursued further by this track.",
+      "cost": "multi-session",
+      "blocks": [
+        "S4",
+        "interior-cut-evaluation-harness"
+      ]
+    },
+    {
+      "id": "metrics-nihil-actum-invariant",
+      "title": "Tier V: nihil-actum invariant check",
+      "status": "done",
+      "notes": "Built scripts/metrics_nihil_actum_invariant.py. Concordance+ledger check: invariant_passed=True, 127 nihil days, 0 violations. Emits shared per-day K_e series (k_e_signal=0 on nihil) for Tier D/O.",
+      "next_action": "Group resolution_concordance_1626_1630 by day, filter to nihil_actum status, count attributed resolutions, assert zero; register violation count via svz.py metric under Tier V.",
+      "goal": "Zero resolutions attributed to any nihil_actum day; check runnable on every concordance rebuild, gating trust in Tier O/D numbers.",
+      "cost": "cheap",
+      "blocks": [
+        "metrics-separation-span-table"
+      ]
+    },
+    {
+      "id": "metrics-separation-span-table",
+      "title": "Tier O: consecutive-day separation span table",
+      "status": "done",
+      "notes": "Built scripts/metrics_separation_span_table.py. Separated=1961 (16.8% of ceiling); solid_days=221/1594; Global spans@30 unmet at gap 0/1/2 (longest 6/9/9 calendar days).",
+      "next_action": "Rerun after paragraph attribution coverage improves; Global, spans remains unmet.",
+      "goal": "Global, spans criterion measured and reported (qualifying spans, days covered) at gap in {0,1,2}.",
+      "cost": "session",
+      "blocks": [
+        "metrics-ke-drift-diagnostic"
+      ]
+    },
+    {
+      "id": "metrics-ke-drift-diagnostic",
+      "title": "Tier D: per-day K_e drift-comparison diagnostic",
+      "status": "done",
+      "notes": "Built scripts/metrics_ke_drift_diagnostic.py on Tier V day series. 203 drift candidates at |dev|>=10 vs ±3d neighbor median; 0 blocked by V. Candidates are suspects, not proven errors.",
+      "next_action": "Reuse the span table's per-day K_e series; flag days whose K_e jumps implausibly relative to neighbors as date/session mis-attribution candidates.",
+      "goal": "Ranked list of candidate date/session mis-attribution days, feeding the ceiling-gap explanation PLAN.md already names.",
+      "cost": "cheap",
+      "blocks": [
+        "metrics-bottleneck-diagnostic"
+      ]
+    },
+    {
+      "id": "metrics-bottleneck-diagnostic",
+      "title": "Tier P: bottleneck diagnostic (evidence vs. algorithm)",
+      "status": "done",
+      "notes": "Built scripts/metrics_bottleneck_diagnostic.py. oracle_coverage=0.263 (5/19), real_coverage=0.368 (7/19), recommended_focus=algorithm_redesign. Real>oracle is thin-anchor monotone dodge (same as endpoints density), not evidence that NW anchors beat perfect gold.",
+      "next_action": "Rerun whenever Tier A-D supply or the placement model changes materially; feed recommended_focus into svz.py review.",
+      "goal": "A recorded oracle_ceiling vs real_performance gap that names whether anchor supply or the placement algorithm is the next investment; feeds svz.py review.",
+      "cost": "session"
+    },
+    {
+      "id": "metrics-consolidation-overhaul",
+      "title": "Register the metrics-tier overhaul itself in state.json",
+      "status": "done",
+      "notes": "Closed 2026-09-22: docs/METRICS.md channel tiers O/P/A-E/V/X in place; V/D/O/P implemented (E retired). Overhaul complete.",
+      "next_action": "None — overhaul closed.",
+      "cost": "cheap"
+    },
+    {
+      "id": "metrics-local-inventory-ceiling",
+      "title": "metrics-local-inventory-ceiling",
+      "status": "done",
+      "notes": "DONE 2026-09-24. Built scripts/metrics_local_inventory_ceiling.py: per-date pigeonhole ceiling = min(k_e, same-calendar-day raw paragraph_count), summed per inventory_id. Reproduces the cited corpus-wide 11,644 ceiling exactly (and 535 no-HTR dates), closing docs/METRICS.md's 'Known gaps' item. PLAN.md's Local criterion is MET: all 5 main annual inventories (3185-3189) clear >=50% of their own ceiling (63.9%-72.3%); the 2 non-annual 'secret resolution' inventories (4562, 4861) do not (10.5%, 0.0%), structurally near-zero same-day HTR, not the worked-example candidates this criterion targets. See docs/DECISIONS.md 2026-09-24."
+    },
+    {
+      "id": "inventory-stream-collision-avoidance",
+      "title": "Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md)",
+      "status": "inprogress",
+      "notes": "Step 1 PASS (landmark density gate). Step 2 NEGATIVE (length prior; do not adopt). Steps 5a + 5c.1 DONE 2026-09-25: separated set is accurate enough to freeze as a scaffold except on review-code-M days (0.639 exact / 0.911 within-1 on segmentable days, beating the uniform null 2.4-2.7x). Step 6 gate DONE 2026-09-25, DID NOT PASS -- do not build the session aligner: scripts/session_offset_eval.py (15 tests) -> session_offset_eval shows the enriched<->HTR session mapping is already complete wherever there is HTR to map to. In inventories 3185-3189 every enriched sitting resolves to a session (1,089/1,089) and there are ZERO missing_htr rows; all 344 unresolved sittings / 4,482 resolutions are in 4562 (2,095) and 4861 (2,387), the non-annual series PLAN.md's Local criterion already excludes, where 4861 has no axis sessions at all. Only 3 sittings (40 resolutions) sit in order-determined brackets -- all 3 beyond the +/-1-day window at 20/22/36 days, so the mechanism is confirmed on 40 of 19,120 resolutions against a stretch gap of 718. The cited 1,137 cross_day_shift resolutions are NOT unmapped; every one carries a resolved session. Also measured: no-insertion holds at session level in the annual inventories (12/1,034) but breaks in 4562 (39). SCOPE CONSTRAINT (user, 2026-09-25, now a standing track guardrail): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it -- 184 axis sessions / 2,284 paragraphs (10.6%) dated to 1630-12-31 are barred, enforced and asserted (0 claimed today); enforcing it changed no gate quantity. The day partition excluded them for free by keying paragraph counts on enriched dates, so the 11,644 ceiling and Step 1's segment ceilings are safe, but a STREAM framing must bar them explicitly -- Step 5's pending bound re-derivation is the next thing that would hit this. Step 3's design question was settled earlier: no-insertion is a structural constraint, not a gap penalty. Open, unscoped: pin CORRECTNESS is untested (Step 6 closes 'mapping absent', not 'mapping wrong') -- cheap check is enriched date vs the content-verified raw session's date from s6b_session_fingerprint_match, 70 pinned sittings already sit >1 day from their session label; axis_for_date's neighbour fallback places resolutions on days with no HTR of their own (corpus-wide share unmeasured); length_prior_eval.py's gold adapter uses a non-canonical boundary convention (Step 2's ranking survives, its absolute numbers do not).",
+      "next_action": "Step 3: the entity-mention edit alignment scoped to s6b_known_point_ledger.py's 947 open gaps, parameter-free first (unit costs, no IDF, no anchor gate), under the no-insertion structural constraint (forbid the enriched-side gap move; make the HTR-side stay-on-same-resolution move free) rather than a gap penalty. Respect the 1630-05-14 scope bar. Fold in the stratified-by-IDF-band D1c re-run as Step 3's own gate. Score against 5c.1's baseline (exact 0.639 / within-1 0.911 on gold's segmentable days), never against separated.",
+      "goal": "Establish whether posing segmentation on the inventory stream, with session openings as interior landmarks instead of the calendar day as a hard partition, recovers separations the per-day framing declares structurally impossible -- judged by collisions recovered plus a correctness check, never by separated-share alone.",
+      "cost": "multi-session"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "S0",
+      "to": "S5"
+    },
+    {
+      "from": "S1",
+      "to": "S4"
+    },
+    {
+      "from": "S2",
+      "to": "S4"
+    },
+    {
+      "from": "S4a",
+      "to": "S4b"
+    },
+    {
+      "from": "S4b",
+      "to": "S4c"
+    },
+    {
+      "from": "S4c",
+      "to": "S4d"
+    },
+    {
+      "from": "S4c",
+      "to": "S4e"
+    },
+    {
+      "from": "S3-tooling",
+      "to": "S3-annotation"
+    },
+    {
+      "from": "S3-annotation",
+      "to": "S5"
+    },
+    {
+      "from": "S4",
+      "to": "S5"
+    },
+    {
+      "from": "S4",
+      "to": "line-level-segmentation"
+    },
+    {
+      "from": "entity-resolution-fix",
+      "to": "excel-overlap-builder-audit"
+    }
+  ],
+  "metrics": [
+    {
+      "scope": "S1-D1",
+      "name": "htr_under_segmented_rate",
+      "label": "HTR under-segmented session-days",
+      "value": "81.1%"
+    },
+    {
+      "scope": "S1-D1",
+      "name": "exact_count_rate",
+      "label": "Exact K_f == K_e session-days",
+      "value": "3.8%"
+    },
+    {
+      "scope": "S1-D1",
+      "name": "mean_entity_containment",
+      "label": "Mean entity containment",
+      "value": "0.295"
+    },
+    {
+      "scope": "S1-D1c",
+      "name": "tier1_kendall_tau",
+      "label": "Tier-1 Kendall tau",
+      "value": "0.638; 64.3% of pairs at tau >= 0.8"
+    },
+    {
+      "scope": "S1-D2",
+      "name": "llm_judge_precision",
+      "label": "LLM judge precision",
+      "value": "60.0% against 53.7% baseline"
+    },
+    {
+      "scope": "S1-D2b",
+      "name": "opening_formula_hit_rate",
+      "label": "Opening formula hit rate",
+      "value": "80.1%"
+    },
+    {
+      "scope": "S4",
+      "name": "resolution_baseline_coverage",
+      "label": "Flat-resolution entity-NW baseline coverage",
+      "value": "0 / 50 predicted"
+    },
+    {
+      "scope": "S4",
+      "name": "paragraph_axis_entity_coverage",
+      "label": "Paragraph-axis resolved entity coverage",
+      "value": "480 / 611 paragraphs; 87 unresolved annotation references"
+    },
+    {
+      "scope": "S4",
+      "name": "boundary_f1_tolerance0",
+      "label": "Boundary micro F1 (tolerance 0)",
+      "value": "0.576",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "value": "0.576"
+        },
+        {
+          "date": "2026-09-18",
+          "value": "0.576"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "boundary_f1_tolerance2",
+      "label": "Boundary micro F1 (within 2 paragraphs)",
+      "value": "0.727",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "value": "0.727"
+        },
+        {
+          "date": "2026-09-18",
+          "value": "0.727"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "coverage",
+      "label": "Predicted-day coverage (of 21 eligible gold days)",
+      "value": "0.429",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "value": "0.238"
+        },
+        {
+          "date": "2026-09-18",
+          "value": "0.429"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "gold_cut_opening_signal",
+      "label": "Opening signal at manual cuts",
+      "value": "227/360 regex (63.1%); 225/360 S2 top-20 phrases (62.5%)"
+    },
+    {
+      "scope": "S4",
+      "name": "fuzzy_opening_coverage",
+      "label": "fuzzy_search opening coverage",
+      "value": "225/360 (62.5%), unchanged from exact top-20 phrase matching"
+    },
+    {
+      "scope": "S4",
+      "name": "heldout_opening_candidates",
+      "label": "Held-out opening phrase inventory",
+      "value": "271 candidates from 3,817 tier-1 flat records; excludes 50 gold dates"
+    },
+    {
+      "scope": "S4",
+      "name": "corpus_paragraph_axis",
+      "label": "Corpus paragraph axis",
+      "value": "21,519 paragraphs; 16,104 entity-bearing; 41,156 resolved attachments"
+    },
+    {
+      "scope": "S4",
+      "name": "corpus_baseline_coverage",
+      "label": "Corpus entity-NW baseline",
+      "value": "244/1,594 predicted; 815 insufficient anchors; 535 no same-day HTR assignment"
+    },
+    {
+      "scope": "resolution-concordance-completeness",
+      "name": "resolved_auto_pct",
+      "label": "Resolved-auto share of resolution-level concordance",
+      "value": "70.7%"
+    },
+    {
+      "scope": "resolution-concordance-completeness",
+      "name": "missing_htr_pct",
+      "label": "Missing-HTR share (accepted structural ceiling)",
+      "value": "28.6%"
+    },
+    {
+      "scope": "hoe-classifier-other-bucket",
+      "name": "other_bucket_pct",
+      "label": "'other' bucket share of the HOE layer",
+      "value": "31%"
+    },
+    {
+      "scope": "S4",
+      "name": "entity_density_bundled_clean_effect_size",
+      "label": "Common-language effect size, bundled vs clean-boundary paragraph entity_annotation_count (gold, n=22/112)",
+      "value": "0.770",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.770"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_recall_tol150",
+      "label": "NER-only entity spans, even-split heuristic, tol=150 chars",
+      "value": "0.333",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.333"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_recall_tol150",
+      "label": "NER + entity_surface_matches dictionary lookup, tol=150 chars",
+      "value": "0.407",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.407"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_recall_tol50",
+      "label": "NER-only entity spans, even-split heuristic, tol=50 chars",
+      "value": "0.0",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.0"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_recall_tol50",
+      "label": "NER + dictionary lookup, tol=50 chars",
+      "value": "0.111",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.111"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_phrase_snapped_recall_tol50",
+      "label": "NER-only spans + phrase-boundary snap, tol=50 chars",
+      "value": "0.074",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.074"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage1_phrase_snapped_recall_tol150",
+      "label": "NER-only spans + phrase-boundary snap, tol=150 chars",
+      "value": "0.333",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.333"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_phrase_snapped_recall_tol50",
+      "label": "NER + dictionary + phrase-boundary snap, tol=50 chars",
+      "value": "0.148",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.148"
+        }
+      ]
+    },
+    {
+      "scope": "S4",
+      "name": "bundled_split_poc_stage2_phrase_snapped_recall_tol150",
+      "label": "NER + dictionary + phrase-boundary snap, tol=150 chars",
+      "value": "0.407",
+      "history": [
+        {
+          "date": "2026-09-18",
+          "value": "0.407"
+        }
+      ]
+    },
+    {
+      "scope": "excel-overlap-builder-audit",
+      "name": "place_overlap_variant_recovery_rate",
+      "label": "1265/9428 additional rows found by build_windowed_overlap.py's variant+tag_text passes vs legacy canonical-only place_overlap_1626_1630.xlsx (window_days=0, --compare-legacy: legacy_only=0, rebuilt_only=1265)",
+      "value": "0.1342",
+      "history": [
+        {
+          "date": "2026-09-19",
+          "value": "0.1342"
+        }
+      ]
+    },
+    {
+      "scope": "excel-overlap-builder-audit",
+      "name": "org_overlap_variant_recovery_rate",
+      "label": "55/1363 additional rows found by build_windowed_overlap.py's variant pass vs legacy canonical-only org_overlap_1626_1630.xlsx (window_days=0, --compare-legacy: legacy_only=0, rebuilt_only=55)",
+      "value": "0.0404",
+      "history": [
+        {
+          "date": "2026-09-19",
+          "value": "0.0404"
+        }
+      ]
+    },
+    {
+      "scope": "excel-overlap-builder-audit",
+      "name": "per_overlap_bug_confirmed",
+      "label": "Confirmed by code inspection: build_per_overlap.py has no fuzzy/variant pass at all (exact tag_text substring, then exact-word surname_token fallback only). Directional cross-check against entity_surface_matches_1626_1630 (different candidate universe, so not a clean rate): 1123 fuzzy-confirmed PER entity/resolution pairs across 991 resolutions are absent from per_overlap_1626_1630.xlsx entirely.",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-19",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "boundary_recall_ceiling_char_coords",
+      "label": "Hard recall bound AT TOLERANCE 0 on the 50-day gold set under (paragraph_stream_index, char_offset): 320/352 distinct cut positions, vs 280/352 (0.795) under paragraph indices alone. Higher is better. Rigorous at tol0 only -- at tol>0 a clustering predictor can exceed the distinct-value count (see DECISIONS.md 2026-09-20 correction). Residual 32 slots have char_offset=null.",
+      "value": "0.909",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.909"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_recall_bound_tol0",
+      "label": "S6a STRICT ceiling: 313/352 distinct character positions reachable at tolerance 0 on the 50-day gold set, vs 280/352 (0.795) under paragraph indices. Higher is better. CORRECTS the step guide's 320/352 (0.909), which counted 7 paragraph-index groups whose slots have char_offset=null as reachable; they are annotation gaps. 39 cut slots carry no offset and are unreachable on a character axis.",
+      "value": "0.889",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.889"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_tol0",
+      "label": "S6a re-scored baseline: micro F1 at tolerance 0 CHARACTERS for the unchanged 2026-09-18 s4_paragraph_axis_predictions, composed onto the character axis. Higher is better. Not comparable to the 0.576 paragraph-coordinate figure (different unit); the point is that 0.467 sits well below the 0.889 ceiling, so the metric is no longer saturated.",
+      "value": "0.467",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.467"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_tol150",
+      "label": "S6a re-scored baseline: micro F1 at tolerance 150 characters (matching the split-POC harness scale). Higher is better.",
+      "value": "0.567",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.567"
+        }
+      ]
+    },
+    {
+      "scope": "interior-cut-evaluation-harness",
+      "name": "folded_groups_separated_by_composition",
+      "label": "22 of 24 folded gold groups (16 days) gain distinct character coordinates under (paragraph_stream_index, char_offset) composition. Higher is better. The 2 that stay folded hold only char_offset=null slots.",
+      "value": "0.917",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.917"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "oracle_anchor_coverage_all_density",
+      "label": "S6 Step 1 oracle diagnostic: with a PERFECT gold-derived anchor set, the current placement model (interpolate_positions + snap_boundaries, unmodified) can predict only 5 of 19 scoreable gold days. Higher is better. 9 days abstain folded_anchors_non_monotone, 5 axis_shorter_than_k_e. This is an upper bound on what ANY anchor-selection improvement, chaining included, can cover.",
+      "value": "0.263",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.263"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "oracle_anchor_f1_tol50_all_density",
+      "label": "S6 Step 1 oracle diagnostic: micro F1 at tol 50 chars on the 5 days perfect anchors can predict (tol0 0.727, tol150 0.788). Higher is better. Caps below 1.0 because the model emits (paragraph index, snap offset), so the 33 mid_paragraph gold cuts are largely unreachable.",
+      "value": "0.788",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.788"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_lumped",
+      "label": "S6a LUMPED baseline: gold cuts collapsed onto the paragraph they open (interior cuts credited at their paragraph start, de-duplicated) and model output collapsed the same way. Higher is better. Flat 0.828 across tol 0/50/150 because paragraph starts are far apart, so tolerance is irrelevant once both sides are at paragraph granularity. Separate metric name on purpose: the STRICT character-precision figures (char_axis_boundary_f1_tol0 = 0.467) are unchanged and must keep their own history.",
+      "value": "0.828",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.828"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "known_point_pinned_share_1626h1",
+      "label": "S6b constraint baseline, contiguous 1626-01-01..06-30: 389 of 1218 enriched resolutions are pinned by a typed known point (366 tier-1 anchors, 41 gold boundaries; session start/end are sentinels). Higher is better. Measures the problem's constraint structure, not any model.",
+      "value": "0.319",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.319"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "unplaced_resolutions_in_open_gaps_1626h1",
+      "label": "S6b constraint baseline: 544 of 723 unplaced resolutions sit in the 93 gaps holding more than 2 resolutions. LOWER is better. Counting GAPS flatters this badly -- 81.2% of gaps are determined or nearly so, but those hold only 24.8% of unplaced resolutions; 18.8% of gaps hold 75.2% of the work.",
+      "value": "0.752",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.752"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "known_point_pinned_share_1626_1630",
+      "label": "S6b constraint baseline, FULL period 1626-1630: 5111 of 13530 enriched resolutions pinned by a typed known point (4761 tier-1 anchors, 350 gold boundaries). Higher is better. Report: docs/S6B_CONSTRAINT_BASELINE.md.",
+      "value": "0.378",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.378"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "unplaced_in_open_gaps_1626_1630",
+      "label": "S6b constraint baseline, FULL period: 5302 of 7504 unplaced resolutions sit in the 947 gaps holding more than 2 resolutions, spanning 3.13M characters. LOWER is better. Gap-count view says 84.3% settled; resolution-weighted view says 70.7% of the work is open. Quote both.",
+      "value": "0.707",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "value": "0.707"
+        }
+      ]
+    },
+    {
+      "scope": "adopt-windowed-overlap-rebuild",
+      "name": "per_overlap_rebuild_recovered_rows",
+      "label": "PER variant-aware rebuild vs legacy literal-substring build: legacy_only=0 (strict superset), shared=7544, rebuilt_only=415. Higher is better.",
+      "value": "415",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "415"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6b_anchor_harvest_density_smoke_36day",
+      "label": "S6b anchor harvest, 36-day smoke window (1626-01-01..03-01, preliminary, not corpus-wide): group A (tier1_entity_nw) 149 anchors/32 days; group B (entity_surface_matches 617, fuzzy_surface_scan 5007)/36 days; group C (s2_anchor_phrases 465, s4_opening_phrase_candidates 547)/36 days. Of 26 insufficient_entity_anchors abstentions in this window, 3 had zero group-A anchors at all, and all 3 gain a non-A anchor once B/C are harvested (anchor SUPPLY only -- not a placement guarantee, see docs/DECISIONS.md 2026-09-20 on the placement model binding). No trend direction; this is a first reading, full-corpus run not yet done.",
+      "value": "0.0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6b_anchor_harvest_zero_group_a_share_of_abstentions",
+      "label": "S6b anchor harvest, FULL CORPUS 1626-1630: 247,871 anchor rows over 1,240 days-with-axis. Of the 815 corpus-wide insufficient_entity_anchors abstentions, only 59 (7.2%) had ZERO group-A (tier1_entity_nw) anchors at all -- the other 756 (92.8%) already had >=1 group-A anchor and abstained for a different reason (interpolate_positions' monotonicity/axis-length requirements, per the S6 Step 1 oracle diagnostic). Of the 59 zero-anchor days, 57 (96.6%) gain a non-A anchor once groups B/C are harvested -- but that is only 57/815 = 7.0% of all abstentions. LOWER is better (less of the problem is anchor-supply-shaped). Report: this response.",
+      "value": "0.072",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.072"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6b_anchor_harvest_per_group_density_full_corpus",
+      "label": "S6b anchor harvest, FULL CORPUS: per-channel density (anchors / distinct positions / days-touched of 1,240 days-with-axis). A tier1_entity_nw: 5,332/3,718/993. B entity_surface_matches: 18,406/8,075/1,068; fuzzy_surface_scan: 189,764/162,307/1,238 (touches nearly every day and vastly outnumbers group A, but char-offset granularity means many hits cluster within single paragraphs). C s2_anchor_phrases: 14,890/14,890/1,231; s4_opening_phrase_candidates: 16,999/16,999/1,233 (one best hit per paragraph by construction, so anchors==distinct positions). D session_boundary: 2,480/2,480/1,240 (2 per day, as designed). Value recorded is total group-A anchors in thousands (5.332k) as a scale reference; read the full breakdown in the label, not the number. Higher is better for coverage completeness, not for correctness of any given anchor.",
+      "value": "6.99",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "6.99"
+        }
+      ]
+    },
+    {
+      "scope": "adopt-windowed-overlap-rebuild",
+      "name": "tier_headline_stats_shift",
+      "label": "Post-rebuild build_alignment_new.py re-run (2026-09-21, refreshed place/org/per overlap tables), alignment_1626_1630.parquet, n=13342 (unchanged): tier1_anchor 5725->5730 (42.9%->42.9%), tier2_* 4734->4708 (35.5%->35.3%), tier3_* 2883->2904 (21.6%->21.8%). Value = largest single-tier count delta (26) / total (13342). LOWER is better (less headline movement from the overlap swap alone).",
+      "value": "0.0195",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.0195"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "s6c_gold_day_coverage",
+      "label": "19/21 eligible gold days predicted (was 9/21 pre-S6c)",
+      "value": "0.905",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.905"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_lumped_tol150",
+      "label": "S6c segmentation DP, was 0.828 pre-S6c (baseline unchanged within noise)",
+      "value": "0.826",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.826"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "char_axis_boundary_f1_tol50",
+      "label": "S6c segmentation DP on nearly 3x the predicted days (19 vs 7), was 0.500 pre-S6c",
+      "value": "0.503",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.503"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_insufficient_entity_anchors_abstentions",
+      "label": "was 777 pre-S6c; eliminated entirely (1059 = 282 pre-existing + all 777 recovered)",
+      "value": "0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_coverage_of_days_with_axis",
+      "label": "1059/1059 days with an axis now predict (535 missing_htr, structural, untouched)",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_severe_collapse_share",
+      "label": "Predicted days with 7+ resolutions collapsed onto one paragraph (83/1140) after the axis_for_date fix; was 92/1140=0.0807 pre-fix, 79/1059=0.075 before the concordance-fallback wiring",
+      "value": "0.0728",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.075"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.0728"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_missing_htr_after_concordance_wiring",
+      "label": "was 535 pre-wiring; 81 days recovered via resolution_concordance_1626_1630's resolved_session_id",
+      "value": "454",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "454"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_fingerprint_match_rate",
+      "label": "S6b prerequisite: resolutions_flat session -> raw session content-fingerprint match rate (substring containment on 'para'-class text), registered as s6b_session_fingerprint_match, replacing unregistered scratch. 1059/1511 matched, 0 ambiguous, 659/1059 drifted (non-zero offset). Higher is better.",
+      "value": "0.701",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.701"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_day_find_hit_precision_sample",
+      "label": "session_day_find (S6b Group-D channel): 25/25 sampled hits genuine at FuzzyPhraseSearcher threshold 0.95+ignorecase, 154 hits/130 sessions vs regex baseline's unvalidated 210/167 on the same session-text universe. Higher is better (this is a precision spot-check, not corpus coverage).",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_day_find_corpus_density",
+      "label": "session_day_find corpus-wide: 203 anchors / 162 of 1240 days-with-axis (13.1%), 203 distinct positions -- smallest of all six non-sentinel channels (vs group A tier1_entity_nw 5375 anchors/995 days). insufficient_entity_anchors supply-gain proxy is degenerate at 0/0/0: S6c already eliminated that abstention category entirely, so the proxy has nothing left to measure -- not evidence this channel closed a gap.",
+      "value": "0.131",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.131"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "corpus_predictor_phrase_evidence_tol0_f1",
+      "label": "s4_corpus_paragraph_predictions.py's predict(), with s4_opening_phrase_candidates fed into segment_day's position_scores, scored on the 19/21 scoreable gold days: tol0 F1 0.622 vs 0.644 WITHOUT phrase evidence -- a regression, not a gain. tol1/tol2 marginally better (0.796/0.812 vs 0.790/0.807), mean Pk/WindowDiff worse (0.292 vs 0.285). Adding snap_boundaries (the gold pipeline's second phrase-evidence stage) on top produced IDENTICAL numbers -- not a partial-implementation artifact. NOT wired into the corpus predictor. Higher is better (but this is the WITH-evidence reading; compare against the 0.644 without-evidence baseline, not a target).",
+      "value": "0.622",
+      "history": [
+        {
+          "date": "2026-09-21",
+          "value": "0.622"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-nihil-actum-invariant",
+      "name": "invariant_passed",
+      "label": "Tier V nihil-actum invariant_passed (1=pass, 0=fail)",
+      "value": "1",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-nihil-actum-invariant",
+      "name": "nihil_share_of_days",
+      "label": "Tier V nihil_share_of_days (127/1594)",
+      "value": "0.0797",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.0797"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-ke-drift-diagnostic",
+      "name": "n_drift_candidates",
+      "label": "Tier D K_e drift candidates (|dev|>=10 vs ±3d neighbor median); lower after genuine fixes is better",
+      "value": "203",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "203"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-separation-span-table",
+      "name": "separated_count",
+      "label": "separated resolutions (unique start + extent<=3)",
+      "value": "1961",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "1961"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-separation-span-table",
+      "name": "solid_day_count",
+      "label": "solid days (separated_share>=0.5 on k_e_signal)",
+      "value": "221",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "221"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-separation-span-table",
+      "name": "global_spans_gap1_n_spans",
+      "label": "Global spans @30d gap=1 (n_spans; criterion >=6)",
+      "value": "0",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-separation-span-table",
+      "name": "global_spans_gap1_days_covered",
+      "label": "Global spans @30d gap=1 (days covered; criterion >=180)",
+      "value": "0",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-bottleneck-diagnostic",
+      "name": "oracle_ceiling_coverage",
+      "label": "oracle_ceiling coverage (perfect anchors + interpolate_positions)",
+      "value": "0.263",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.263"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-bottleneck-diagnostic",
+      "name": "real_performance_coverage",
+      "label": "real_performance coverage (NW anchors + interpolate_positions)",
+      "value": "0.368",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.368"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-bottleneck-diagnostic",
+      "name": "recommended_focus",
+      "label": "bottleneck recommended_focus (decision aid)",
+      "value": "algorithm_redesign",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "algorithm_redesign"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_date_verified_corpus_density",
+      "label": "session_date_verified corpus-wide: 939 anchors / 891 of 1240 days (71.9%)",
+      "value": "0.719",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.719"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_breaking_gaps",
+      "label": "Tier O span-gap map: inter-solid breaking gaps (171) among 221 solid days; 49 adjacent solid pairs. Dominant interrupter weak_separation (125/171), then missing_htr (38), nihil_actum (8).",
+      "value": "171",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "171"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_severe_collapse_share",
+      "label": "Share of breaking gaps that contain an S6c severe-collapse day (40/171) after axis_for_date fix; was 0.2515 (43/171) -- drops below the 0.25 implication threshold",
+      "value": "0.2339",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.2515"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.2339"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_bridge_weak_separation_longest",
+      "label": "Bridge counterfactual: drop all 917 weak_separation days from the series; longest gap=0 solid run is only 12 calendar days (still 0 spans@30). No single-class bridge reaches Global spans.",
+      "value": "12",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "12"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_days",
+      "label": "S6c severe-collapse autopsy: days with max>=7 resolutions on one paragraph start (83/1140, after the 2026-09-23 axis_for_date fix; was 92/1140)",
+      "value": "83",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "92"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "83"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_pigeonhole_forced_share",
+      "label": "Share of severe-collapse days where ceil(k_e/P)>=7 (25/83) after axis_for_date fix -- structural even under optimal assignment; was 0.3478 (32/92)",
+      "value": "0.3012",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.3478"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.3012"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_room_on_axis_share",
+      "label": "Share of severe-collapse days with paragraph_count>=k_e (10/83) after axis_for_date fix; was 0.1087 (10/92)",
+      "value": "0.1205",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "0.1087"
+        },
+        {
+          "date": "2026-09-23",
+          "value": "0.1205"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_weak_separation_share",
+      "label": "All 92 severe-collapse days are Tier O weak_separation nonsolids (0 solid)",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_richer_session_ignored",
+      "label": "Of 92 severe-collapse days, 9 prefer a thin same-calendar-date axis over a richer concordance-resolved session on a neighboring date (axis_for_date bug)",
+      "value": "9",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "9"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "severe_collapse_genuinely_thin",
+      "label": "Of 92 severe-collapse days, 15 have P<=1 on both calendar axis and resolved session (real short/blob HTR, often inventory 4562)",
+      "value": "15",
+      "history": [
+        {
+          "date": "2026-09-22",
+          "value": "15"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "separated_share_of_ceiling_post_concordance_refresh",
+      "label": "PLAN.md Global-primary metric after re-running resolution_concordance_1626_1630 (stale since 2026-09-17) against the current S6c predictor: 8015/11644 separated (was 1961/11644=16.8%). Higher is better. Global-primary criterion (>=50%) now met; stretch (>=75%) not yet (gap ~718).",
+      "value": "0.688",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.688"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "solid_days_post_concordance_refresh",
+      "label": "Tier O solid days out of 1594 after concordance refresh (was 221/1594). Higher is better.",
+      "value": "693",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "693"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "global_spans_gap2_days_covered_post_refresh",
+      "label": "Global spans@30 gap=2 days_covered after concordance refresh (was 0; n_spans=4, criterion is >=6 spans AND >=180 days). Higher is better -- 177 is just short of the 180-day stretch.",
+      "value": "177",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "177"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "weak_separation_headroom_share_post_refresh",
+      "label": "Share of remaining 445 weak_separation days (was 917) that are headroom_available (ceiling>=0.5, not axis-capped) per metrics_weak_separation_headroom_diagnostic, after the concordance refresh. Higher is better (means placement-quality work, not axis granularity, is still the live lever).",
+      "value": "0.822",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.822"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_position_scores_gold_tol0_paragraph_f1",
+      "label": "Group-B (entity_surface_matches) position_scores wired into segment_day, corpus predictor codepath, 19/21 scoreable gold days, PARAGRAPH tol0 F1 (not char tolerance per 2026-09-21 rescope). Baseline (no evidence) tol0=0.644/tol1=0.790/tol2=0.807; Group-B tol0=0.555/tol1=0.790/tol2=0.840. Lower is worse at tol0 -- net negative at the primary granularity, same failure mode as Group-C phrase hits (2026-09-21): entity mentions signal presence, not resolution-opening position, so the phrase_weight/dispersion tradeoff pulls cuts toward entity-dense paragraphs regardless of whether they open a resolution.",
+      "value": "0.555",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.555"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_vs_group_c_divergent_day_tp_delta",
+      "label": "Sum of (with-evidence TP - baseline TP) across days whose predicted cuts actually changed, 19-21 scoreable gold days, paragraph tol0. Group B: -21 across 11 divergent days (all worse). Group C (re-measured same way this session): -2 across 8 divergent days (6 same, 2 worse, 0 better). Lower magnitude is better/more neutral. Confirms Group B's regression is ~10x larger than Group C's, traced to flat_id-level (not paragraph-level) evidence granularity -- see docs/DECISIONS.md correction.",
+      "value": "-21",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "-21"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "entity_surface_matches_two_sided_grounding_rate",
+      "label": "Two-sided check, 40-day random sample (seed=42): of 243 entity_surface_matches rows flagged 'new' (not already in the rebuilt place/org/per_overlap tables for that flat resolution), only 4 (1.6%) match a SPECIFIC enriched resolution's own resolved entity set (places+orgs+persons via resolve_enriched_entities) anywhere in that day's candidate pool; 239 (98.4%) are floating -- no enriched resolution that day claims the name at all. Higher is better (more grounded, fewer false anchors). Sanity-checked against a raw example (1626-01-19): genuinely-grounded enriched entities are small specific place names (Oudenbosch, Kempenland, Zevenbergen); the floating flagged names are large common geographic terms (Holland, Zeeland, Engeland, Amsterdam, Groningen) that read as incidental context mentions, not resolution subjects.",
+      "value": "0.016",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.016"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_grounded_paragraph_tol0_f1",
+      "label": "Grounded Group-B (matches filtered to entities resolve_enriched_entities confirms the day's own enriched resolutions actually claim) position_scores, 19/21 scoreable gold days, paragraph tol0 F1. Baseline (no evidence)=0.644, ungrounded Group-B=0.555, grounded Group-B=0.588 (tol1 0.790->0.784, tol2 0.807->0.824). Grounding recovers ~30% of the regression but does not close it -- still net negative at tol0. 101/181 (56%) of ungrounded Group-B's flagged paragraphs survive day-level grounding, far above the 1.6% grounded share found in the corpus-wide 40-day two-sided sample, because day-level grounding only checks whether SOME enriched resolution that date claims the name, not the specific paragraph's true owner resolution -- a coarser, more permissive check. Higher is better, compare against 0.644 baseline not 1.0.",
+      "value": "0.588",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.588"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_pairwise_bridge_missing_htr_weak_separation_spans30",
+      "label": "Pairwise bridge counterfactual (missing_htr + weak_separation jointly, gap=0): 9 spans@30 / 366 days covered, criterion_met=True (>=6 spans AND >=180 days). Neither class alone moves the metric (missing_htr alone: longest=12 unchanged; weak_separation alone: longest=20). Higher is better.",
+      "value": "9",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "9"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "ke_kf_window_drift_shift_candidate_share",
+      "label": "Windowed K_e-vs-paragraph_count(K_f proxy) shift-signature diagnostic (scripts/metrics_ke_kf_window_drift_diagnostic.py), scoped to metrics_span_gap_map's 13 longest weak_separation-dominated breaking gaps (>=8 nonsolid session-days), not corpus-wide. 12/13 windows show shift_candidate (alternating over-/under-attribution between adjacent days -- negative lag-1 autocorrelation and/or a high share of sign-flipping adjacent pairs), only 1/13 uniform_shortfall. Spot-check on the top window (1627-03-25..1627-04-10) found the concrete mechanism: resolution_concordance_1626_1630's resolved_session_id has NO cross-date uniqueness constraint -- 1627-03-27 and 1627-03-29 both resolve to session-3186-num-55 (paragraph_count=53 duplicated), 1627-04-01 and 1627-04-03 both resolve to session-3186-num-57 (paragraph_count=77 duplicated). Corpus-wide: 68/1053 resolved sessions (6.5%) are independently claimed by 2+ enriched dates, 153 dates (~10% of resolved_auto dates) involved. Higher share is worse (more windows show the drift signature rather than a genuine capacity shortfall).",
+      "value": "0.923",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.923"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_collision_weak_separation_share",
+      "label": "weak_separation share of ALL weak_separation days that are collision-involved (post-dedup)",
+      "value": "0.239",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.239"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "session_collision_dates_count",
+      "label": "Corpus-wide resolved_session_id collision dates (post-dedup)",
+      "value": "132",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "132"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "separated_share_of_ceiling_post_uniqueness_fix",
+      "label": "Global-primary separated/ceiling after uniqueness policy + full chain re-run",
+      "value": "0.688",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.688"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "span_gap_weak_separation_days_post_uniqueness_fix",
+      "label": "metrics_span_gap_map weak_separation day count after uniqueness fix",
+      "value": "430",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "430"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_relocated_tol0_paragraph_f1",
+      "label": "Per-paragraph .find()-relocated Group-B position_scores, 19/21 scoreable gold days, paragraph tol0 F1. Baseline (no evidence)=0.644, blanket Group-B=0.555, relocated Group-B=0.543 (tol1 0.790->0.773, tol2 0.807->0.840, unchanged from blanket). Relocation did not recover the regression -- a third negative result, not milder than the blanket version. Higher is better, compare against 0.644 baseline not 1.0.",
+      "value": "0.543",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.543"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_exact_only_relocated_tol0_paragraph_f1",
+      "label": "Ad hoc exact-substring-only relocation (no fuzzy fallback) of Group-B evidence, same 19/21 gold-day harness, paragraph tol0 F1. Baseline=0.644, blanket Group-B=0.555, fuzzy-relocated=0.543, exact-only-relocated=0.560. Even the most precise possible relocation (exact substring, zero false-positive risk) stays net negative and barely above the noisy fuzzy-relocated variant -- rules out fuzzy-fallback noise as the dominant cause and confirms the granularity-mismatch hypothesis does not by itself explain enough of the regression to recover baseline. Higher is better.",
+      "value": "0.560",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.560"
+        }
+      ]
+    },
+    {
+      "scope": "s6-anchor-chain-alignment",
+      "name": "group_b_candidate_grounded_tol0_paragraph_f1",
+      "label": "Per-gap candidate-grounded Group-B position_scores (grounds a match to only the specific enriched resolution(s) segment_day's DP already knows occupy that gap, not the whole day), 19/21 scoreable gold days, paragraph tol0 F1. candidate_id_match_rate=1.0 (87/87), so the tie below isn't a data-matching artifact. Baseline (no evidence)=0.644, blanket Group-B=0.555, day-grounded=0.588, candidate-grounded=0.588 (tol1 0.790->0.779, tol2 0.807->0.829). Tightening grounding from day-level to gap-candidate-level changes NOTHING at tol0 -- the two grounding granularities are functionally equivalent on this gold set. Higher is better, compare against 0.644 baseline not 1.0.",
+      "value": "0.588",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.588"
+        }
+      ]
+    },
+    {
+      "scope": "fuzzy-surface-form-scan",
+      "name": "newly_recovered_share",
+      "label": "167,599/189,764 raw fuzzy hits flagged newly_recovered (not already in entity_surface_matches_1626_1630); 12,774 LOC/9,391 PER/0 ORG already-known vs 28,295 LOC/135,365 PER/3,939 ORG newly-recovered. Higher is naive recall, not anchor quality -- see decision entry for why it doesn't translate to placement gain.",
+      "value": "0.883",
+      "history": [
+        {
+          "date": "2026-09-23",
+          "value": "0.883"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-local-inventory-ceiling",
+      "name": "corpus_ceiling_reproduced",
+      "label": "First scripted reproduction of the cited 11,644 corpus-wide pigeonhole ceiling: sum over all 1,594 enriched-dates of min(k_e, same-calendar-day raw paragraph_count from paragraph_axis_1626_1630). Exact match to docs/DECISIONS.md's 2026-09-22 cited constant; 535 no-HTR dates also matches exactly. Closes docs/METRICS.md's 'Known gaps' item.",
+      "value": "11644",
+      "history": [
+        {
+          "date": "2026-09-24",
+          "value": "11644"
+        }
+      ]
+    },
+    {
+      "scope": "metrics-local-inventory-ceiling",
+      "name": "local_criterion_inventories_met",
+      "label": "Inventories meeting PLAN.md's Local criterion (separated >= 50% of own ceiling), out of 7 total: all 5 main annual inventories (3185-3189) meet it (63.9%-72.3%); the 2 non-annual 'secret resolution' inventories (4562, 4861) do not (10.5%, 0.0%), each near-zero same-day HTR under this axis.",
+      "value": "5",
+      "history": [
+        {
+          "date": "2026-09-24",
+          "value": "5"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "landmark_raw_session_opening_availability",
+      "label": "Share of 1,690 raw 1626-1630 sessions carrying a 'date' region (99.8% as the first region)",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "landmark_stream_localizability_union",
+      "label": "Share of 1,316 paragraph_axis flat sessions where a session opening is localizable via any of the 3 channels",
+      "value": "0.860",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.860"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "landmark_fingerprint_verified_share",
+      "label": "Share of axis flat sessions content-verified against a raw session (s6b_session_fingerprint_match)",
+      "value": "0.714",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.714"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "landmark_verified_non_monotone_steps",
+      "label": "Non-monotone steps among content-verified landmarks, inventories 3185-3189 (order preservation)",
+      "value": "0",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "landmark_segment_k_e_ratio_vs_day",
+      "label": "Median landmark-segment k_e / median day k_e, fingerprint_verified channel (locality cost; gate threshold 2.0)",
+      "value": "1.333",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "1.333"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "landmark_ceiling_gain_no_htr_isolated",
+      "label": "Ceiling gain over 11,644 at bounded locality, with no-HTR dates barred from borrowing paragraphs (vs +1,329 unrestricted; Global-stretch gap is 718)",
+      "value": "342",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "342"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "separated_set_exact_start_paragraph_agreement",
+      "label": "Exact start-paragraph agreement of the production separated set vs boundary gold (191 rows, 35 gold days); non-separated rows score 0.306, uniform null 0.267",
+      "value": "0.628",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.628"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "separated_set_within_1_paragraph",
+      "label": "Share of separated placements within 1 paragraph of gold (191 rows); non-separated 0.620",
+      "value": "0.869",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.869"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "placement_exact_agreement_review_code_S",
+      "label": "Exact start-paragraph agreement on gold's segmentable (S) days, 158 rows, median displacement 0; M days score 0.271 with mean displacement 5.87",
+      "value": "0.639",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.639"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "verified_session_offset_beyond_one_position",
+      "label": "Share of the 1059 content-verified flat sessions whose raw_num-flat_num offset exceeds one position (offsets run to 13; 62.2% are non-zero) -- the ledger's session candidate window is +/-1 calendar day",
+      "value": "0.466",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.466"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "enriched_nihil_days_present_in_htr_axis",
+      "label": "2 of 127 enriched nihil-actum dates appear in paragraph_axis_1626_1630 at all (112 of 127 are Sundays); HTR-side nihil/vacat markers fall on 138 other dates with zero overlap",
+      "value": "0.016",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.016"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "htr_nihil_marker_dates",
+      "label": "Standalone HTR Nihil Actum marker dates (corrected from an erroneous 138 that was 86% vacatien/prose false positives); 95 of 127 enriched nihil sittings leave no textual trace at all",
+      "value": "32",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "32"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_unresolved_share_in_non_annual_inventories",
+      "label": "Step 6 gate: share of the 344 unresolved enriched sittings (4,482 resolutions) that sit in the two non-annual 'secret resolution' inventories 4562/4861 -- 344/344. In the five main annual inventories 3185-3189 EVERY enriched sitting already resolves to an HTR session (216/216, 218/218, 276/276, 271/271, 108/108); the concordance has zero missing_htr rows there. 4861 has no axis sessions at all (191 sittings, 2,387 resolutions, nothing to align to) and 4562 has 102 sessions for 187 sittings. LOWER would be better (more of the unmapped mass reachable in the pooled inventories); 1.0 means Step 6's premise has no target in the main corpus.",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_determined_share_of_unresolved",
+      "label": "Step 6 gate: share of unresolved enriched sittings sitting in a DETERMINED bracket (equal counts of unresolved sittings and unclaimed sessions between two consecutive resolved pins, so monotonicity alone forces the pairing) -- 3/344 sittings, 40/4,482 resolutions, all in inventory 4562. Gate threshold was >=0.25, fixed before the run. Higher is better (more mass recoverable by order alone). The rest: 225 sittings/2,794 resolutions in brackets with no unclaimed session at all, 113/1,606 in deficit brackets.",
+      "value": "0.0087",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "0.0087"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_forced_pairings_beyond_candidate_window",
+      "label": "Step 6 gate: share of order-forced enriched<->HTR session pairings whose calendar-day distance exceeds the ledger's +/-1-day candidate window -- 3/3, at 20, 22 and 36 days. Higher means the window is what blocks the correspondence. The MECHANISM Step 6 proposed is confirmed (order reaches pairings the date label provably cannot), but the population it applies to is 3 sittings / 40 resolutions against a Global-stretch gap of 718, so it does not carry the step.",
+      "value": "1.0",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_sessions_with_no_enriched_sitting",
+      "label": "Step 6 no-insertion check AT SESSION LEVEL (the design notes required verifying it, not carrying the resolution-level claim over on faith): axis flat sessions bracketed by claimed sessions on BOTH sides with no enriched sitting available to claim them -- 51 of the 1,132 sessions IN SCOPE (4.5%), namely 3186:2, 3187:4, 3188:5, 3189:1, 4562:39. LOWER is better. So no-insertion is nearly clean in the annual inventories (12/1,034, 1.2%) but NOT exactly true, and 4562 breaks it. Scope note (user, 2026-09-25): the enriched edition ends 1630-05-14, so the 184 axis sessions dated after it (3189:180, 4562:4, 2,284 paragraphs = 10.6% of the axis) are barred from the stream entirely and are not counted here; 0 of them are claimed by any sitting today.",
+      "value": "51",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "51"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step6_axis_sessions_barred_past_edition_end",
+      "label": "Scope constraint (user, 2026-09-25): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it. Axis sessions dated after that end, barred from the stream: 184 of 1,316 (3189:180, 4562:4), carrying 2,284 paragraphs = 10.6% of the 21,519-paragraph axis. This is why 3189 shows 289 axis sessions against 108 enriched sittings. Claimed by a sitting today: 0 -- scripts/session_offset_eval.py asserts it, so a widened axis_for_date fallback would trip rather than silently place resolutions past the end of the edition. Enforcing the bar changed no gate quantity (3 forced pairings, 100% beyond window, 51 no-insertion sessions, verdict unchanged), which is the robustness check on the Step 6 finding. Already safe upstream: metrics_local_inventory_ceiling and landmark_density_eval both key paragraph counts on enriched dates, so the 11,644 day ceiling and Step 1's segment ceilings never included this material.",
+      "value": "184",
+      "history": [
+        {
+          "date": "2026-09-25",
+          "value": "184"
+        }
+      ]
+    }
+  ],
+  "blockers": [
+    "line-level-segmentation: htr_classified_lines_marijn.csv page_id->calendar-date mapping not yet built, so overlap with the 12 structurally-abstaining gold days is unverified."
+  ],
+  "next_actions": [
+    "Run `uv run python scripts/svz.py review` at the start of the next session before picking up work; see docs/ITERATION_POLICY.md.",
+    "line-level-segmentation: map marijn-variant page_ids to calendar dates (session/page index join) and check overlap with the 12 gold days before writing any DP/classifier code.",
+    "S4: explain why boundary F1 stayed at 0.576/0.727 despite the collision fix relocating most boundaries from raw interpolation to phrase-snapped positions -- needs a per-boundary gold-vs-predicted diff, not attempted yet.",
+    "S4: investigate the 2 gold dates (1626-05-17, 1627-04-11) with zero boundary_gold_paragraph_axis records -- data-completeness gap, not yet root-caused."
+  ]
+}

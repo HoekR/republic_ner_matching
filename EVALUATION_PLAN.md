@@ -99,17 +99,48 @@ Outputs:
 Success criteria:
 - Matcher changes can be assessed against all benchmarks without ad hoc notebook work
 
+---
+
+## Milestone 7 - Resolution Segmentation & Alignment Benchmark
+
+> Canonical design: [docs/SEGMENTATION_TRANSFER.md](docs/SEGMENTATION_TRANSFER.md) §4.
+> Evaluates HTR resolution re-segmentation and sequence alignment against normative editorial resolutions.
+
+Goal:
+- Evaluate count-constrained boundary placement over the HTR stream against algorithm-independent ground truth.
+
+Primary sources:
+- `K_e` normative resolution counts and sequence from `enriched_resolutions_1626_1630_complete.json`
+- Upstream hand-validated resolution starts: `ground_truth/resolutions/res_start/*.jsonl` (245 records)
+- Boundary gold: ~50 session-days stratified by `|K_e - K_f|` (S3)
+
+Metrics:
+- **Primary — Boundary accuracy:**
+  - Boundary precision, recall, F1 at character/line tolerance $t$
+  - **WindowDiff** and **$P_k$** (standard text-segmentation metrics, tolerance-aware by design)
+  - Exact-count satisfaction rate: fraction of session-days where predicted $K_f' = K_e$
+- **Secondary (continuity only, demoted):**
+  - Pair-level precision on the 50 labeled pairs and 42 audited backtest pairs (comparability only; do not optimize against it)
+- **Always report:**
+  - Coverage alongside precision, with explicit abstention rates
+
+Success criteria:
+- Boundary F1 and WindowDiff separate segmentation quality independently of candidate-set generation.
+- Zero reliance on algorithm-dependent pair verdicts for tuning.
+
 ## Execution Order
 
-1. Milestone 1: asset inventory
-2. Milestone 3: linking benchmark, because labeled delegate IDs already exist
-3. Milestone 2: span benchmark
-4. Milestone 4: hard-case handling and abstention
-5. Milestone 5: adjudicated production set
-6. Milestone 6: unified runner
+1. Milestone 7 (S0): segmentation evaluation harness & diagnostics D1/D1c/D2/D2b
+2. Milestone 1: asset inventory
+3. Milestone 3: linking benchmark, because labeled delegate IDs already exist
+4. Milestone 2: span benchmark
+5. Milestone 4: hard-case handling and abstention
+6. Milestone 5: adjudicated production set
+7. Milestone 6: unified runner
 
 ## Notes
 
 - The external PER BIO files are best for span detection, not identity linking.
 - The `test_real` benchmark is the current best source for delegate-ID evaluation.
 - The adjudicated KWIC set is required before tuning aggressively for short context and multi-name spans.
+- For resolution alignment, pair verdicts are algorithm-dependent and expire on pipeline changes; boundary gold and WindowDiff/$P_k$ provide permanent, algorithm-independent evaluation.

@@ -65,9 +65,30 @@ from rapidfuzz.fuzz import token_set_ratio
 # Default data paths (relative to this file)
 # ---------------------------------------------------------------------------
 _HERE = pathlib.Path(__file__).parent
-_KWS_HOE_DEFAULT = _HERE / "data" / "kws_hoe.py"
-_PERSCATREP_DEFAULT = _HERE / "data" / "perscatrep.tsv"
-_HOE_STORE_DEFAULT = _HERE / "data" / "hoe_store.pkl"
+
+
+def _resolve_data_path(*candidates: pathlib.Path) -> pathlib.Path:
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
+_KWS_HOE_DEFAULT = _resolve_data_path(
+    _HERE / "data" / "kws_hoe.py",
+    _HERE / "data" / "reference" / "kws_hoe.py",
+    _HERE / "data.bak" / "kws_hoe.py",
+)
+_PERSCATREP_DEFAULT = _resolve_data_path(
+    _HERE / "data" / "perscatrep.tsv",
+    _HERE / "data" / "reference" / "perscatrep.tsv",
+    _HERE / "data.bak" / "perscatrep.tsv",
+)
+_HOE_STORE_DEFAULT = _resolve_data_path(
+    _HERE / "data" / "hoe_store.pkl",
+    _HERE / "data" / "reference" / "hoe_store.pkl",
+    _HERE / "data.bak" / "hoe_store.pkl",
+)
 
 # Dict name → fallback category when canonical form is not in perscatrep
 _DICT_FALLBACK: dict[str, str] = {

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "workflow": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/rikhoekstra/develop/dighum_template/packages/workflow_mcp",
+        "workflow-mcp",
+        "--project-root",
+        "${workspaceFolder}"
+      ]
+    }
+  }
+}

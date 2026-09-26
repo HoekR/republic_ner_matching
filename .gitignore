@@ -1,5 +1,12 @@
 __pycache__/
 credentials.txt
+.venv/
+.uvcache/
+*.egg-info/
+output/
+data.bak/
+*.zip
+*.tar.gz
 data/kwic_heinsius.jsonl
 data/kwic_heinsius.pkl
 data/training_pairs_1626_1630.jsonl
@@ -7,3 +14,4 @@ data/ORG-annotations.json
 data/hoe_graph/node_text_embeddings.npz
 data/LOC-annotations.json
 data/PER-annotations.json
+.aider*

@@ -1,0 +1,68 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "1c30fb57",
+   "metadata": {},
+   "source": [
+    "# PROJECT_NAME Project Dashboard\n",
+    "\n",
+    "This notebook is a visual overview for project state and lightweight result checks. Keep source-of-truth status in `docs/state.json` and render `docs/STATE.md` with `uv run python scripts/svz.py render`."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7d67bb53",
+   "metadata": {},
+   "source": [
+    "```mermaid\n",
+    "flowchart TD\n",
+    "    classDef done fill:#2e7d32,stroke:#1b5e20,color:#fff;\n",
+    "    classDef inprogress fill:#f57c00,stroke:#e65100,color:#fff;\n",
+    "    classDef todo fill:#424242,stroke:#212121,color:#ddd,stroke-dasharray: 5 5;\n",
+    "    S0[\"S0: Project setup\"] ::: todo\n",
+    "```"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "bcf98fae",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from pathlib import Path\n",
+    "import json\n",
+    "\n",
+    "state_path = Path('docs/state.json')\n",
+    "state = json.loads(state_path.read_text(encoding='utf-8'))\n",
+    "print(f\"Project: {state.get('project')}\")\n",
+    "print(f\"Last updated: {state.get('last_updated') or 'not set'}\")\n",
+    "print(f\"Active focus: {state.get('active_focus') or 'none'}\")\n",
+    "state.get('tasks', [])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "69b89e6f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "metrics = state.get('metrics', [])\n",
+    "if metrics:\n",
+    "    import pandas as pd\n",
+    "    pd.DataFrame(metrics)\n",
+    "else:\n",
+    "    print('No metrics recorded yet.')"
+   ]
+  }
+ ],
+ "metadata": {
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
