@@ -82,3 +82,7 @@ Optional Cursor MCP server for cost-sensitive step workflow. Prefer MCP over rea
 
 Setup: see `docs/addons/workflow-mcp/README.md`. Requires an optional sibling clone of [dighum_template](https://github.com/HoekR/dighum_template) for the server package (not vendored — no code replication). Still follow **one step per chat**; MCP does not replace human progress ticks in `PLAN.md`.
 - minimal_agent: Minimal, human-in-the-loop assistant. See docs/agent-plan.md
+
+## Repo inventory
+
+See [docs/REPUBLIC_REPO_INVENTORY.md](docs/REPUBLIC_REPO_INVENTORY.md) for sibling Republic clones on `~/develop`.

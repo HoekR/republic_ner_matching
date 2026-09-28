@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Label {{ row.example_id }}{% endblock %}
+{% block content %}
+<nav class="pager">
+  {% if prev_id %}
+  <a class="btn secondary" href="{{ url_for('label_record', example_id=prev_id) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">Item {{ index + 1 }} of {{ stats.total }}</span>
+  {% if next_id %}
+  <a class="btn secondary" href="{{ url_for('label_record', example_id=next_id) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Example</span><code>{{ row.example_id }}</code></div>
+    <div><span class="label">Date</span>{{ row.date }}</div>
+    <div><span class="label">Paragraph</span>{{ row.paragraph_stream_index }}</div>
+    <div><span class="label">Resolutions</span>{{ row.n_resolutions }} (concordance expected cuts {{ expected_cuts }})</div>
+    <div><span class="label">State file</span><code class="path">{{ state_file }}</code></div>
+  </div>
+  <p class="notes-hint">Concordance ids:
+    {% for rid in row.resolution_ids or [] %}
+      <code>{{ rid }}</code>{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+</section>
+
+<form id="label-form" class="card" data-example-id="{{ row.example_id }}" data-next-id="{{ next_id or '' }}" data-marker="{{ marker }}" data-expected-cuts="{{ expected_cuts }}">
+  <div class="form-header">
+    <h2>Paragraph HTR</h2>
+    <div class="actions-inline">
+      <button type="button" class="btn secondary" id="btn-insert-cut">Insert cut marker</button>
+      <span id="cut-count" class="status-pill {{ 'done' if cuts_ok else 'pending' }}">{{ n_cuts }} / {{ expected_cuts }} cuts</span>
+      <span class="status-pill {{ 'done' if row.labelled else 'pending' }}">{{ 'Saved' if row.labelled else 'Unsaved' }}</span>
+    </div>
+  </div>
+
+  <fieldset class="verdict-box">
+    <legend>Verdict</legend>
+    <label class="check"><input type="radio" name="verdict" value="cuts" {{ 'checked' if verdict == 'cuts' else '' }}>
+      <b>cuts</b> — place <code>{{ marker }}</code> at each true interior start</label>
+    <label class="check"><input type="radio" name="verdict" value="no_cut" {{ 'checked' if verdict == 'no_cut' else '' }}>
+      <b>no_cut</b> — single / partial resolution; no interior cut</label>
+    <label class="check"><input type="radio" name="verdict" value="false_lump" {{ 'checked' if verdict == 'false_lump' else '' }}>
+      <b>false_lump</b> — concordance multi-map / day-collapse is wrong (quarantine)</label>
+    <label class="check"><input type="radio" name="verdict" value="skip" {{ 'checked' if verdict == 'skip' else '' }}>
+      <b>skip</b> — not annotatable (wrong date/session, unreadable, …)</label>
+  </fieldset>
+
+  <label>Editable text
+    <textarea name="text" id="editor" rows="14" spellcheck="false">{{ row.text }}</textarea>
+  </label>
+
+  <div class="row checks">
+    <label class="check"><input type="checkbox" name="uncertain" id="uncertain" {{ 'checked' if row.uncertain else '' }}> uncertain</label>
+    <label class="check"><input type="checkbox" name="clutter" id="clutter" {{ 'checked' if row.clutter else '' }}> cluttered / hard HTR</label>
+  </div>
+
+  <label>Paragraph notes
+    <textarea name="paragraph_notes" id="paragraph_notes" rows="2" placeholder="Whole-paragraph comments">{{ row.paragraph_notes }}</textarea>
+  </label>
+  <label>Cut / verdict notes
+    <textarea name="cut_notes" id="cut_notes" rows="2" placeholder="Why no_cut / false_lump, or per-cut comments">{{ row.cut_notes }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Save &amp; next</button>
+    <button type="button" class="btn secondary" id="btn-save-stay">Save</button>
+    <span id="save-status" class="save-status"></span>
+  </div>
+</form>
+
+<script src="{{ url_for('static', filename='label.js') }}"></script>
+{% endblock %}

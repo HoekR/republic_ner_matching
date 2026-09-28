@@ -254,13 +254,23 @@ This touches only the default that fires when evidence is absent — i.e. exactl
 responsible for finding A — and does not involve the entity-density mechanism that sank Group B.
 
 ### Step 3 — Order-constrained alignment over all entities
-<!-- status: blocked 2026-09-25 — gate no_data; control has only 26 common-band pairs -->
+<!-- status: gate passed 2026-09-28 — ready to build; aligner itself not started -->
 
 **Gate checkpoint (2026-09-25).** The IDF-band D1c tests pass, and the real common-band tau is
 0.809 versus 0.103 for the deliberately mismatched control. The control has only 26 common-band
 pairs, below the fixed minimum of 50, so the verdict is **`no_data`**, not a pass or fail. Do not
 build the entity-stream aligner or weaken the threshold; obtain a defensible control with at least
 50 common-band pairs before reopening this step.
+
+**Gate re-run (2026-09-28) — PASS.** The `no_data` verdict above was a control-sample-size
+artifact, not evidence: a wrong pairing shares >=2 common-band mentions far less often than a real
+one (mean containment 0.295), so a single fixed derangement only produced 26 common-band pairs.
+`scripts/d1c_idf_band_order_eval.py` now pools 4 independent fixed-offset derangements into one
+control sample (96 common-band pairs, clears `MIN_PAIRS_PER_BAND=50`). Verdict: **PASS** —
+common-band tau 0.809 clears the 0.40 floor, is >= 0.75x the rare-band tau (0.4675), and beats the
+pooled control (0.1736) by 0.6354 (threshold 0.20). See `docs/DECISIONS.md` 2026-09-28. **Next
+action:** build the entity-mention unit-cost edit aligner per "The change" / "First experiment"
+below — not started this session.
 
 Hypothesis 5. Note this is **not** a rerun of the closed Group-B experiments: those fed entity
 *density* into `position_scores` and failed because density clusters multiple resolutions onto the
@@ -462,6 +472,116 @@ non-problem and the whole objection above was moot.
 - **Score by correctness, never by `separated`.** Step 2's side finding stands: a trivial even
   spread beats gold's own annotations on the `separated` criterion, so it cannot discriminate
   placement rules.
+
+**Session 2026-09-28 (first experiment built and measured).** The D1c gate above ran first and
+PASSED: pooled 4-derangement control (single derangement starved the common band at 26 pairs,
+below `MIN_PAIRS_PER_BAND`; 4 independent cyclic-shift derangements pooled to 96 common-band
+control pairs), margin 0.6354 over control (0.1736) — common-entity order consistency holds up,
+not just rare-entity, so building the alignment was justified.
+
+Built `align_entity_mentions` (`scripts/s6b_known_point_ledger.py`) — the parameter-free unit-cost
+DP with the no-insertion structural constraint (enriched-side gap move impossible, not merely
+penalised; flat/HTR-side skip at unit cost) — plus `scripts/s6d_entity_mention_gap_placement.py`
+(mention extraction over the same >=4-char overlap vocabulary `d1c_idf_band_order_eval` uses, and
+traceback-to-paragraph-cut projection) and `scripts/s6d_entity_alignment_gap_eval.py` (wires both
+to real data on the 21 gold `S`-code days: chain built from **tier-1 anchors only**, so no gold
+leaks into placement; gold used only for scoring, via `separated_accuracy_eval.accuracy()` reused
+directly rather than reimplemented). 6 new tests, all passing. Registered
+`s6d_entity_alignment_gap_eval` in `data_manifest.toml`.
+
+**Wiring check:** the fallback-only column reproduces 5c.1 exactly (n=158, exact=0.6392,
+within_1=0.9114) — confirms the S-code cohort and metric reuse are correct before trusting the
+new number.
+
+**Measured, scoped to open gaps only:** of 52 open-gap resolutions on these 21 days, the alignment
+projects a non-abstaining cut for only **20 (38.5%)**. ~~Most open gaps still have zero
+shared-vocabulary entity matches to align on at all, which is itself a coverage finding, not just
+an accuracy one.~~ **That explanation is wrong — see the correction dated 2026-09-28 below.** The
+abstaining gaps all have entities on both sides; the cause is a structural defect in the DP.
+Of the 20 projected, 14 have a gold label to score. On that 14-resolution
+projected-and-scored subset: exact agreement **0.4286 → 0.5714** (up), within-1 **0.7857 → 0.6429**
+(down), mean|displacement| **2.0 → 2.357** (worse). **Mixed signal at n=14 — not a clean PASS or
+FAIL.** Full numbers and provenance: `docs/state.json` metrics `step3_gap_projection_coverage`,
+`step3_projected_exact_vs_baseline`, `step3_projected_within1_vs_baseline` (scope
+`inventory-stream-collision-avoidance`).
+
+**Not run:** a corpus-wide production pass over all 947 open gaps — gold only exists on these 50
+days and that's what scoring needs; a production run is a separate, later decision, not required
+to answer this question.
+
+**CORRECTION (2026-09-28, same day) — the 38.5% is a bug in the aligner, not a fact about the
+corpus.** The first write-up above read the abstentions as missing evidence. They are not. Every
+abstaining gap has entities on both sides. What happens instead:
+
+`align_entity_mentions` allows exactly two moves from a cell `(i, j)` — match, which advances both
+indices, and flat-skip, which advances only `i`. **No move advances `j` on its own.** Every move
+therefore advances `i` by one, so a path from `(0, 0)` to `(n, m)` is exactly `n` moves long and
+must contain exactly `m` matches. Such a path exists only when `n >= m`. When the HTR side has
+fewer mentions than the enriched side, the end cell is unreachable, `dp[n][m]` stays infinite, and
+the function returns an empty traceback — the same empty value it returns when a side is genuinely
+empty, which is what made the two look alike.
+
+All 32 unprojected resolutions are this case. Measured per gap (HTR mentions vs enriched mentions):
+1630-03-20 **1 vs 27**, 1629-10-15 **3 vs 38**, 1628-01-27 **10 vs 49**, 1630-02-27 **32 vs 33**.
+The last one matters most: one unrecovered mention is the whole difference between placing a
+6-resolution gap and abstaining on it. The failure is a cliff, not a gradient.
+
+Three consequences, each verified rather than argued:
+
+1. **It is not a date or placement artefact.** Every interior enriched index resolved (0 of 178
+   missing), and the HTR gap windows carry entities at the ordinary corpus rate — 8.08 vocabulary
+   hits per 1,000 characters against 8.20 for the whole day axis. The windows are neither empty nor
+   pointing at the wrong text.
+2. **It is not evidence absence.** The enriched side is *denser* in recovered mentions than the HTR
+   side (10.79 vs 8.08 per 1,000 characters). That inverts this section's own stated premise, that
+   "the summary drops detail the HTR keeps". The inversion is an artefact of how mentions are
+   recovered: the vocabulary is the overlap tables' enriched-side `name` column, matched as a
+   literal lowercase substring, which finds names reliably in clean editorial prose and unreliably
+   in period-spelled HTR. The vocabulary was inherited from the D1c gate without anyone asking
+   whether it suited the HTR side.
+3. **The implementation contradicts the design above it.** This section requires the model express
+   many-to-one *in both directions*, naming "a run of consecutive enriched resolutions attaching to
+   one HTR unit". The current move set cannot represent that. Adding the missing
+   `(i, j) -> (i, j+1)` move at zero or near-zero cost implements what was specified and removes
+   the cliff.
+
+Also measured, and it qualifies the 20 that did project: of their 52 matched pairs only **14 are
+identical names**, and one of the 5 projecting gaps matched with **zero** shared names. Because
+substitution and skip both cost 1, the DP pairs non-matching names positionally, so most of the
+"coverage" is positional bookkeeping rather than entity evidence — which is the likeliest reason
+the accuracy barely moved off `segment_gap`'s interpolation.
+
+Diagnostics live in `scripts/s6d_entity_alignment_gap_eval.py` (`abstention_reasons`,
+`enriched_lookup` on the summary row); 18 tests pass; the headline metrics are unchanged, since
+this explains the existing number rather than moving it.
+
+**Session 2026-09-28 (defects fixed, first experiment measured — closes NEGATIVE).** Implemented
+the three defects' fixes: (1) added the missing `(i,j→i,j+1)` enriched-run DP move at unit cost,
+restoring the ability to express "consecutive enriched resolutions onto one HTR unit"; (2) wired
+word-boundary vocab matching (`\b…\b`), stopping `over` from matching inside `overgelevert` et
+al.; (3) added matched control using `segment_gap` with identical chains (no entity evidence) as
+the honest comparator. Fixed test expectations on the new move set.
+
+**Measured on 21 gold S-code days, 52 open-gap resolutions across 9 gaps.** Coverage improved
+22/52 (42.3%) → 45/52 (86.5%) — the word boundaries recovered real projections. But accuracy is
+**decidedly negative**: entity-DP exact start-paragraph agreement **0.2308** on projected subset
+(n=39) vs control segment_gap **0.5385** on identical chains. The aligner is substantially worse
+than pure interpolation. Of 48 projected pairs, only 21 have identical-named vocabulary match
+(43.8%); the other 27 are positional name-substitutions, zero entity evidence. Mean displacement
+on projected rows: 6.9 paragraphs vs baseline 0. **Verdict: close Step 3 negative per pre-declared
+threshold** (entity-DP must beat control; margin is −0.31). The plan's own "second lever" (graded
+substitution cost per plan section "Second, and only conditionally") is explicitly gated on this
+first experiment beating the null — it does not.
+
+**Why the recovery paradox**: junk-vocabulary entries like `over`, `inde`, `raed` inflate the HTR-side
+mention count `n`, propping up the `n >= m` feasibility requirement. Word boundaries removed them,
+so many previously unreachable gaps became reachable. But they *filled* with non-entity mismatches,
+not entity signal. Vocabulary is the wrong lever; all 969 entries exist in canonical PER-/LOC-/ORG-
+entities.json, so swapping lists buys nothing. Filtering (raise min name length, drop low-value
+match_kinds, cross-gate against abbrd_minimal) is the right direction for vocabulary, but it is
+orthogonal to *this* finding: the aligner's own mechanism does not support the corpus's dominant
+shape (many-to-one in both directions) well enough for entity evidence to matter. The work that
+remains is structural, not parametric.
 
 ### Step 4 — Close the anchor-correction loop
 <!-- status: pending -->

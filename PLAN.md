@@ -71,6 +71,40 @@ close out. Durable stop/continue decisions are logged in [docs/DECISIONS.md](doc
 
 ---
 
+## Synthetic boundary encoder track (separate line)
+<!-- doc-status: future -->
+
+Fine-tune `emanjavacas/GysBERT` and `globalise/GloBERTise` on artificial 2→4 resolution HTR merges
+(boundary recovery at char offsets). **Not** part of segmentation-transfer S3 day gold. Guide:
+[docs/steps/STEP_SYNTHETIC_BOUNDARY_ENCODER.md](docs/steps/STEP_SYNTHETIC_BOUNDARY_ENCODER.md).
+
+| Step | Done when | Status |
+|------|-----------|--------|
+| Gold scaffold + manifest | `build_synthetic_boundary_gold_scaffold.py` registered; expert can label | [x] 2026-09-27 |
+| Verified gold | `merge_synthetic_boundary_gold_annotations.py` → `synthetic_boundary_gold` | [x] 2026-09-27 (scaffold suggested_boundaries auto-accepted; not hand-reviewed) |
+| Synthetic split + HF train | Train/val/test excluding gold ids; curriculum 2 then 4 segments | [x] 2026-09-27 |
+| Evaluation | Primary: gold via `compute_boundary_prf` (tol 0/50/150); secondary: held-out synthetic test | [x] 2026-09-27 — report `docs/SYNTHETIC_BOUNDARY_ENCODER_REPORT.md` |
+| Gold50 transfer | soft GloBERTise F1@50=0.407; hard-openings retrain **worse** (0.259); phrase-snap hurts | [x] 2026-09-28 — no S6c wire |
+| Lumped-paragraph gold UI | S3-style CUT UI + notes for more mid_paragraph GT | [x] tooling; 13 anns → false lumps not mid-para cuts |
+| Hard-period day gold UI | Flask day annotator + DATE_END/DATE_START on severe-collapse sample | [x] tooling ready — annotate next |
+| Fold-in windowed inference | `eval_fold_in_boundary_split.py` scores the full session via overlapping windows (`windowed_predict_model` in `synthetic_boundary_common.py`) instead of hard 512-token truncation | [x] 2026-09-28 — eyeballed plausible on the report's longest sessions; no gold for fold-in sessions, so not scored numerically |
+
+**Next (human):** hard-period session-day gold (CUT + DATE markers), disk-backed Flask:
+
+```bash
+uv run python scripts/build_hard_period_boundary_sample.py   # if not already
+uv run boundary-day-gold-ui                                 # http://127.0.0.1:5056
+# Save writes output/boundary_gold_hard_period_annotations.json
+uv run python merge_boundary_annotations.py \
+  --sample output/boundary_gold_hard_period_sample.json \
+  --annotations output/boundary_gold_hard_period_annotations.json \
+  --annotator YOUR_NAME
+```
+
+Lumped-paragraph UI remains at `uv run lumped-paragraph-gold-ui` (port 5055) if needed.
+
+---
+
 ## Workspace Standard Alignment & Organization (Completed)
 <!-- doc-status: active -->
 
@@ -2570,6 +2604,12 @@ the corrections list is fetched directly from MySQL.
 | `metrics_span_gap_map`                         | `output/metrics_span_gap_map.jsonl`                         | semi    |
 | `s6c_severe_collapse_autopsy`                  | `output/s6c_severe_collapse_autopsy.jsonl`                  | semi    |
 | `metrics_bottleneck_diagnostic`                | `output/metrics_bottleneck_diagnostic.jsonl`                | semi    |
+| `synthetic_boundary_gold_scaffold`             | `output/synthetic_boundary_gold_scaffold.jsonl`           | semi    |
+| `synthetic_boundary_gold_annotations`          | `output/synthetic_boundary_gold_annotations.json`           | explore |
+| `synthetic_boundary_gold`                      | `output/synthetic_boundary_gold.jsonl`                      | semi    |
+| `synthetic_boundary_folds`                     | `output/synthetic_boundary_folds.jsonl`                     | semi    |
+| `synthetic_boundary_eval_report`               | `output/synthetic_boundary_eval_report.jsonl`               | semi    |
+| `synthetic_boundary_gold50_transfer`           | `output/synthetic_boundary_gold50_transfer.jsonl`           | semi    |
 
 S4a completed 2026-09-01: registered both outputs in `data_manifest.toml` and
 documented the canonical key, ledger schema, and status semantics in

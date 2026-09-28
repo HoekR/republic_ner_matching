@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-25 13:10",
+  "last_updated": "2026-09-28 16:15",
   "active_focus": "Step 6 gate ran and did NOT pass -- the session aligner should not be built. The enriched<->HTR session mapping is already complete wherever HTR exists: 1,089/1,089 sittings pinned in 3185-3189, zero missing_htr rows there, and all 4,482 unmapped resolutions in 4562/4861 (4861 has no HTR at all). Order-forced pairings confirm the mechanism (3/3 beyond the +/-1-day window, at 20/22/36 days) on 40 of 19,120 resolutions. Next: Step 3, the entity-mention edit alignment inside s6b_known_point_ledger.py's 947 open gaps, parameter-free, under the no-insertion structural constraint, scored against 5c.1's 0.639 exact / 0.911 within-1 on gold's segmentable days. Clear chat.",
   "tasks": [
     {
@@ -137,7 +137,7 @@
       "title": "Short-resolution alignment (align_short_resolutions.py) -- decide: wire into concordance or retire",
       "status": "done",
       "notes": "RETIRED 2026-09-22 with the LLM side-plan close (plans/SHORT_RESOLUTION_SIDE_PLAN.md Step 7). Formulaic align_short_resolutions.py stays an orphan: never measured, never wired into s6b_anchor_harvest A-D, never consumed by concordance. Closing the LLM ranking track removes the only active reason to keep Tier E on the board; do not wire-in without a new measured case. Script may remain in-repo as historical reference.",
-      "goal": "Retired — no Tier E wire-in without a fresh measured case.",
+      "goal": "Retired \u2014 no Tier E wire-in without a fresh measured case.",
       "cost": "cheap",
       "next_action": ""
     },
@@ -215,7 +215,7 @@
       "id": "metrics-ke-drift-diagnostic",
       "title": "Tier D: per-day K_e drift-comparison diagnostic",
       "status": "done",
-      "notes": "Built scripts/metrics_ke_drift_diagnostic.py on Tier V day series. 203 drift candidates at |dev|>=10 vs ±3d neighbor median; 0 blocked by V. Candidates are suspects, not proven errors.",
+      "notes": "Built scripts/metrics_ke_drift_diagnostic.py on Tier V day series. 203 drift candidates at |dev|>=10 vs \u00b13d neighbor median; 0 blocked by V. Candidates are suspects, not proven errors.",
       "next_action": "Reuse the span table's per-day K_e series; flag days whose K_e jumps implausibly relative to neighbors as date/session mis-attribution candidates.",
       "goal": "Ranked list of candidate date/session mis-attribution days, feeding the ceiling-gap explanation PLAN.md already names.",
       "cost": "cheap",
@@ -237,7 +237,7 @@
       "title": "Register the metrics-tier overhaul itself in state.json",
       "status": "done",
       "notes": "Closed 2026-09-22: docs/METRICS.md channel tiers O/P/A-E/V/X in place; V/D/O/P implemented (E retired). Overhaul complete.",
-      "next_action": "None — overhaul closed.",
+      "next_action": "None \u2014 overhaul closed.",
       "cost": "cheap"
     },
     {
@@ -250,8 +250,8 @@
       "id": "inventory-stream-collision-avoidance",
       "title": "Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md)",
       "status": "inprogress",
-      "notes": "Step 1 PASS (landmark density gate). Step 2 NEGATIVE (length prior; do not adopt). Steps 5a + 5c.1 DONE 2026-09-25: separated set is accurate enough to freeze as a scaffold except on review-code-M days (0.639 exact / 0.911 within-1 on segmentable days, beating the uniform null 2.4-2.7x). Step 6 gate DONE 2026-09-25, DID NOT PASS -- do not build the session aligner: scripts/session_offset_eval.py (15 tests) -> session_offset_eval shows the enriched<->HTR session mapping is already complete wherever there is HTR to map to. In inventories 3185-3189 every enriched sitting resolves to a session (1,089/1,089) and there are ZERO missing_htr rows; all 344 unresolved sittings / 4,482 resolutions are in 4562 (2,095) and 4861 (2,387), the non-annual series PLAN.md's Local criterion already excludes, where 4861 has no axis sessions at all. Only 3 sittings (40 resolutions) sit in order-determined brackets -- all 3 beyond the +/-1-day window at 20/22/36 days, so the mechanism is confirmed on 40 of 19,120 resolutions against a stretch gap of 718. The cited 1,137 cross_day_shift resolutions are NOT unmapped; every one carries a resolved session. Also measured: no-insertion holds at session level in the annual inventories (12/1,034) but breaks in 4562 (39). SCOPE CONSTRAINT (user, 2026-09-25, now a standing track guardrail): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it -- 184 axis sessions / 2,284 paragraphs (10.6%) dated to 1630-12-31 are barred, enforced and asserted (0 claimed today); enforcing it changed no gate quantity. The day partition excluded them for free by keying paragraph counts on enriched dates, so the 11,644 ceiling and Step 1's segment ceilings are safe, but a STREAM framing must bar them explicitly -- Step 5's pending bound re-derivation is the next thing that would hit this. Step 3's design question was settled earlier: no-insertion is a structural constraint, not a gap penalty. Open, unscoped: pin CORRECTNESS is untested (Step 6 closes 'mapping absent', not 'mapping wrong') -- cheap check is enriched date vs the content-verified raw session's date from s6b_session_fingerprint_match, 70 pinned sittings already sit >1 day from their session label; axis_for_date's neighbour fallback places resolutions on days with no HTR of their own (corpus-wide share unmeasured); length_prior_eval.py's gold adapter uses a non-canonical boundary convention (Step 2's ranking survives, its absolute numbers do not).",
-      "next_action": "Step 3: the entity-mention edit alignment scoped to s6b_known_point_ledger.py's 947 open gaps, parameter-free first (unit costs, no IDF, no anchor gate), under the no-insertion structural constraint (forbid the enriched-side gap move; make the HTR-side stay-on-same-resolution move free) rather than a gap penalty. Respect the 1630-05-14 scope bar. Fold in the stratified-by-IDF-band D1c re-run as Step 3's own gate. Score against 5c.1's baseline (exact 0.639 / within-1 0.911 on gold's segmentable days), never against separated.",
+      "notes": "Step 1 PASS (landmark density gate). Step 2 NEGATIVE (length prior; do not adopt). Steps 5a + 5c.1 DONE 2026-09-25: separated set is accurate enough to freeze as a scaffold except on review-code-M days (0.639 exact / 0.911 within-1 on segmentable days, beating the uniform null 2.4-2.7x). Step 6 gate DONE 2026-09-25, DID NOT PASS -- do not build the session aligner: scripts/session_offset_eval.py (15 tests) -> session_offset_eval shows the enriched<->HTR session mapping is already complete wherever there is HTR to map to. In inventories 3185-3189 every enriched sitting resolves to a session (1,089/1,089) and there are ZERO missing_htr rows; all 344 unresolved sittings / 4,482 resolutions are in 4562 (2,095) and 4861 (2,387), the non-annual series PLAN.md's Local criterion already excludes, where 4861 has no axis sessions at all. Only 3 sittings (40 resolutions) sit in order-determined brackets -- all 3 beyond the +/-1-day window at 20/22/36 days, so the mechanism is confirmed on 40 of 19,120 resolutions against a stretch gap of 718. The cited 1,137 cross_day_shift resolutions are NOT unmapped; every one carries a resolved session. Also measured: no-insertion holds at session level in the annual inventories (12/1,034) but breaks in 4562 (39). SCOPE CONSTRAINT (user, 2026-09-25, now a standing track guardrail): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it -- 184 axis sessions / 2,284 paragraphs (10.6%) dated to 1630-12-31 are barred, enforced and asserted (0 claimed today); enforcing it changed no gate quantity. The day partition excluded them for free by keying paragraph counts on enriched dates, so the 11,644 ceiling and Step 1's segment ceilings are safe, but a STREAM framing must bar them explicitly -- Step 5's pending bound re-derivation is the next thing that would hit this. Step 3's design question was settled earlier: no-insertion is a structural constraint, not a gap penalty. Open, unscoped: pin CORRECTNESS is untested (Step 6 closes 'mapping absent', not 'mapping wrong') -- cheap check is enriched date vs the content-verified raw session's date from s6b_session_fingerprint_match, 70 pinned sittings already sit >1 day from their session label; axis_for_date's neighbour fallback places resolutions on days with no HTR of their own (corpus-wide share unmeasured); length_prior_eval.py's gold adapter uses a non-canonical boundary convention (Step 2's ranking survives, its absolute numbers do not). Step 3 first experiment BUILT and MEASURED 2026-09-28 (scripts/s6d_entity_mention_gap_placement.py, scripts/s6d_entity_alignment_gap_eval.py, 6 new tests): align_entity_mentions (existing DP primitive, no-insertion constraint) wired to real gap data on the 21 gold S-code days, chain built from tier-1 anchors only (no gold leakage into placement), gold used only for scoring via separated_accuracy_eval.accuracy() reused directly (fallback-only column reproduces 5c.1 exactly: n=158, exact=0.6392, within_1=0.9114, confirming correct wiring). Of 52 open-gap resolutions on these days, only 20 (38.5%) get a non-abstaining projection -- most open gaps still have zero shared-vocabulary entity matches to align on, which is itself informative (coverage, not just accuracy, is a real constraint here). Of those 20, 14 have a gold label to score: exact agreement moved 0.4286 -> 0.5714 (up), within-1 moved 0.7857 -> 0.6429 (down), mean|disp| 2.0 -> 2.357 (worse) on that projected-and-scored subset. Mixed signal at n=14 -- not enough to call PASS or FAIL. NOT YET DECIDED: whether to (a) extend coverage (most open gaps have zero shared vocabulary -- would need the graded-substitution-cost step explicitly deferred by the plan, or the fuzzy/dictionary vocabulary already used elsewhere in this track), (b) accept current coverage and treat the accuracy wash as inconclusive-at-this-n, or (c) close Step 3 here given bounded upside was already flagged as a risk in the plan text. A corpus-wide 947-gap production run was deliberately not done (gold only exists on these 50 days; a production run is a separate later decision, not needed to answer this question). CORRECTION 2026-09-28 (same day): the 38.5% coverage figure above was diagnosed wrongly as missing entity evidence. It is a defect in align_entity_mentions. The DP offers only match (i+1,j+1) and flat-skip (i+1,j); nothing advances j alone, so reaching (n,m) requires n>=m, and it returns an empty traceback -- indistinguishable from the genuinely-empty-side case -- whenever the HTR side recovers fewer mentions than the enriched side. All 32 non-projected resolutions are this case, with entities present on both sides. Verified not a date/placement artefact (0 of 178 interior enriched indices missing; HTR gap windows carry 8.08 vocab hits/1k chars vs 8.20 for the whole day axis) and not evidence absence (enriched side is DENSER at 10.79/1k, inverting the plan's own premise -- an artefact of literal substring matching against an enriched-derived vocabulary, inherited from the D1c gate without being re-examined for the HTR side). The implementation also contradicts the plan, which requires many-to-one in BOTH directions. Separately, of the 52 matched pairs behind the 20 projections only 14 are identical names and one projecting gap had zero shared names, so most 'coverage' is positional bookkeeping. Diagnostics: abstention_reasons / enriched_lookup on the s6d_entity_alignment_gap_eval summary row. Step 3 (entity-mention gap alignment, first experiment) CLOSED 2026-09-28. Built complete apparatus: added enriched-run DP move (unit cost, symmetric), word-boundary vocab scan (recovering 45 vs 20 projections), matched control via segment_gap with identical chains (honest comparator). Result: entity-DP exact=0.2308 vs control=0.5385 on 39-resolution projected subset \u2014 aligner substantially worse than pure interpolation. 73% of new projections are positional name-substitutions (zero shared vocabulary), placing 23/39 by >6 paragraphs (median 6 vs baseline 0). Verdict: close negative per pre-declared threshold. Gated 'second lever' (graded substitution cost) explicitly requires this first experiment to beat the null, and it does not. Track remains open; this reframes the strategy.",
+      "next_action": "No immediate next action on the entity-alignment path. The architecture finding (disconnected patches, frozen anchors, two unreconciled anchor sets) remains open and unaddressed \u2014 that is the structural work if the inventory-stream reframing is to work. The date-numbering conflation correction is also pending (see docs/DECISIONS.md 2026-09-28). Recommend documenting the Step 3 closure and assessing whether the architecture work or a different strategy is the next allocation.",
       "goal": "Establish whether posing segmentation on the inventory stream, with session openings as interior landmarks instead of the calendar day as a hard partition, recovers separations the per-day framing declares structurally impossible -- judged by collisions recovered plus a correctness check, never by separated-share alone.",
       "cost": "multi-session"
     }
@@ -962,7 +962,7 @@
     {
       "scope": "metrics-ke-drift-diagnostic",
       "name": "n_drift_candidates",
-      "label": "Tier D K_e drift candidates (|dev|>=10 vs ±3d neighbor median); lower after genuine fixes is better",
+      "label": "Tier D K_e drift candidates (|dev|>=10 vs \u00b13d neighbor median); lower after genuine fixes is better",
       "value": "203",
       "history": [
         {
@@ -1632,6 +1632,54 @@
         {
           "date": "2026-09-25",
           "value": "184"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step3_gate_verdict_common_band_tau",
+      "label": "Step 3 gate: pooled 4-derangement control (96 common-band pairs), margin 0.6354 over control (0.1736) -- PASS",
+      "value": "0.809",
+      "history": [
+        {
+          "date": "2026-09-28",
+          "value": "0.809"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step3_gap_projection_coverage",
+      "label": "Share of 52 open-gap resolutions (gold's 21 S-code days, tier1-only chain) the entity-mention alignment projects a cut for. CORRECTED 2026-09-28: this is NOT an evidence-supply measure. All 32 non-projected resolutions have entities on BOTH sides; align_entity_mentions has no move that advances the enriched index alone, so a path to (n,m) needs n>=m and is unreachable when the HTR side recovers fewer mentions than the enriched side (measured: 1 vs 27, 3 vs 38, 10 vs 49, 32 vs 33). Reads as an aligner defect, not a corpus fact; not interpretable until the move set is fixed",
+      "value": "0.385",
+      "history": [
+        {
+          "date": "2026-09-28",
+          "value": "0.385"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step3_projected_exact_vs_baseline",
+      "label": "Exact start-paragraph agreement on the 14 gold-scored, actually-projected open-gap resolutions; baseline (production fallback) on the same 14 is 0.4286. CAVEAT 2026-09-28: only 14 of the 52 matched pairs behind these projections are identical names and one of the 5 projecting gaps matched with zero shared names -- substitution and skip both cost 1, so most of this is positional bookkeeping, not entity evidence. n=14",
+      "value": "0.5714",
+      "history": [
+        {
+          "date": "2026-09-28",
+          "value": "0.5714"
+        }
+      ]
+    },
+    {
+      "scope": "inventory-stream-collision-avoidance",
+      "name": "step3_projected_within1_vs_baseline",
+      "label": "Within-1-paragraph share on the same 14-resolution subset; baseline 0.7857. Moved the WRONG direction. Same 2026-09-28 caveat: mostly positional substitution rather than entity agreement, so this is close to a measurement of segment_gap's own interpolation. n=14",
+      "value": "0.6429",
+      "history": [
+        {
+          "date": "2026-09-28",
+          "value": "0.6429"
         }
       ]
     }

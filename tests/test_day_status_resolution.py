@@ -1,4 +1,6 @@
-from scripts.s4_day_status_resolution import deduplicate_session_claims, resolve_row
+import pandas as pd
+
+from scripts.s4_day_status_resolution import deduplicate_session_claims, fold_in_candidates, resolve_row
 
 
 def _row(status_code: str, **overrides):
@@ -130,6 +132,166 @@ def test_non_n_status_with_no_candidate_score_is_uncertain():
 
     assert result["day_status"] == "uncertain"
     assert result["resolution_source"] == "no_confident_source"
+
+
+def test_uncertain_status_resolved_by_fold_in_candidate():
+    row = _row("?")
+    fold_in = {
+        row["session_date_key"]: {
+            "resolved_session_id": "session-neighbor",
+            "fold_in_side": "previous",
+            "fold_in_slack": 4,
+        }
+    }
+
+    result = resolve_row(row, approved={}, candidate_scores={}, n_recovery_offsets={}, fold_in=fold_in)
+
+    assert result["day_status"] == "resolved_auto"
+    assert result["resolved_session_id"] == "session-neighbor"
+    assert result["resolution_source"] == "fold_in_recovered"
+
+
+def _ledger_row(inventory_id, enriched_date, status_code, **overrides):
+    row = {
+        "session_date_key": f"{inventory_id}|{enriched_date}",
+        "inventory_id": inventory_id,
+        "enriched_date": enriched_date,
+        "status_code": status_code,
+        "enriched_count": 0,
+        "exact_date_paragraph_count": 0,
+        "previous_day_session_ids": [],
+        "next_day_session_ids": [],
+    }
+    row.update(overrides)
+    return row
+
+
+def test_fold_in_candidates_recovers_unambiguous_neighbor_with_slack():
+    ledger = pd.DataFrame(
+        [
+            _ledger_row(
+                3185, "1626-03-27", "T", enriched_count=6, exact_date_paragraph_count=10,
+            ),
+            _ledger_row(
+                3185, "1626-03-28", "?", enriched_count=3,
+                previous_day_session_ids=["session-3185-num-56"],
+                next_day_session_ids=["session-3185-num-57"],
+            ),
+            _ledger_row(
+                3185, "1626-03-29", "T", enriched_count=4, exact_date_paragraph_count=4,
+            ),
+        ]
+    )
+
+    result = fold_in_candidates(ledger)
+
+    assert result["3185|1626-03-28"]["resolved_session_id"] == "session-3185-num-56"
+    assert result["3185|1626-03-28"]["fold_in_side"] == "previous"
+    assert result["3185|1626-03-28"]["fold_in_slack"] == 4
+
+
+def test_fold_in_candidates_leaves_row_when_both_neighbors_have_slack():
+    ledger = pd.DataFrame(
+        [
+            _ledger_row(3185, "1626-03-27", "T", enriched_count=2, exact_date_paragraph_count=10),
+            _ledger_row(
+                3185, "1626-03-28", "?", enriched_count=3,
+                previous_day_session_ids=["session-3185-num-56"],
+                next_day_session_ids=["session-3185-num-57"],
+            ),
+            _ledger_row(3185, "1626-03-29", "T", enriched_count=1, exact_date_paragraph_count=10),
+        ]
+    )
+
+    result = fold_in_candidates(ledger)
+
+    assert "3185|1626-03-28" not in result
+
+
+def test_fold_in_candidates_skips_when_neither_neighbor_has_slack():
+    ledger = pd.DataFrame(
+        [
+            _ledger_row(3185, "1626-03-27", "T", enriched_count=10, exact_date_paragraph_count=10),
+            _ledger_row(
+                3185, "1626-03-28", "?", enriched_count=3,
+                previous_day_session_ids=["session-3185-num-56"],
+                next_day_session_ids=["session-3185-num-57"],
+            ),
+            _ledger_row(3185, "1626-03-29", "T", enriched_count=4, exact_date_paragraph_count=4),
+        ]
+    )
+
+    result = fold_in_candidates(ledger)
+
+    assert "3185|1626-03-28" not in result
+
+
+def test_fold_in_candidates_two_gap_rows_sharing_one_neighbor_within_budget_both_resolve():
+    # 1626-02-22 (need=1) and 1626-02-24 (need=8) both fold into 1626-02-23's
+    # session, whose slack is exactly 9 -- fits combined, both should resolve.
+    ledger = pd.DataFrame(
+        [
+            _ledger_row(
+                3185, "1626-02-22", "?", enriched_count=1,
+                previous_day_session_ids=["session-3185-num-35"],
+                next_day_session_ids=["session-3185-num-36"],
+            ),
+            _ledger_row(3185, "1626-02-23", "T", enriched_count=10, exact_date_paragraph_count=19),
+            _ledger_row(
+                3185, "1626-02-24", "?", enriched_count=8,
+                previous_day_session_ids=["session-3185-num-36"],
+                next_day_session_ids=["session-3185-num-37"],
+            ),
+        ]
+    )
+
+    result = fold_in_candidates(ledger)
+
+    assert result["3185|1626-02-22"]["resolved_session_id"] == "session-3185-num-36"
+    assert result["3185|1626-02-24"]["resolved_session_id"] == "session-3185-num-36"
+
+
+def test_fold_in_candidates_two_gap_rows_sharing_one_neighbor_over_budget_neither_resolves():
+    # Same setup, but 1626-02-24 now needs 9 -- combined demand (1+9=10) exceeds
+    # the shared slack of 9, so neither claimant should be guessed.
+    ledger = pd.DataFrame(
+        [
+            _ledger_row(
+                3185, "1626-02-22", "?", enriched_count=1,
+                previous_day_session_ids=["session-3185-num-35"],
+                next_day_session_ids=["session-3185-num-36"],
+            ),
+            _ledger_row(3185, "1626-02-23", "T", enriched_count=10, exact_date_paragraph_count=19),
+            _ledger_row(
+                3185, "1626-02-24", "?", enriched_count=9,
+                previous_day_session_ids=["session-3185-num-36"],
+                next_day_session_ids=["session-3185-num-37"],
+            ),
+        ]
+    )
+
+    result = fold_in_candidates(ledger)
+
+    assert "3185|1626-02-22" not in result
+    assert "3185|1626-02-24" not in result
+
+
+def test_fold_in_candidates_skips_ambiguous_multi_candidate_rows():
+    ledger = pd.DataFrame(
+        [
+            _ledger_row(3185, "1626-03-27", "T", enriched_count=2, exact_date_paragraph_count=10),
+            _ledger_row(
+                3185, "1626-03-28", "?", enriched_count=3,
+                previous_day_session_ids=["session-3185-num-56", "session-3185-num-56b"],
+                next_day_session_ids=["session-3185-num-57"],
+            ),
+            _ledger_row(3185, "1626-03-29", "T", enriched_count=4, exact_date_paragraph_count=4),
+        ]
+    )
+
+    result = fold_in_candidates(ledger)
+
+    assert "3185|1626-03-28" not in result
 
 
 def _candidate(session_id: str, combined_score: float, low_confidence: bool = False) -> dict:

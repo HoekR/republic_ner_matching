@@ -6,6 +6,7 @@ from scripts.d1c_idf_band_order_eval import (
     aggregate,
     band_edges,
     band_of,
+    control_offsets,
     deranged_indices,
     gate_verdict,
     name_frequencies,
@@ -155,7 +156,7 @@ def test_min_margin_over_control_is_a_real_gap_not_zero():
 
 
 def test_deranged_indices_has_no_fixed_point():
-    indices = deranged_indices(7)
+    indices = deranged_indices(7, offset=3)
 
     assert len(indices) == 7
     assert sorted(indices) == list(range(7))
@@ -163,8 +164,27 @@ def test_deranged_indices_has_no_fixed_point():
 
 
 def test_deranged_indices_handles_small_counts():
-    assert deranged_indices(0) == []
-    assert deranged_indices(1) == []
+    assert deranged_indices(0, offset=1) == []
+    assert deranged_indices(1, offset=1) == []
+
+
+def test_control_offsets_returns_distinct_nonzero_offsets_spread_across_the_range():
+    offsets = control_offsets(100, 4)
+
+    assert len(offsets) == len(set(offsets))
+    assert all(0 < offset < 100 for offset in offsets)
+
+
+def test_control_offsets_handles_small_counts():
+    assert control_offsets(0, 4) == []
+    assert control_offsets(1, 4) == []
+
+
+def test_pooled_derangements_have_no_fixed_points_at_any_offset():
+    count = 37
+    for offset in control_offsets(count, 4):
+        indices = deranged_indices(count, offset)
+        assert all(index != value for index, value in enumerate(indices))
 
 
 def test_aggregate_reports_per_band_taus_and_scarcity():

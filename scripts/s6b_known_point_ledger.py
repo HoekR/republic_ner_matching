@@ -100,22 +100,35 @@ def align_entity_mentions(
     flat_mentions: Sequence[str],
     enriched_mentions: Sequence[str],
 ) -> tuple[list[tuple[int, int]], float]:
-    """Align ordered entity mentions with the Step 3 no-insertion constraint.
+    """Align ordered entity mentions under a monotone many-to-many (stepwise) constraint.
 
-    The enriched summary is treated as the bounded target: an extra enriched mention is not
-    allowed to appear as a gap insertion, while the flat/HDR stream may skip unmatched mentions
-    cheaply and continue the order-preserving match. This keeps the experiment parameter-free,
-    makes the traceback usable for later placement, and matches the corpus-level design choice
-    spelled out in plans/COLLISION_AVOIDANCE_TRACK.md: deletion is the norm on the enriched
-    side, while insertion is not a modelled event.
+    Three moves from cell `(i, j)`, all at unit cost so the experiment stays parameter-free:
+    match `(i+1, j+1)`, flat/HTR skip `(i+1, j)`, and enriched run `(i, j+1)`. The third is what
+    plans/COLLISION_AVOIDANCE_TRACK.md Step 3 means by many-to-one *in both directions* -- "a run
+    of consecutive enriched resolutions attaching to one HTR unit" -- and it is the corpus's
+    dominant shape, since HTR under-segments 81.1% of session-days (S1-D1).
+
+    Fixed 2026-09-28. Without the enriched run, every move advanced `i` by one, so a path to
+    `(n, m)` was exactly `n` moves long and had to contain exactly `m` matches -- reachable only
+    when `n >= m`. Below that the end cell stayed at infinity and the function returned an empty
+    traceback, which the caller could not tell apart from "a side was empty". That misread 32 of
+    52 open-gap resolutions as missing evidence when both sides in fact had entities (measured HTR
+    vs enriched mentions per gap: 1 vs 27, 3 vs 38, 10 vs 49, 32 vs 33). An empty traceback now
+    means only what it says: one of the two sides had no mentions.
+
+    Note the costs deliberately stay symmetric. Step 3's "cheap HTR skip" asymmetry is a
+    parameter, and tuning it before the parameter-free measurement reports would repeat the
+    mistake the plan's own first-experiment guard warns about.
     """
     flat = [str(item) for item in flat_mentions]
     enriched = [str(item) for item in enriched_mentions]
     n = len(flat)
     m = len(enriched)
 
+    # An empty side admits no match, so the traceback is empty whichever way it is scored; the
+    # cost is the run of gap moves needed to cross the non-empty side, not infinity.
     if n == 0 or m == 0:
-        return [], 0.0 if n == 0 and m == 0 else float("inf")
+        return [], float(n + m)
 
     inf = float("inf")
     dp = [[inf] * (m + 1) for _ in range(n + 1)]
@@ -139,6 +152,12 @@ def align_entity_mentions(
                 if next_cost < dp[i + 1][j + 1]:
                     dp[i + 1][j + 1] = next_cost
                     parent[i + 1][j + 1] = ("match", i, j)
+
+            if j < m:
+                enriched_run = dp[i][j] + 1.0
+                if enriched_run < dp[i][j + 1]:
+                    dp[i][j + 1] = enriched_run
+                    parent[i][j + 1] = ("enriched_run", i, j)
 
     if dp[n][m] == inf:
         return [], float("inf")

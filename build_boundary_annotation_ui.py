@@ -55,6 +55,8 @@ OUT_HTML = OUTPUT_DIR / "boundary_annotation_ui.html"
 MARKER = "|||CUT|||"  # typed inline into the text at each resolution boundary
 MARKER_END = "|||END|||"  # optional: true end of a resolution (last resolution, or before a gap)
 MARKER_START = "|||START RES|||"  # optional: true start of the next resolution, after a boilerplate gap
+MARKER_DATE_END = "|||DATE_END|||"  # calendar-day / session-date cut: end of this date's content
+MARKER_DATE_START = "|||DATE_START|||"  # calendar-day / session-date cut: start of the next date's content
 SEPARATOR = "\n\n"  # joins paragraphs into one editable block; must match merge_boundary_annotations.py
 
 
@@ -142,21 +144,27 @@ h1 {{ margin: 0 0 6px; color: #1a365d; font-size: 1.4rem; }}
 <div class='header'>
   <h1>Boundary Gold Annotator</h1>
   <p class='meta'>Left: K_e enriched resolutions for the day, in order. Right: the flat-paragraph stream as editable text.
-  Type the marker <code>{MARKER}</code> directly into the text at each plain resolution boundary (anywhere — mid-paragraph and mid-word are fine).
-  If a boilerplate/header gap sits between two resolutions (e.g. a session heading), bracket it with <code>{MARKER_END}</code> before the gap and
-  <code>{MARKER_START}</code> after it instead of a cut marker. Place exactly K_e - 1 total transitions (cut markers + START markers).
-  If the last resolution ends before the visible text does (trailing text belongs to another session), place a lone <code>{MARKER_END}</code> at its true end.
-  If the first fragment is a continuation from a previous day, tick the checkbox below the editor.</p>
+  Type the marker <code>{MARKER}</code> at each plain resolution boundary (mid-paragraph OK).
+  Bracket resolution boilerplate gaps with <code>{MARKER_END}</code> … <code>{MARKER_START}</code>.
+  Bracket <b>calendar-date / session-date</b> cuts with <code>{MARKER_DATE_END}</code> … <code>{MARKER_DATE_START}</code>
+  (spillover from another day, or the next day's content starting mid-stream). Place exactly K_e - 1
+  resolution transitions (cut + START RES). Date markers do not count toward that total.
+  Tick the checkbox if the first fragment continues a previous day.</p>
   <div class='toolbar'>
     <span id='progress' class='meta'>0 / 0</span>
-    <button class='muted' onclick='insertMarker()'>Insert cut marker</button>
-    <button class='muted' onclick='insertEndMarker()'>Insert END marker</button>
-    <button class='muted' onclick='insertStartMarker()'>Insert START marker</button>
+    <button class='muted' onclick='insertMarker()'>Insert cut</button>
+    <button class='muted' onclick='insertEndMarker()'>Insert END</button>
+    <button class='muted' onclick='insertStartMarker()'>Insert START RES</button>
+    <button class='muted' onclick='insertDateEndMarker()'>Insert DATE_END</button>
+    <button class='muted' onclick='insertDateStartMarker()'>Insert DATE_START</button>
     <button class='primary' onclick='exportAnnotations()'>Export annotations</button>
     <button class='muted' onclick='clearStorage()'>Clear saved</button>
   </div>
 </div>
-<p class='note'><b>Workflow:</b> type <code>{MARKER}</code> at plain cut points, bracket boilerplate gaps with <code>{MARKER_END}</code> … <code>{MARKER_START}</code>, use a lone <code>{MARKER_END}</code> if the last resolution ends early, export, move <code>boundary_gold_annotations.json</code> into <code>output/</code>, then run <code>uv run python merge_boundary_annotations.py</code>.</p>
+<p class='note'><b>Workflow:</b> resolution cuts via <code>{MARKER}</code> / END+START&nbsp;RES; date cuts via
+<code>{MARKER_DATE_END}</code> … <code>{MARKER_DATE_START}</code>; export →
+<code>output/boundary_gold_annotations.json</code> →
+<code>uv run python merge_boundary_annotations.py</code>.</p>
 <div id='task'></div>
 <div class='pagination'>
   <button id='prevBtn' onclick='changePage(-1)'>&larr; Previous</button>
@@ -168,8 +176,10 @@ const DAYS = {data_json};
 const MARKER = {json.dumps(MARKER)};
 const MARKER_END = {json.dumps(MARKER_END)};
 const MARKER_START = {json.dumps(MARKER_START)};
+const MARKER_DATE_END = {json.dumps(MARKER_DATE_END)};
+const MARKER_DATE_START = {json.dumps(MARKER_DATE_START)};
 const SEPARATOR = {json.dumps(SEPARATOR)};
-const STORAGE_KEY = 'boundary_gold_annotations_v4';
+const STORAGE_KEY = 'boundary_gold_annotations_v5';
 const LEGACY_STORAGE_PREFIX = 'boundary_gold_annotations_';
 let page = 0;
 let annotations = {{}};  // date -> {{ text, startsMid }}
@@ -257,6 +267,8 @@ function insertAtCursor(marker) {{
 function insertMarker() {{ insertAtCursor(MARKER); }}
 function insertEndMarker() {{ insertAtCursor(MARKER_END); }}
 function insertStartMarker() {{ insertAtCursor(MARKER_START); }}
+function insertDateEndMarker() {{ insertAtCursor(MARKER_DATE_END); }}
+function insertDateStartMarker() {{ insertAtCursor(MARKER_DATE_START); }}
 
 function countTransitions(text) {{
   return countOccurrences(text, MARKER) + countOccurrences(text, MARKER_START);
@@ -272,8 +284,9 @@ function updateProgress() {{
   const needed = day.k_e - 1;
   const current = countTransitions(textFor(day));
   const hasEnd = countOccurrences(textFor(day), MARKER_END) > 0;
+  const nDate = countOccurrences(textFor(day), MARKER_DATE_END) + countOccurrences(textFor(day), MARKER_DATE_START);
   document.getElementById('dayCount').className = `progress ${{current === needed ? 'ok' : 'bad'}}`;
-  document.getElementById('dayCount').textContent = `${{current}} / ${{needed}} transitions placed (cut + START)${{hasEnd ? ' · END marker used' : ''}}`;
+  document.getElementById('dayCount').textContent = `${{current}} / ${{needed}} resolution transitions (cut + START RES)${{hasEnd ? ' · END used' : ''}}${{nDate ? ` · ${{nDate}} date marker(s)` : ''}}`;
 
   const doneDays = DAYS.filter(isDayComplete).length;
   document.getElementById('progress').textContent = `${{doneDays}} / ${{DAYS.length}} days complete`;
@@ -309,6 +322,8 @@ function exportAnnotations() {{
     marker: MARKER,
     marker_end: MARKER_END,
     marker_start: MARKER_START,
+    marker_date_end: MARKER_DATE_END,
+    marker_date_start: MARKER_DATE_START,
     separator: SEPARATOR,
     total_days: DAYS.length,
     complete_days: DAYS.filter(isDayComplete).length,
@@ -337,11 +352,28 @@ render();
 
 
 def main() -> None:
-    sample = json.loads(SAMPLE_FILE.read_text(encoding="utf-8"))
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Build boundary gold annotation HTML UI.")
+    parser.add_argument(
+        "--sample",
+        type=Path,
+        default=SAMPLE_FILE,
+        help="Path to boundary gold sample JSON (default: output/boundary_gold_sample.json).",
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=OUT_HTML,
+        help="Output HTML path.",
+    )
+    args = parser.parse_args()
+    sample = json.loads(args.sample.read_text(encoding="utf-8"))
     enriched_all, res_df, *_ = load_data()
     payloads = build_day_payloads(sample["days"], enriched_all, res_df)
-    OUT_HTML.write_text(render_html(payloads), encoding="utf-8")
-    print(f"Wrote {OUT_HTML} with {len(payloads)} days to annotate.")
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(render_html(payloads), encoding="utf-8")
+    print(f"Wrote {args.out} with {len(payloads)} days to annotate (sample={args.sample}).")
 
 
 if __name__ == "__main__":

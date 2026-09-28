@@ -24,6 +24,7 @@ dependencies = [
     "flair>=0.15.1",
     "fuzzy-search>=3.0.3",
     "mlx-lm>=0.29.1",
+    "flask>=3.1.3",
 ]
 
 [project.optional-dependencies]
@@ -43,5 +44,13 @@ dev = [
     "pytest-cov>=5.0",
 ]
 
+[project.scripts]
+lumped-paragraph-gold-ui = "lumped_paragraph_labeller.app:main"
+boundary-day-gold-ui = "boundary_day_labeller.app:main"
+
 [tool.setuptools.packages.find]
-include = ["generate_alignment", "tests"]
+include = ["generate_alignment", "lumped_paragraph_labeller", "boundary_day_labeller", "data_io", "tests"]
+
+[tool.setuptools.package-data]
+lumped_paragraph_labeller = ["templates/*", "static/*"]
+boundary_day_labeller = ["templates/*", "static/*"]

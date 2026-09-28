@@ -89,14 +89,8 @@ def select_windows(
     ]
 
 
-def session_collision_dates(concordance_records: list[dict[str, Any]]) -> set[str]:
-    """Enriched dates whose ``resolved_session_id`` is independently claimed by another date.
-
-    ``resolve_row`` (scripts/s4_day_status_resolution.py) picks each ledger row's
-    (i.e. each enriched date's) best-matching session independently, with no
-    constraint that a session can be claimed by only one date -- two different
-    calendar dates can and do resolve to the identical session.
-    """
+def _resolved_session_date_frame(concordance_records: list[dict[str, Any]]) -> pd.DataFrame:
+    """De-duplicated (enriched_date, resolved_session_id) pairs for resolved_auto days."""
     if isinstance(concordance_records, pd.DataFrame):
         concordance_records = concordance_records.to_dict(orient="records")
     frame = pd.DataFrame(
@@ -109,13 +103,49 @@ def session_collision_dates(concordance_records: list[dict[str, Any]]) -> set[st
             for r in concordance_records
         ]
     )
-    resolved = frame.loc[
+    return frame.loc[
         (frame["day_status"] == "resolved_auto") & frame["resolved_session_id"].notna(),
         ["enriched_date", "resolved_session_id"],
     ].drop_duplicates()
+
+
+def session_collision_dates(concordance_records: list[dict[str, Any]]) -> set[str]:
+    """Enriched dates whose ``resolved_session_id`` is independently claimed by another date.
+
+    ``resolve_row`` (scripts/s4_day_status_resolution.py) picks each ledger row's
+    (i.e. each enriched date's) best-matching session independently, with no
+    constraint that a session can be claimed by only one date -- two different
+    calendar dates can and do resolve to the identical session.
+    """
+    resolved = _resolved_session_date_frame(concordance_records)
     session_date_counts = resolved.groupby("resolved_session_id")["enriched_date"].nunique()
     collided_sessions = set(session_date_counts[session_date_counts > 1].index)
     return set(resolved.loc[resolved["resolved_session_id"].isin(collided_sessions), "enriched_date"])
+
+
+def collision_dates_detail(concordance_records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One record per colliding ``resolved_session_id``, listing the enriched dates that claim it.
+
+    This is the materialized form of :func:`session_collision_dates` -- the set alone
+    is consumed for aggregate counts, but selecting hand-parse or gold-scaffold
+    candidates needs the actual (session, dates) pairs.
+    """
+    resolved = _resolved_session_date_frame(concordance_records)
+    session_date_counts = resolved.groupby("resolved_session_id")["enriched_date"].nunique()
+    collided_sessions = session_date_counts[session_date_counts > 1].index
+    collided = resolved.loc[resolved["resolved_session_id"].isin(collided_sessions)]
+    records = []
+    for session_id, group in collided.groupby("resolved_session_id"):
+        dates = sorted(group["enriched_date"])
+        records.append(
+            {
+                "record_type": "collision_dates_detail",
+                "resolved_session_id": session_id,
+                "enriched_dates": dates,
+                "n_dates": len(dates),
+            }
+        )
+    return sorted(records, key=lambda r: r["enriched_dates"][0])
 
 
 def collision_weak_separation_crosstab(
@@ -273,6 +303,7 @@ def build_output_records(
     day_frame: pd.DataFrame,
     resolved_dates: set[str],
     collision_dates: set[str],
+    collision_detail_records: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
@@ -312,11 +343,15 @@ def build_output_records(
             "(HTR axis capacity), the same proxy metrics_weak_separation_headroom_"
             "diagnostic.py already uses -- not a literal resolutions_flat count. "
             "See the corpus_collision_crosstab record for the population-level "
-            "(not just top-window) version of the session-collision check."
+            "(not just top-window) version of the session-collision check, and the "
+            "collision_dates_detail records for the actual (session, enriched_dates) "
+            "pairs -- use these to select hand-parse / gold-scaffold candidates on "
+            "known collision dates rather than corpus-wide."
         ),
     }
     records.append(meta)
     records.append(crosstab)
+    records.extend(collision_detail_records)
     records.extend(summaries)
     return records
 
@@ -339,6 +374,7 @@ def main() -> None:
     day_frame = load_gap_day_frame(gap_records)
 
     collision_dates = session_collision_dates(concordance_records)
+    collision_detail_records = collision_dates_detail(concordance_records)
     resolved_dates = set(day_frame.loc[day_frame["day_status"] == "resolved_auto", "enriched_date"])
 
     records = build_output_records(
@@ -347,6 +383,7 @@ def main() -> None:
         day_frame=day_frame,
         resolved_dates=resolved_dates,
         collision_dates=collision_dates,
+        collision_detail_records=collision_detail_records,
     )
     meta = records[0]
 
@@ -362,8 +399,10 @@ def main() -> None:
     )
 
     crosstab = next(r for r in records if r["record_type"] == "corpus_collision_crosstab")
+    n_collision_detail = sum(1 for r in records if r["record_type"] == "collision_dates_detail")
     print(f"Wrote {len(records)} records to {path}")
     print(f"n_windows_inspected={meta['n_windows_inspected']}")
+    print(f"n_collision_dates_detail_sessions={n_collision_detail}")
     print(f"shift_signature_counts={meta['shift_signature_counts']}")
     print(
         f"corpus_collision_crosstab: n_collision_days={crosstab['n_collision_days']} "

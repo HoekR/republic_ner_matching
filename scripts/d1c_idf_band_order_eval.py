@@ -46,6 +46,13 @@ pairings (each enriched text against another pair's flat text, a fixed derangeme
 same-`flat_id` collisions dropped). If the control's band taus match the real ones, the order signal
 is convention rather than alignment evidence.
 
+**Pooled derangements (2026-09-28).** A single derangement yielded only 26 common-band control pairs
+(below `MIN_PAIRS_PER_BAND`) because a wrong pairing shares >= 2 common-band mentions far less often
+than a real one (mean containment 0.295), so the gate came back `no_data` rather than a verdict. Fixed
+by running `CONTROL_DERANGEMENTS` independent cyclic-shift derangements (distinct offsets, none equal
+to 0 or a repeat) and pooling their mention lists before aggregating -- each shift is a genuinely
+different wrong pairing, not reused data, so this grows the control sample without inventing evidence.
+
 Gate thresholds, fixed before the run:
 
 * `MIN_PAIRS_PER_BAND = 50` -- below this, verdict is `no_data`, not a result.
@@ -92,6 +99,7 @@ PASS_RATIO = 0.75
 FAIL_TAU_CEILING = 0.20
 MIN_MARGIN_OVER_CONTROL = 0.20
 HIGH_CONCORDANCE_TAU = 0.8
+CONTROL_DERANGEMENTS = 4
 
 
 def overlap_frame() -> pd.DataFrame:
@@ -212,12 +220,21 @@ def gate_verdict(
     )
 
 
-def deranged_indices(count: int) -> list[int]:
-    """A fixed offset permutation: no index maps to itself, so every control pairing is wrong."""
+def deranged_indices(count: int, offset: int) -> list[int]:
+    """A fixed cyclic-shift permutation at `offset`: no index maps to itself, so every control
+    pairing is wrong (true whenever offset % count != 0)."""
     if count < 2:
         return []
-    offset = max(1, count // 2)
     return [(index + offset) % count for index in range(count)]
+
+
+def control_offsets(count: int, n: int) -> list[int]:
+    """`n` distinct, non-zero cyclic-shift offsets spread across the pair count, so each pooled
+    derangement is a genuinely different wrong pairing rather than a repeat."""
+    if count < 2:
+        return []
+    raw = {max(1, (count * k) // (n + 1)) for k in range(1, n + 1)}
+    return sorted(offset % count or 1 for offset in raw)
 
 
 def aggregate(
@@ -309,21 +326,36 @@ def main() -> None:
         shared_mentions(enriched, flat, vocabulary) for enriched, flat in zip(enriched_texts, flat_texts)
     ]
 
-    # Mismatched-pair control: a fixed derangement so no pair is matched with itself, dropping any
-    # pairing that would (by coincidence) reuse the same flat_id -- that is not a wrong pairing.
-    control_order = deranged_indices(len(tier1))
-    control_mentions = [
-        shared_mentions(enriched_texts[i], flat_texts[control_order[i]], vocabulary)
-        if i < len(control_order) and flat_ids[control_order[i]] != flat_ids[i]
-        else []
-        for i in range(len(tier1))
+    # Mismatched-pair control: fixed cyclic-shift derangements so no pair is matched with itself,
+    # dropping any pairing that would (by coincidence) reuse the same flat_id -- that is not a wrong
+    # pairing. A single derangement starved the common band (26 pairs, below MIN_PAIRS_PER_BAND), so
+    # several distinct-offset derangements are pooled into one control sample; each offset is an
+    # independently wrong pairing, not a repeat of the same data.
+    offsets = control_offsets(len(tier1), CONTROL_DERANGEMENTS)
+    control_orders = [deranged_indices(len(tier1), offset) for offset in offsets]
+
+    def control_mentions_for(order: list[int]) -> list[list[tuple[str, int, int]]]:
+        return [
+            shared_mentions(enriched_texts[i], flat_texts[order[i]], vocabulary)
+            if i < len(order) and flat_ids[order[i]] != flat_ids[i]
+            else []
+            for i in range(len(tier1))
+        ]
+
+    control_order = control_orders[0] if control_orders else []
+    control_mentions_display = control_mentions_for(control_order)
+    control_mentions_pooled = [
+        mentions
+        for order in control_orders
+        for mentions in control_mentions_for(order)
     ]
 
     observed = [frequencies[name] for mentions in real_mentions for name, _, _ in mentions]
     edges = band_edges(observed)
 
     real = aggregate(real_mentions, frequencies, edges)
-    control = aggregate(control_mentions, frequencies, edges)
+    control = aggregate(control_mentions_pooled, frequencies, edges)
+    control_display = aggregate(control_mentions_display, frequencies, edges)
     verdict, reason = gate_verdict(real["by_band"], control["by_band"])
 
     pair_records = [
@@ -336,7 +368,9 @@ def main() -> None:
             "control_shared_mentions": control_record["shared_mentions"],
             "control_whole_pair_tau": control_record["whole_pair_tau"],
         }
-        for row, real_record, control_record in zip(tier1.itertuples(index=False), real["per_pair"], control["per_pair"])
+        for row, real_record, control_record in zip(
+            tier1.itertuples(index=False), real["per_pair"], control_display["per_pair"]
+        )
     ]
 
     summary = {
@@ -356,12 +390,18 @@ def main() -> None:
         "band_edges_evidence_rows": {"common_above": edges[1], "rare_at_or_below": edges[0]},
         "real": {k: v for k, v in real.items() if k != "per_pair"},
         "control": {k: v for k, v in control.items() if k != "per_pair"},
+        "control_derangements": len(control_orders),
+        "control_offsets": offsets,
         "method_note": (
             "Bands are mention-weighted terciles of overlap-evidence frequency; a band's tau uses "
             "only that band's mentions within a pair. Whole-pair tau is reported for comparability "
             "with the standing 0.638 D1c figure. The control re-runs the same measurement on "
-            "deliberately mismatched enriched/flat pairings (fixed derangement). No tolerance-family "
-            "metric is computed."
+            "deliberately mismatched enriched/flat pairings, pooled across "
+            f"{len(control_orders)} independent fixed-offset derangements (2026-09-28: a single "
+            "derangement starved the common band at 26 pairs, below MIN_PAIRS_PER_BAND) so the "
+            "control sample has enough common-band pairs to give the gate a verdict. Per-pair "
+            "control columns in the row records still use only the first derangement, for display. "
+            "No tolerance-family metric is computed."
         ),
     }
 
@@ -369,6 +409,7 @@ def main() -> None:
 
     print(f"Wrote D1c IDF-band order evaluation to {output}")
     print(f"tier-1 pairs: {summary['tier1_pairs']}; vocabulary: {summary['vocabulary_names']} names")
+    print(f"control: {len(control_orders)} pooled derangements at offsets {offsets}")
     print(f"band edges (overlap evidence rows): rare <= {edges[0]:.0f} < mid <= {edges[1]:.0f} < common")
     for label, data in (("real", real), ("control", control)):
         whole = data["whole_pair"]

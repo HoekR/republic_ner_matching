@@ -136,6 +136,76 @@ def deduplicate_session_claims(candidate_scores: dict[str, dict[str, Any]]) -> d
     return resolved
 
 
+def fold_in_candidates(ledger: pd.DataFrame) -> dict[str, dict[str, Any]]:
+    """Detect ``?``-status rows whose content likely got folded into one immediate
+    neighbor's session rather than genuinely missing.
+
+    Repeatedly proposed (PLAN.md/docs/DECISIONS.md, 2026-09-23 and earlier) but
+    never previously wired into ``resolve_row``: compare a neighbor session's
+    total paragraph capacity (``exact_date_paragraph_count``, session-wide, not
+    date-scoped) against that neighbor's own expected resolution count
+    (``enriched_count``). Leftover capacity (``slack``) that covers this row's
+    own ``enriched_count`` is evidence the neighbor session also holds this
+    date's resolutions.
+
+    Scoped to the unambiguous case only: exactly one previous-day and one
+    next-day candidate session (adjacent session numbers, i.e. no genuinely
+    missing physical page). Wider gaps involve real candidate ambiguity this
+    check isn't built for. If both neighbors show sufficient slack, the row is
+    left for manual review rather than guessed.
+
+    Two gap rows can independently point at the same neighbor session from
+    opposite sides (e.g. both 1626-02-22 and 1626-02-24 folding into
+    1626-02-23's session). A row is only resolved once every row sharing that
+    neighbor still fits within its single, shared slack budget -- otherwise
+    every claimant on that session is left uncertain rather than guessed.
+    """
+    indexed = ledger.set_index(["inventory_id", "enriched_date"])
+    session_slack: dict[str, int] = {}
+    claims: list[tuple[str, str, str, int]] = []
+
+    uncertain = ledger.loc[ledger["status_code"] == "?"]
+    for row in uncertain.itertuples(index=False):
+        prev_ids = list(row.previous_day_session_ids)
+        next_ids = list(row.next_day_session_ids)
+        if len(prev_ids) != 1 or len(next_ids) != 1:
+            continue
+
+        row_period = pd.Period(row.enriched_date, freq="D")
+        viable: dict[str, str] = {}
+        for side, session_id, offset in (("previous", prev_ids[0], -1), ("next", next_ids[0], 1)):
+            neighbor_date = str(row_period + offset)
+            try:
+                neighbor = indexed.loc[(row.inventory_id, neighbor_date)]
+            except KeyError:
+                continue
+            if neighbor["status_code"] not in DIRECT_STATUSES:
+                continue
+            slack = session_slack.setdefault(
+                session_id, int(neighbor["exact_date_paragraph_count"]) - int(neighbor["enriched_count"])
+            )
+            if slack >= int(row.enriched_count):
+                viable[side] = session_id
+
+        if len(viable) == 1:
+            side, session_id = next(iter(viable.items()))
+            claims.append((session_id, str(row.session_date_key), side, int(row.enriched_count)))
+
+    demand: dict[str, int] = {}
+    for session_id, _key, _side, need in claims:
+        demand[session_id] = demand.get(session_id, 0) + need
+
+    results: dict[str, dict[str, Any]] = {}
+    for session_id, key, side, _need in claims:
+        if demand[session_id] <= session_slack[session_id]:
+            results[key] = {
+                "resolved_session_id": session_id,
+                "fold_in_side": side,
+                "fold_in_slack": session_slack[session_id],
+            }
+    return results
+
+
 def n_row_recovery_offsets(ledger: pd.DataFrame, known_sessions: set[tuple[int, str]]) -> dict[str, int | None]:
     """Return each N-status row's nearest same-inventory HTR offset within +/-14 days, if any."""
     n_rows = ledger.loc[ledger["status_code"] == "N", ["session_date_key", "inventory_id", "enriched_date"]]
@@ -151,6 +221,7 @@ def resolve_row(
     approved: dict[str, dict[str, Any]],
     candidate_scores: dict[str, dict[str, Any]],
     n_recovery_offsets: dict[str, int | None],
+    fold_in: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Resolve one ledger row's day_status/resolved_session_id per the Step 4B precedence."""
     key = str(row["session_date_key"])
@@ -207,6 +278,15 @@ def resolve_row(
             "resolution_source": source,
         }
 
+    fold = (fold_in or {}).get(key)
+    if fold is not None:
+        return {
+            **base,
+            "day_status": "resolved_auto",
+            "resolved_session_id": fold["resolved_session_id"],
+            "resolution_source": "fold_in_recovered",
+        }
+
     return {**base, "day_status": "uncertain", "resolved_session_id": None, "resolution_source": "no_confident_source"}
 
 
@@ -216,9 +296,10 @@ def main() -> None:
     candidate_scores = {str(record["session_date_key"]): record for record in load(CANDIDATE_SCORES_DATASET)}
     candidate_scores = deduplicate_session_claims(candidate_scores)
     n_recovery_offsets = n_row_recovery_offsets(ledger, direct_sessions(load(FLAT_DATASET)))
+    fold_in = fold_in_candidates(ledger)
 
     records = [
-        resolve_row(row, approved, candidate_scores, n_recovery_offsets)
+        resolve_row(row, approved, candidate_scores, n_recovery_offsets, fold_in)
         for row in ledger.sort_values(["inventory_id", "enriched_date"]).to_dict(orient="records")
     ]
 

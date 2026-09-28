@@ -1,0 +1,24 @@
+{
+  "dataset": "lumped_paragraph_boundary_gold",
+  "description": "See live scaffold + UI. This file is a format illustration only.",
+  "workflow": [
+    "uv run python scripts/build_lumped_paragraph_gold_scaffold.py",
+    "uv run python scripts/build_lumped_paragraph_annotation_ui.py",
+    "Open output/lumped_paragraph_annotation_ui.html — type |||CUT||| like S3 day gold; use notes/uncertain/clutter",
+    "Export → move lumped_paragraph_gold_annotations.json into output/",
+    "uv run python scripts/merge_lumped_paragraph_annotations.py --annotator YOUR_NAME"
+  ],
+  "ui_export_shape": {
+    "marker": "|||CUT|||",
+    "annotations": {
+      "1626-01-08#p2": {
+        "text": "…tot Rotterdam, |||CUT|||Noch gelesen een ander reqte…",
+        "paragraph_notes": "",
+        "cut_notes": "Clear onset at Noch gelesen…",
+        "uncertain": false,
+        "clutter": false,
+        "skip": false
+      }
+    }
+  }
+}

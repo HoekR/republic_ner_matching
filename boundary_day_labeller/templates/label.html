@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Label {{ row.date }}{% endblock %}
+{% block content %}
+<nav class="pager">
+  {% if prev_id %}
+  <a class="btn secondary" href="{{ url_for('label_day', date=prev_id) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">Day {{ index + 1 }} of {{ stats.total }}</span>
+  {% if next_id %}
+  <a class="btn secondary" href="{{ url_for('label_day', date=next_id) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Date</span><code>{{ row.date }}</code></div>
+    <div><span class="label">K_e / K_f</span>{{ row.k_e }} / {{ row.k_f }} (diff {{ row.diff_ke_kf }})</div>
+    <div><span class="label">Hard reason</span>{{ row.hard_reason }}</div>
+    <div><span class="label">Paragraphs</span>{{ row.n_paragraphs }}</div>
+    <div><span class="label">State file</span><code class="path">{{ state_file }}</code></div>
+  </div>
+  <p class="notes-hint">Suggested resolution transitions: <b>{{ row.needed }}</b> (CUT + START RES) from K_e−1 — advisory only; save any count. Date markers are extra.</p>
+</section>
+
+<form id="label-form" class="card"
+      data-date="{{ row.date }}"
+      data-next-id="{{ next_id or '' }}"
+      data-needed="{{ row.needed }}"
+      data-marker-cut="{{ markers.cut }}"
+      data-marker-end="{{ markers.end }}"
+      data-marker-start="{{ markers.start }}"
+      data-marker-date-end="{{ markers.date_end }}"
+      data-marker-date-start="{{ markers.date_start }}">
+  <div class="form-header">
+    <h2>Flat paragraph stream</h2>
+    <div class="actions-inline">
+      <button type="button" class="btn secondary" data-insert="cut">CUT</button>
+      <button type="button" class="btn secondary" data-insert="end">END</button>
+      <button type="button" class="btn secondary" data-insert="start">START RES</button>
+      <button type="button" class="btn secondary" data-insert="date_end">DATE_END</button>
+      <button type="button" class="btn secondary" data-insert="date_start">DATE_START</button>
+      <span id="cut-count" class="status-pill {{ 'done' if cuts_ok else 'pending' }}">{{ row.n_transitions }} / {{ row.needed }} res</span>
+      <span id="date-count" class="status-pill">{{ row.n_date_markers }} date</span>
+      <span class="status-pill {{ 'done' if row.labelled else 'pending' }}">{{ 'Saved' if row.labelled else 'Unsaved' }}</span>
+    </div>
+  </div>
+
+  <label>Editable text
+    <textarea id="editor" rows="18" spellcheck="false">{{ row.text }}</textarea>
+  </label>
+
+  <div class="row checks">
+    <label class="check"><input type="checkbox" id="startsMid" {{ 'checked' if row.startsMid else '' }}>
+      First fragment continues a previous day</label>
+  </div>
+
+  <label>Notes
+    <textarea id="notes" rows="2" placeholder="Date spillover, collapse notes, …">{{ row.notes }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Save &amp; next</button>
+    <button type="button" class="btn secondary" id="btn-save-stay">Save</button>
+    <span id="save-status" class="save-status"></span>
+  </div>
+</form>
+
+<script src="{{ url_for('static', filename='label.js') }}"></script>
+{% endblock %}

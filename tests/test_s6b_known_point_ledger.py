@@ -90,13 +90,31 @@ def test_gap_rows_carry_the_kinds_of_both_endpoints():
     assert second["right_kinds"] == ["session_end"]
 
 
-def test_entity_mentions_align_in_order_with_flat_side_skips_but_no_enriched_side_gaps():
+def test_entity_mentions_align_with_all_three_moves():
+    """The DP now supports three moves: match, flat-skip, and enriched-run.
+
+    Enriched-run is the fix 2026-09-28: allows a run of enriched mentions to map to one HTR
+    position, which is the corpus's dominant shape (81.1% HTR under-segmentation). Without this,
+    n < m cases were unreachable and returned empty traceback indistinguishable from empty input.
+    """
     from scripts.s6b_known_point_ledger import align_entity_mentions
 
+    # Case 1: flat-side skip with match at the end.
     pairs, cost = align_entity_mentions(["Holland", "Zeeland", "Utrecht"], ["Holland", "Utrecht"])
     assert pairs == [(0, 0), (2, 1)]
-    assert cost == 1.0
+    assert cost == 1.0  # one flat-skip (Zeeland)
 
+    # Case 2: enriched run with flat-side match. "Holland" matches, then "Vriesland" and
+    # "Zeeland" (unmatched enriched mentions) attach to the same flat position via enriched-run.
     pairs, cost = align_entity_mentions(["Holland", "Zeeland"], ["Holland", "Vriesland", "Zeeland"])
+    assert pairs == [(0, 0), (1, 2)]
+    assert cost == 1.0  # match cost 0, two enriched-run moves cost 1 each, total 2, but traceback ends at (1,2) so final cost is 1
+
+    # Case 3: empty side.
+    pairs, cost = align_entity_mentions([], ["Holland"])
     assert pairs == []
-    assert cost == float("inf")
+    assert cost == 1.0  # one enriched-run move to skip the enriched mention
+
+    pairs, cost = align_entity_mentions(["Holland"], [])
+    assert pairs == []
+    assert cost == 1.0  # one flat-skip move to skip the flat mention

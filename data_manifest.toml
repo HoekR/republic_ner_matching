@@ -159,6 +159,20 @@ phase = "semi"
 description = "Hand-annotated session-day boundary gold for segmentation transfer"
 parent = "resolutions_flat"
 
+[datasets.boundary_gold_hard_period_sample]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_hard_period_sample.json"
+phase = "semi"
+description = "Hard-period session-day scaffold (severe collapse / high |Ke-Kf|), excluding original boundary_gold_sample dates; for CUT + DATE_END/DATE_START annotation."
+parent = "boundary_gold_sample"
+
+[datasets.boundary_gold_hard_period_annotations]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_gold_hard_period_annotations.json"
+phase = "explore"
+description = "Disk-backed export from boundary-day-gold-ui (hard-period sample)."
+parent = "boundary_gold_hard_period_sample"
+
 [datasets.boundary_gold_exception_review]
 tier = "hot"
 path = "republic_ner_matching/output/boundary_gold_exception_review.csv"
@@ -256,6 +270,13 @@ path = "republic_ner_matching/output/s6b_known_point_ledger.jsonl"
 phase = "semi"
 description = "Constraint baseline over a contiguous window: typed known points (session start, tier-1 anchor, gold boundary) chained at character coordinates, with the resolution count that must fall in each gap"
 parent = "alignment_1626_1630"
+
+[datasets.s6d_entity_alignment_gap_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6d_entity_alignment_gap_eval.jsonl"
+phase = "semi"
+description = "Step 3 first-experiment result of plans/COLLISION_AVOIDANCE_TRACK.md: unit-cost, no-insertion entity-mention edit alignment (scripts.s6b_known_point_ledger.align_entity_mentions) projected onto paragraph cut points (scripts/s6d_entity_mention_gap_placement.py) inside s6b's open gaps, scored on the 50 gold days (review_code == S subset) with separated_accuracy_eval's own accuracy()/gold_start_paragraphs() -- exact start-paragraph agreement and within-1 share, never a tolerance-family character metric. Interior known points come from tier-1 anchors only, not gold, so gold is read only to score. Open gaps the alignment cannot project fall back to resolution_concordance_1626_1630's production placement."
+parent = "s6b_known_point_ledger"
 
 [datasets.length_prior_eval]
 tier = "hot"
@@ -599,3 +620,80 @@ path = "republic_ner_matching/output/separated_accuracy_eval.jsonl"
 phase = "semi"
 description = "Step 5c.1 of plans/COLLISION_AVOIDANCE_TRACK.md: accuracy of the production `separated` set (PLAN.md Global-primary, 8,015 resolutions) against the 50 hand-annotated boundary_gold_sample days, the precondition for Step 5's scaffold framing. Per resolution, the concordance's predicted paragraph_start_index vs gold's start paragraph under the canonical s6a convention (cut c opens resolution c+1; paragraph_boundary units open at index+1; out_of_range placeholders held out as unlocated), plus segment_gap's uniform spread as the null. Cohorts: separated / not-separated / by loss reason (collision, extent) / by review code. Resolution index 0 is held out of the headline because both sides place it at paragraph 0 by construction. Metrics are exact start-paragraph agreement and absolute paragraph displacement only -- no tolerance-family character metric. Also recomputes Step 2's `uniform beats gold on separated` side finding under the corrected gold convention. Diagnostic only, no placement change."
 parent = "resolution_concordance_1626_1630"
+
+[datasets.synthetic_boundary_gold_scaffold]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_gold_scaffold.jsonl"
+phase = "semi"
+description = "Synthetic merge boundary gold — annotation scaffold (separate track from boundary_gold_sample). Machine-suggested char boundaries on 2- and 4-resolution HTR concatenations from separated concordance rows; expert fills gold_boundaries via merge script."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.synthetic_boundary_gold_annotations]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_gold_annotations.json"
+phase = "explore"
+description = "Labels for synthetic_boundary_gold_scaffold (candidate_id, gold_boundaries, review_status, annotator). May be hand labels or scaffold suggested_boundaries auto-accept."
+parent = "synthetic_boundary_gold_scaffold"
+
+[datasets.synthetic_boundary_gold]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_gold.jsonl"
+phase = "semi"
+description = "Merge-boundary benchmark for encoder fine-tuning (GysBERT / globalise/GloBERTise). Primary eval set; resolution ids here must never enter synthetic train/val. 2026-09-27: 55 items from scaffold suggested_boundaries auto-accept (annotator=scaffold_suggested_autoaccept), not hand-reviewed."
+parent = "synthetic_boundary_gold_scaffold"
+
+[datasets.synthetic_boundary_folds]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_folds.jsonl"
+phase = "semi"
+description = "Synthetic merge-boundary train/val/test folds (2- and 4-resolution concatenations). Excludes synthetic_boundary_gold resolution ids and boundary_gold_sample dates; date-hashed 70/15/15 split; concat capped for 512-token encoders."
+parent = "synthetic_boundary_gold"
+
+[datasets.synthetic_boundary_folds_hard]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_folds_hard.jsonl"
+phase = "semi"
+description = "Hard-synthetic folds: same pool as synthetic_boundary_folds but leading opening-formula text stripped on segments 2..n (s4_opening_phrase_candidates) so gold cuts are not clean formulaic onsets."
+parent = "synthetic_boundary_folds"
+
+[datasets.synthetic_boundary_eval_report]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_eval_report.jsonl"
+phase = "semi"
+description = "Boundary P/R/F1 at tol 0/50/150 for even-split baseline and fine-tuned encoders on synthetic test + synthetic_boundary_gold."
+parent = "synthetic_boundary_folds"
+
+[datasets.synthetic_boundary_gold50_transfer]
+tier = "hot"
+path = "republic_ner_matching/output/synthetic_boundary_gold50_transfer.jsonl"
+phase = "semi"
+description = "Transfer eval of synthetic boundary encoders on boundary_gold_sample bundled mid_paragraph cuts (same units as s4_bundled_split_poc)."
+parent = "boundary_gold_sample"
+
+[datasets.fold_in_boundary_split_eval]
+tier = "hot"
+path = "republic_ner_matching/output/fold_in_boundary_split_eval.jsonl"
+phase = "semi"
+description = "Boundary-splitter model predictions on real fold_in_candidates() sessions (scripts/s4_day_status_resolution.py): for each session shared by 2+ dates via ?-status recovery, the predicted cut char offset(s) with surrounding context, to check whether the trained model lands on a real day-boundary within genuinely concatenated session text (unlike the earlier lumped-paragraph gold task, exactly one real cut is known to exist per date pair)."
+parent = "session_date_status_1626_1630"
+
+[datasets.lumped_paragraph_gold_scaffold]
+tier = "hot"
+path = "republic_ner_matching/output/lumped_paragraph_gold_scaffold.jsonl"
+phase = "semi"
+description = "Candidate lumped/bundled single-paragraph HTR spans (concordance n_share≥2) for mid_paragraph cut labeling; excludes boundary_gold_sample dates by default."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.lumped_paragraph_gold_annotations]
+tier = "hot"
+path = "republic_ner_matching/output/lumped_paragraph_gold_annotations.json"
+phase = "explore"
+description = "Raw export from lumped_paragraph_annotation_ui.html (CUT markers + notes)."
+parent = "lumped_paragraph_gold_scaffold"
+
+[datasets.lumped_paragraph_boundary_gold]
+tier = "hot"
+path = "republic_ner_matching/output/lumped_paragraph_boundary_gold.jsonl"
+phase = "semi"
+description = "Hand-verified mid_paragraph char cuts inside lumped HTR paragraphs (with notes/uncertain/clutter)."
+parent = "lumped_paragraph_gold_scaffold"

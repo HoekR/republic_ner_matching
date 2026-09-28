@@ -7,6 +7,7 @@ import pandas as pd
 from scripts.metrics_ke_kf_window_drift_diagnostic import (
     build_output_records,
     classify_shift_signature,
+    collision_dates_detail,
     collision_weak_separation_crosstab,
     complementary_adjacent_pairs,
     lag1_autocorrelation,
@@ -118,6 +119,22 @@ def test_session_collision_dates_finds_shared_session():
     assert session_collision_dates(concordance) == {"1627-03-27", "1627-03-29"}
 
 
+def test_collision_dates_detail_lists_dates_per_colliding_session():
+    concordance = [
+        {"enriched_date": "1627-03-27", "day_status": "resolved_auto", "resolved_session_id": "s-55"},
+        {"enriched_date": "1627-03-29", "day_status": "resolved_auto", "resolved_session_id": "s-55"},
+        {"enriched_date": "1627-03-28", "day_status": "resolved_auto", "resolved_session_id": "s-56"},
+        {"enriched_date": "1627-03-30", "day_status": "missing_htr", "resolved_session_id": None},
+    ]
+    detail = collision_dates_detail(concordance)
+    assert len(detail) == 1
+    record = detail[0]
+    assert record["record_type"] == "collision_dates_detail"
+    assert record["resolved_session_id"] == "s-55"
+    assert record["enriched_dates"] == ["1627-03-27", "1627-03-29"]
+    assert record["n_dates"] == 2
+
+
 def test_collision_weak_separation_crosstab_effect_size():
     day_frame = pd.DataFrame(
         [
@@ -170,6 +187,14 @@ def test_build_output_records_meta_counts_signatures():
         day_frame=day_frame,
         resolved_dates={"1626-01-10", "1626-01-11", "1626-01-12"},
         collision_dates={"1626-01-11"},
+        collision_detail_records=[
+            {
+                "record_type": "collision_dates_detail",
+                "resolved_session_id": "s-1",
+                "enriched_dates": ["1626-01-11"],
+                "n_dates": 1,
+            }
+        ],
     )
     meta = records[0]
     assert meta["record_type"] == "meta"
@@ -179,6 +204,8 @@ def test_build_output_records_meta_counts_signatures():
     crosstab = records[1]
     assert crosstab["record_type"] == "corpus_collision_crosstab"
     assert crosstab["n_weak_separation_days_collision_involved"] == 1
-    window = records[2]
+    detail = records[2]
+    assert detail["record_type"] == "collision_dates_detail"
+    window = records[3]
     assert window["record_type"] == "window"
     assert len(window["days"]) == 3
