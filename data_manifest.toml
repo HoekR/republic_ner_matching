@@ -306,6 +306,13 @@ phase = "semi"
 description = "Diagnostic join of concordance enriched sitting -> flat session claims to uniquely content-verified flat -> raw session identity and raw index date labels. Conflicts, multiple claims, and missing/ambiguous matches remain visible; raw date labels are not promoted to truth and neither mapping nor placement changes."
 parent = "s6b_session_fingerprint_match"
 
+[datasets.resolution_loss_census]
+tier = "hot"
+path = "republic_ner_matching/output/resolution_loss_census.jsonl"
+phase = "semi"
+description = "Diagnostic census bucketing all 19,120 enriched resolutions by placement outcome (placed / cross_day_shift / missing_htr / nihil_actum), each cross-tabbed against the content-fingerprint verification status of its resolved flat session and that session's flat->raw numbering offset. Answers how much of the 5,746 unpaired mass sits on a content-confirmed session with a merely mismatched date label (recoverable by relabelling) versus no session at all (structural). Diagnostic only: no mapping, status or placement is changed, and a raw date label is never promoted to truth."
+parent = "resolution_concordance_1626_1630"
+
 [datasets.s6_oracle_anchor_diagnostic]
 tier = "hot"
 path = "republic_ner_matching/output/s6_oracle_anchor_diagnostic.jsonl"
