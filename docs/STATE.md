@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-09-29 15:53
+Last updated: 2026-09-29 16:35
 
 ```mermaid
 flowchart TD
@@ -225,6 +225,7 @@ Resolution loss diagnosis: inventorying where the 5,746 unpaired resolutions sit
 - **inventory-stream-collision-avoidance — s6b known-point ledger: open-gap share of unplaced resolutions, production anchors (was 0.707 under stored tier1_anchor):** 0.574
 - **tfidf-similarity-discrimination-eval — TF-IDF similarity AUC, tier1_anchor pos vs within-day derangement neg:** 0.9555
 - **tfidf-embeddings-wiring — tfidf_similarity_auc_paragraph_granularity:** 0.893
+- **tfidf-embeddings-wiring — S6c position_scores wiring, gold subset (19d, 197 rows): baseline separated=146; similarity scale 0.5/1.0 identical (delta 0, bonus << dispersion penalty); scale 3.0 regresses to 128 (delta -18). NEGATIVE.:** 0
 
 ## Blockers / Open Questions
 

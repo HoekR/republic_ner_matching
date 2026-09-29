@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-29 15:53",
+  "last_updated": "2026-09-29 16:35",
   "active_focus": "Resolution loss diagnosis: inventorying where the 5,746 unpaired resolutions sit, and deciding which unbanks for free (cross_day_shift on confirmed sessions) vs which needs more work (the 340-day pile-up).",
   "tasks": [
     {
@@ -1757,6 +1757,18 @@
         {
           "date": "2026-09-29",
           "value": "0.893"
+        }
+      ]
+    },
+    {
+      "scope": "tfidf-embeddings-wiring",
+      "name": "s6c_similarity_separated_delta_gold_subset",
+      "label": "S6c position_scores wiring, gold subset (19d, 197 rows): baseline separated=146; similarity scale 0.5/1.0 identical (delta 0, bonus << dispersion penalty); scale 3.0 regresses to 128 (delta -18). NEGATIVE.",
+      "value": "0",
+      "history": [
+        {
+          "date": "2026-09-29",
+          "value": "0"
         }
       ]
     }

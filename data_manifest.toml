@@ -331,7 +331,7 @@ parent = "s4_corpus_paragraph_predictions"
 tier = "hot"
 path = "republic_ner_matching/output/s6c_similarity_position_scores_eval.jsonl"
 phase = "semi"
-description = "Baseline vs. TF-IDF similarity as position_scores bonus in S6c gap-filling, restricted to the 19/21 scoreable gold days. Tests whether semantic similarity helps weak_separation day placement. Scored at PARAGRAPH granularity (tol 0/1/2), not character offset tolerance."
+description = "Baseline vs. TF-IDF similarity as position_scores bonus in S6c gap-filling, swept over several bonus scales, restricted to the scoreable gold days. Scored ONLY on PLAN.md's acceptance criteria -- separated_count / separated_share (unique start paragraph on the date, extent <= 3 paragraphs) plus exact start-paragraph agreement and paragraph displacement against gold. Carries no boundary-F1-at-tolerance figures: docs/METRICS.md:187 demotes that family at every granularity. Counts are a gold-subset and are not comparable to the corpus-wide 8,015 / 68.8%."
 parent = "s4_corpus_paragraph_predictions"
 
 [datasets.s6_group_b_grounded_position_scores_eval]
