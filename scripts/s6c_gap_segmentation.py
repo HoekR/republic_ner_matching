@@ -48,6 +48,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import numpy as np
+
 
 def segment_gap(
     low_anchor: int,
@@ -107,6 +109,34 @@ def segment_gap(
             i -= 1
     result.reverse()
     return result
+
+
+def similarity_position_scores(
+    similarity_matrix: np.ndarray,
+    scale: float = 1.0,
+) -> dict[int, float]:
+    """Convert similarity matrix into position_scores bonus per paragraph.
+
+    For each paragraph (column), compute the max similarity across all resolutions (rows).
+    This creates a bonus that biases gap-filling towards paragraphs where at least one
+    resolution has high semantic similarity.
+
+    Args:
+        similarity_matrix: shape (k_e, k_p) — k_e resolutions, k_p paragraphs.
+        scale: multiply all scores by this factor to control bonus magnitude vs. dispersion.
+
+    Returns:
+        dict mapping paragraph index -> bonus in roughly [0, scale].
+    """
+    if similarity_matrix is None or similarity_matrix.size == 0:
+        return {}
+    scores: dict[int, float] = {}
+    max_sims = np.max(similarity_matrix, axis=0)  # max per paragraph across all resolutions
+    for para_idx, max_sim in enumerate(max_sims):
+        bonus = float(max_sim) * scale
+        if bonus > 0:
+            scores[int(para_idx)] = bonus
+    return scores
 
 
 def segment_day(

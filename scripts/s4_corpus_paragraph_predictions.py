@@ -27,7 +27,7 @@ from alignment_embeddings import AlignmentEmbedder, EmbeddingBackend
 from build_alignment_new import align_session, calculate_idf_weights
 from data_io import load, resolve, save_semi_structured
 from scripts.s4_paragraph_axis_baseline import build_axis_overlap, overlap_enriched_id
-from scripts.s6c_gap_segmentation import segment_day
+from scripts.s6c_gap_segmentation import segment_day, similarity_position_scores
 
 
 AXIS_DATASET = "paragraph_axis_1626_1630"
@@ -169,6 +169,7 @@ def predict(
     similarity_matrix: np.ndarray | None = None,
     semantic_weight: float = 0.0,
     min_semantic_threshold: float = 0.35,
+    similarity_position_scale: float = 0.0,
 ) -> dict[str, Any]:
     base = {"date": date, "k_e": len(enriched_ids), "paragraph_count": len(axis), "unit": "paragraph_stream"}
     if not axis:
@@ -194,6 +195,14 @@ def predict(
     # `position_scores` defaults to None (empty) so the live default is unchanged; it exists
     # so scripts/s6_group_b_position_scores_eval.py can pass Group-B evidence through this
     # exact codepath without duplicating it -- see that script before wiring anything live.
+    # If similarity_position_scale > 0, build position_scores from the similarity matrix.
+    if similarity_position_scale > 0 and similarity_matrix is not None:
+        sim_scores = similarity_position_scores(similarity_matrix, scale=similarity_position_scale)
+        if position_scores is None:
+            position_scores = sim_scores
+        else:
+            # Merge with existing position_scores, preferring higher value
+            position_scores = {**position_scores, **{k: max(position_scores.get(k, 0), v) for k, v in sim_scores.items()}}
     positions = segment_day(len(enriched_ids), len(axis_ids), alignments, position_scores)
     return {
         **base,
@@ -229,6 +238,12 @@ def main() -> None:
         default=0.35,
         help="Minimum semantic similarity to allow a diagonal match in NW anchor gate (default: 0.35).",
     )
+    parser.add_argument(
+        "--similarity_position_scale",
+        type=float,
+        default=0.0,
+        help="Scale factor for TF-IDF similarity as position_scores bonus in S6c gap-filling (default: 0.0, off). Test with 0.5-1.0.",
+    )
     args = parser.parse_args()
 
     axis = load(AXIS_DATASET)
@@ -244,11 +259,11 @@ def main() -> None:
     lookup = build_axis_overlap(axis, combined)
     idf_weights = calculate_idf_weights(combined)
 
-    # Initialize semantic similarity if requested
+    # Initialize semantic similarity if requested (for either semantic_weight or similarity_position_scale)
     embedder: AlignmentEmbedder | None = None
     enriched_texts_by_date: dict[str, list[str]] = {}
-    if args.semantic_weight > 0:
-        print(f"Initializing semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}")
+    if args.semantic_weight > 0 or args.similarity_position_scale > 0:
+        print(f"Initializing semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}, position_scale={args.similarity_position_scale}")
         embedder = AlignmentEmbedder(backend=args.semantic_backend)
         enriched_texts_by_date = load_enriched_texts_by_date()
         print(f"Loaded enriched texts for {len(enriched_texts_by_date)} dates")
@@ -257,9 +272,9 @@ def main() -> None:
     for date, enriched_ids in sorted(grouped_enriched().items()):
         axis_records = axis_for_date(date, axis_by_date, axis_by_session, session_by_date)
 
-        # Compute similarity matrix if semantic weight is active
+        # Compute similarity matrix if semantic weight or position_scale is active
         similarity_matrix = None
-        if args.semantic_weight > 0 and embedder is not None:
+        if (args.semantic_weight > 0 or args.similarity_position_scale > 0) and embedder is not None:
             enriched_texts = enriched_texts_by_date.get(date, [])
             axis_texts = extract_axis_texts(axis_records)
             if enriched_texts and axis_texts:
@@ -275,6 +290,7 @@ def main() -> None:
             similarity_matrix=similarity_matrix,
             semantic_weight=args.semantic_weight,
             min_semantic_threshold=args.min_semantic_threshold,
+            similarity_position_scale=args.similarity_position_scale,
         )
         predictions.append(pred)
 
@@ -301,8 +317,8 @@ def main() -> None:
     print(f"Abstentions: {dict(Counter(item['reason'] for item in predictions if item['status'] == 'abstained'))}")
     print(f"Days recovered via resolution_concordance_1626_1630's resolved_session_id (no same-day axis otherwise): {recovered}")
     print(f"Days where the resolved session's axis differs from the same-day stub (docs/DECISIONS.md 2026-09-22): {overridden}")
-    if args.semantic_weight > 0:
-        print(f"Semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}")
+    if args.semantic_weight > 0 or args.similarity_position_scale > 0:
+        print(f"Semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}, position_scale={args.similarity_position_scale}")
 
 
 if __name__ == "__main__":

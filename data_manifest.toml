@@ -327,6 +327,13 @@ phase = "semi"
 description = "Baseline vs. Group-B (entity_surface_matches_1626_1630) position_scores comparison through s4_corpus_paragraph_predictions.predict()'s own codepath, restricted to the 19/21 scoreable gold days. Scored at PARAGRAPH granularity (tol 0/1/2 paragraphs), not character offset tolerance -- docs/DECISIONS.md 2026-09-21 'S6c target metric rescoped' already ruled out char-tolerance as the S6 target metric."
 parent = "s4_corpus_paragraph_predictions"
 
+[datasets.s6c_similarity_position_scores_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6c_similarity_position_scores_eval.jsonl"
+phase = "semi"
+description = "Baseline vs. TF-IDF similarity as position_scores bonus in S6c gap-filling, restricted to the 19/21 scoreable gold days. Tests whether semantic similarity helps weak_separation day placement. Scored at PARAGRAPH granularity (tol 0/1/2), not character offset tolerance."
+parent = "s4_corpus_paragraph_predictions"
+
 [datasets.s6_group_b_grounded_position_scores_eval]
 tier = "hot"
 path = "republic_ner_matching/output/s6_group_b_grounded_position_scores_eval.jsonl"
@@ -598,6 +605,13 @@ tier = "hot"
 path = "republic_ner_matching/output/metrics_weak_separation_headroom_diagnostic.jsonl"
 phase = "semi"
 description = "Tier O weak_separation headroom diagnostic: per-day structural ceiling on separated_share (min(1, paragraph_count/k_e_signal)), splitting structurally_capped (no algorithm can reach solid) from headroom_available (a placement-quality fix could) among weak_separation days."
+parent = "metrics_span_gap_map"
+
+[datasets.weak_separation_similarity_diagnostic]
+tier = "hot"
+path = "republic_ner_matching/output/weak_separation_similarity_diagnostic.jsonl"
+phase = "semi"
+description = "Diagnostic: on 430 weak_separation days, does TF-IDF similarity to HTR paragraph text predict correct resolution placement? Measures AUC: does higher similarity to actual placement than to random alternatives correlate with verified placement. If AUC >= 0.6, similarity is a viable signal for S6c wiring. If AUC < 0.55, placement is fundamentally ambiguous, not recoverable via content semantics."
 parent = "metrics_span_gap_map"
 
 [datasets.metrics_bottleneck_diagnostic]
