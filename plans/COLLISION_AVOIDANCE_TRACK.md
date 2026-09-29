@@ -590,6 +590,20 @@ Hypothesis 3, building on finding D's existing content-verified data. Risk to co
 from confident alignments can amplify bias if the confident set is skewed (tier-1 anchors
 concentrate on entity-rich resolutions). Needs a held-out check, not just convergence.
 
+**2026-09-29 prerequisite (diagnostic, not a corrected mapping):**
+`scripts/fingerprint_assignment_audit.py` joins each current enriched sitting→flat session
+claim to the unique fingerprint-backed flat→raw content correspondence and displays the
+raw index date *label* next to the enriched date. A disagreement is a review candidate,
+not evidence that the raw date is authoritative. Ambiguous fingerprints, multiple flat
+claims for one sitting, and raw-session reuse are retained explicitly. The audit does not
+rewrite the concordance or the paragraph placement. Review the resulting conflicts and
+validate a held-out correction policy before any automatic anchor correction.
+
+**Run 2026-09-29:** 1,123 distinct sitting/session claims; 682 raw date labels agree,
+8 disagree, 82 are involved in reuse of a fingerprint-verified raw session across
+enriched dates, and 351 have no fingerprint match. These categories are audit
+labels, not verdicts about the historical date. No assignment was changed.
+
 ### Step 5 — Restate the state in alignment terms, then re-derive the bound
 <!-- status: 5a + 5c.1 done 2026-09-25; bound re-derivation still pending — rescoped 2026-09-25 (user), was "re-derive the ceiling honestly" -->
 

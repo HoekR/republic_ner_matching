@@ -1,9 +1,11 @@
 from scripts.s6b_known_point_ledger import (
+    PRODUCTION_ANCHOR,
     build_chain,
     collapse,
     enriched_index,
     flat_id_char_starts,
     gaps_of,
+    production_points,
 )
 
 
@@ -88,6 +90,27 @@ def test_gap_rows_carry_the_kinds_of_both_endpoints():
     first, second = gaps_of(build_chain(k_e=2, total_chars=1000, interior=interior))
     assert first["left_kinds"] == ["session_start"] and first["right_kinds"] == ["gold_boundary"]
     assert second["right_kinds"] == ["session_end"]
+
+
+def test_production_points_only_pins_evidence_backed_alignment_cells():
+    # Rebuilt 2026-09-29 (docs/DECISIONS.md): interior points must come from production's own
+    # live align_session anchor, not the stored tier1_anchor table.
+    enriched_ids = ["e0", "e1", "e2"]
+    axis_ids = ["a0", "a1", "a2"]
+    lookup = {("e1", "a1"): {"Amsterdam"}}
+    idf_weights = {"Amsterdam": 1.0}
+    starts = [0, 100, 250]
+
+    points = production_points(enriched_ids, axis_ids, lookup, idf_weights, starts)
+
+    assert points == [{"kind": PRODUCTION_ANCHOR, "enriched_index": 1, "char_position": 100}]
+
+
+def test_production_points_is_empty_without_any_shared_entity():
+    enriched_ids = ["e0", "e1"]
+    axis_ids = ["a0", "a1"]
+
+    assert production_points(enriched_ids, axis_ids, {}, {}, [0, 50]) == []
 
 
 def test_entity_mentions_align_with_all_three_moves():

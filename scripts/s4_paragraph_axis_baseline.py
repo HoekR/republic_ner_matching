@@ -3,14 +3,24 @@
 
 from __future__ import annotations
 
+import argparse
+import sys
 from collections import defaultdict
 from collections.abc import Sequence
+from pathlib import Path
 import re
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from fuzzy_search.search.phrase_searcher import FuzzyPhraseSearcher
 
+# Ensure root directory is in path for imports
+_root = Path(__file__).parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
+from alignment_embeddings import AlignmentEmbedder
 from build_alignment_new import align_session, calculate_idf_weights
 from data_io import load, resolve, save_semi_structured
 from scripts.s6c_gap_segmentation import segment_day
@@ -145,7 +155,17 @@ def build_axis_overlap(axis: list[dict[str, Any]], overlap: pd.DataFrame) -> dic
     return dict(lookup)
 
 
-def predict_day(day: dict[str, Any], axis: list[dict[str, Any]], lookup: dict[tuple[str, str], set[str]], idf_weights: dict[str, float], review_code: str, searcher: FuzzyPhraseSearcher) -> dict[str, Any]:
+def predict_day(
+    day: dict[str, Any],
+    axis: list[dict[str, Any]],
+    lookup: dict[tuple[str, str], set[str]],
+    idf_weights: dict[str, float],
+    review_code: str,
+    searcher: FuzzyPhraseSearcher,
+    similarity_matrix: np.ndarray | None = None,
+    semantic_weight: float = 0.0,
+    min_semantic_threshold: float = 0.35,
+) -> dict[str, Any]:
     base = {"date": day["date"], "k_e": day["k_e"], "paragraph_count": len(axis), "unit": "paragraph_stream"}
     if review_code in REVIEW_ABSTENTION_REASONS:
         return {**base, "status": "abstained", "reason": REVIEW_ABSTENTION_REASONS[review_code], "boundaries": []}
@@ -155,7 +175,15 @@ def predict_day(day: dict[str, Any], axis: list[dict[str, Any]], lookup: dict[tu
 
     enriched_ids = [overlap_enriched_id(enriched_id, str(day["date"])) for enriched_id in day["enriched_ids"]]
     axis_ids = [record["axis_id"] for record in axis]
-    alignments = align_session(enriched_ids, axis_ids, lookup, idf_weights)
+    alignments = align_session(
+        enriched_ids,
+        axis_ids,
+        lookup,
+        idf_weights,
+        similarity_matrix=similarity_matrix,
+        semantic_weight=semantic_weight,
+        min_semantic_threshold=min_semantic_threshold,
+    )
     hits = phrase_hits(axis, searcher)
     # S6c (docs/steps/STEP_S6_anchor_chain_alignment.md, rescoped 2026-09-21): a
     # count-constrained segmentation DP replaces interpolate_positions here so a single
@@ -183,7 +211,72 @@ def predict_day(day: dict[str, Any], axis: list[dict[str, Any]], lookup: dict[tu
     }
 
 
+def extract_axis_texts(axis_records: list[dict[str, Any]]) -> list[str]:
+    """Extract paragraph texts from axis records, maintaining order."""
+    texts = []
+    for record in axis_records:
+        text = record.get("text", "") or record.get("para", "") or record.get("content", "")
+        texts.append(str(text).strip() if text else " ")
+    return texts
+
+
+def load_enriched_texts_by_date() -> dict[str, dict[str, str]]:
+    """Load enriched resolution texts indexed by (date, enriched_id)."""
+    from data_io import load as data_io_load
+
+    texts_by_date_and_id: dict[str, dict[str, str]] = defaultdict(dict)
+    for item in data_io_load("enriched_resolutions_1626_1630"):
+        date = str(item.get("date", ""))[:10]
+        if "1626-01-01" <= date <= "1630-12-31":
+            # Use volgnr if available, otherwise resolution_index
+            enriched_id = item.get("volgnr") or f"#{item.get('resolution_index', 0)}"
+            text = item.get("text", "") or item.get("summary", "") or item.get("title", "")
+            if text:
+                texts_by_date_and_id[date][str(enriched_id).strip()] = str(text).strip()
+    return texts_by_date_and_id
+
+
+def compute_similarity_matrix(
+    enriched_texts: list[str],
+    axis_texts: list[str],
+    embedder: AlignmentEmbedder,
+) -> np.ndarray | None:
+    """Compute semantic similarity matrix; return None on error."""
+    try:
+        if not enriched_texts or not axis_texts:
+            return None
+        matrix = embedder.compute_similarity_matrix(enriched_texts, axis_texts)
+        return matrix if matrix is not None else None
+    except Exception as e:
+        print(f"Warning: failed to compute similarity matrix for day: {e}", file=sys.stderr)
+        return None
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Gold-day baseline with optional semantic similarity wiring.",
+    )
+    parser.add_argument(
+        "--semantic_backend",
+        type=str,
+        default="tfidf",
+        choices=["tfidf", "ollama", "transformers"],
+        help="Backend for semantic similarity computation (default: tfidf).",
+    )
+    parser.add_argument(
+        "--semantic_weight",
+        type=float,
+        default=0.0,
+        help="Weight for semantic similarity in the NW aligner (default: 0.0, off). Range: 0.0-5.0.",
+    )
+    parser.add_argument(
+        "--min_semantic_threshold",
+        type=float,
+        default=0.35,
+        help="Minimum semantic similarity to allow diagonal match (default: 0.35).",
+    )
+    args = parser.parse_args()
+
     gold = load(GOLD_DATASET)
     axis = load(AXIS_DATASET)
     by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -201,10 +294,46 @@ def main() -> None:
     phrases = [item["phrase"] for item in phrase_candidates if item["word_count"] >= 3]
     searcher = build_phrase_searcher(phrases)
     review_codes = read_review_codes()
-    predictions = [
-        predict_day(day, by_date[str(day["date"])], lookup, idf_weights, review_codes.get(str(day["date"]), "S"), searcher)
-        for day in gold["days"]
-    ]
+
+    # Initialize semantic similarity if requested
+    embedder: AlignmentEmbedder | None = None
+    enriched_texts_by_date_and_id: dict[str, dict[str, str]] = {}
+    if args.semantic_weight > 0:
+        print(f"Initializing semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}")
+        embedder = AlignmentEmbedder(backend=args.semantic_backend)
+        enriched_texts_by_date_and_id = load_enriched_texts_by_date()
+        print(f"Loaded enriched texts for {len(enriched_texts_by_date_and_id)} dates")
+
+    predictions = []
+    for day in gold["days"]:
+        date_str = str(day["date"])
+        axis_records = by_date.get(date_str, [])
+
+        # Compute similarity matrix if semantic weight is active
+        similarity_matrix = None
+        if args.semantic_weight > 0 and embedder is not None and axis_records:
+            # Load enriched texts for this day
+            enriched_texts = []
+            for enriched_id in day.get("enriched_ids", []):
+                text = enriched_texts_by_date_and_id.get(date_str, {}).get(str(enriched_id).strip(), "")
+                enriched_texts.append(text or f"enriched_{enriched_id}")
+
+            axis_texts = extract_axis_texts(axis_records)
+            if enriched_texts and axis_texts:
+                similarity_matrix = compute_similarity_matrix(enriched_texts, axis_texts, embedder)
+
+        pred = predict_day(
+            day,
+            axis_records,
+            lookup,
+            idf_weights,
+            review_codes.get(date_str, "S"),
+            searcher,
+            similarity_matrix=similarity_matrix,
+            semantic_weight=args.semantic_weight,
+            min_semantic_threshold=args.min_semantic_threshold,
+        )
+        predictions.append(pred)
     output = save_semi_structured(predictions, logical_name=OUTPUT_DATASET, script=__file__)
     predicted = sum(item["status"] == "predicted" for item in predictions)
     print(f"Wrote {len(predictions)} predictions to {output}; predicted={predicted}, abstained={len(predictions) - predicted}")

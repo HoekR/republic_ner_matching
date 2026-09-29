@@ -16,7 +16,7 @@ points plus counting, and the shape of the gap-size distribution.
 
 Two deliberate choices, both requested:
 
-* **Known points stay typed.** A session start, a tier-1 entity anchor and a gold
+* **Known points stay typed.** A session start, a production anchor and a gold
   boundary are all "known", but they are kept as distinct kinds rather than collapsed,
   so the ledger shows which kind of knowledge does the pinning and what each contributes
   on its own.
@@ -24,6 +24,18 @@ Two deliberate choices, both requested:
   scatter, so intervals between them would measure the sampling rather than the corpus.
   The chain only means something over consecutive sessions, so the window runs
   continuously -- by default the whole 1626-1630 period.
+
+Rebuilt 2026-09-29 (docs/DECISIONS.md, "s6b_known_point_ledger rebuilt on production's own
+anchors"). Interior points used to come from `alignment_1626_1630`'s stored `tier1_anchor`
+rows, scored by a different call (`align_session_milestone_tiered`, flat-resolution
+granularity) than production ever runs. `anchor_set_reconciliation.py` measured only 65.7%
+agreement and 62.9% exact-position agreement between that stored set and production's own
+live `align_session` anchors (paragraph-axis granularity, any NW cell with
+`entity_match_score > 0`). This ledger now computes the live anchor fresh per day
+(`production_points`), so its gap structure describes the constraint production's own
+`segment_day` actually faces. `tier1_points`/`TIER1` stay defined for callers that still
+read the stored table directly (`s6b_anchor_harvest.py` group A,
+`s6d_entity_alignment_gap_eval.py`'s Step 3 chain, which is unaffected by this rebuild).
 
 Rolled up three ways. Month is the easiest to scan and is the primary table, but monthly
 *ratios* rest on thin cells (roughly 20 days and 18 open gaps per month), so read the
@@ -47,19 +59,25 @@ from collections import Counter, defaultdict
 from collections.abc import Sequence
 from typing import Any
 
-from data_io import load, save_semi_structured
+import pandas as pd
+
+from build_alignment_new import align_session, calculate_idf_weights
+from data_io import load, resolve, save_semi_structured
+from scripts.s4_corpus_paragraph_predictions import grouped_enriched
+from scripts.s4_paragraph_axis_baseline import build_axis_overlap
 from scripts.s6a_char_axis_evaluation import char_starts, opening_paragraph
 
 
-ALIGNMENT_DATASET = "alignment_1626_1630"
 AXIS_DATASET = "paragraph_axis_1626_1630"
 LEDGER_DATASET = "session_date_status_1626_1630"
 GOLD_DATASET = "boundary_gold_sample"
+OVERLAP_DATASETS = ("place_overlap_1626_1630", "org_overlap_1626_1630", "per_overlap_1626_1630")
 OUTPUT_DATASET = "s6b_known_point_ledger"
 
 DEFAULT_START = "1626-01-01"
 DEFAULT_END = "1630-12-31"
 TIER1 = "tier1_anchor"
+PRODUCTION_ANCHOR = "production_anchor"
 
 # Gap sizes at or below this are treated as effectively settled by their endpoints plus
 # the count constraint, per SEGMENTATION_TRANSFER.md section 7.
@@ -178,13 +196,53 @@ def align_entity_mentions(
 
 
 def tier1_points(rows: Sequence[Any], by_flat_id: dict[str, int]) -> list[dict[str, Any]]:
-    """One known point per tier-1 anchor whose flat resolution is on this day's axis."""
+    """One known point per tier-1 anchor whose flat resolution is on this day's axis.
+
+    Kept for callers that still read the stored `alignment_1626_1630` table directly
+    (`s6b_anchor_harvest.py` group A, `s6d_entity_alignment_gap_eval.py`'s Step 3 chain).
+    `main()` below no longer calls this -- see `production_points` and
+    docs/DECISIONS.md 2026-09-29.
+    """
     points = []
     for row in rows:
         index = enriched_index(row.enriched_id)
         position = by_flat_id.get(str(row.flat_id))
         if index is not None and position is not None:
             points.append({"kind": TIER1, "enriched_index": index, "char_position": position})
+    return points
+
+
+def production_points(
+    enriched_ids: Sequence[str],
+    axis_ids: Sequence[str],
+    lookup: dict[tuple[str, str], set[str]],
+    idf_weights: dict[str, float],
+    starts: Sequence[int],
+) -> list[dict[str, Any]]:
+    """One known point per resolution production's own live alignment treats as anchored.
+
+    Mirrors `align_session`'s own `has_anchor` gate (any NW cell with a non-empty entity
+    overlap) exactly, rather than reading the stored `tier1_anchor` rows in
+    `alignment_1626_1630` -- those are scored by a *different* call
+    (`align_session_milestone_tiered`, flat-resolution granularity) that
+    `s4_corpus_paragraph_predictions.py` never runs at inference time. Rebuilt 2026-09-29
+    (docs/DECISIONS.md) after `anchor_set_reconciliation.py` measured only 65.7% agreement
+    and 62.9% exact-position agreement between the two anchor sets: this ledger's known
+    points must describe the constraint structure production's `segment_day` actually
+    faces, not a differently-scored proxy for it.
+
+    `i` (the position within `enriched_ids`) is used directly as the enriched index --
+    `enriched_ids` is already ordered by `resolution_index` (`grouped_enriched`), which is
+    the same convention `enriched_index()` extracts from the stored ids by regex.
+    """
+    alignments = align_session(list(enriched_ids), list(axis_ids), lookup, idf_weights)
+    points = []
+    for i, j in alignments:
+        if i is None or j is None:
+            continue
+        shared = lookup.get((enriched_ids[i], axis_ids[j]), set())
+        if shared:
+            points.append({"kind": PRODUCTION_ANCHOR, "enriched_index": i, "char_position": starts[j]})
     return points
 
 
@@ -320,15 +378,14 @@ def main() -> None:
     parser.add_argument("--end", default=DEFAULT_END)
     args = parser.parse_args()
 
-    alignment = load(ALIGNMENT_DATASET)
-    alignment = alignment[
-        (alignment["date"] >= args.start)
-        & (alignment["date"] <= args.end)
-        & (alignment["confidence_tier"] == TIER1)
+    overlaps = [pd.read_excel(resolve(dataset)) for dataset in OVERLAP_DATASETS]
+    overlaps = [
+        overlap.rename(columns={"naam": "name"}) if "name" not in overlap and "naam" in overlap else overlap
+        for overlap in overlaps
     ]
-    tier1_by_date: dict[str, list[Any]] = defaultdict(list)
-    for row in alignment[["enriched_id", "flat_id", "date"]].itertuples(index=False):
-        tier1_by_date[str(row.date)].append(row)
+    combined = pd.concat(overlaps, ignore_index=True)
+    idf_weights = calculate_idf_weights(combined)
+    enriched_by_date = grouped_enriched()
 
     axis_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in load(AXIS_DATASET):
@@ -358,9 +415,14 @@ def main() -> None:
 
         starts = char_starts(axis)
         total_chars = starts[-1] + len(axis[-1]["text"])
-        by_flat_id = flat_id_char_starts(axis)
+        axis_ids = [record["axis_id"] for record in axis]
+        enriched_ids = enriched_by_date.get(date)
 
-        interior = tier1_points(tier1_by_date.get(date, []), by_flat_id)
+        interior = (
+            production_points(enriched_ids, axis_ids, build_axis_overlap(axis, combined), idf_weights, starts)
+            if enriched_ids
+            else []
+        )
         gold_day = gold_by_date.get(date)
         if gold_day is not None:
             interior.extend(gold_points(gold_day, starts))

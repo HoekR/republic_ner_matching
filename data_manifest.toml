@@ -268,8 +268,8 @@ parent = "s4_paragraph_axis_predictions"
 tier = "hot"
 path = "republic_ner_matching/output/s6b_known_point_ledger.jsonl"
 phase = "semi"
-description = "Constraint baseline over a contiguous window: typed known points (session start, tier-1 anchor, gold boundary) chained at character coordinates, with the resolution count that must fall in each gap"
-parent = "alignment_1626_1630"
+description = "Constraint baseline over a contiguous window: typed known points (session start, production anchor, gold boundary) chained at character coordinates, with the resolution count that must fall in each gap. Rebuilt 2026-09-29 (docs/DECISIONS.md) to use production's own live align_session anchors (any NW cell with entity_match_score > 0, computed fresh via build_axis_overlap at paragraph-axis granularity, exactly s4_corpus_paragraph_predictions.py's own runtime codepath) instead of the stored tier1_anchor rows in alignment_1626_1630, which anchor_set_reconciliation measured at only 65.7% agreement and 62.9% exact-position agreement with production's real anchors. alignment_1626_1630 is no longer read at all; other real inputs (enriched_resolutions_1626_1630 for enriched ids, place/org/per_overlap_1626_1630 for the entity lookup, session_date_status_1626_1630 for k_e, boundary_gold_sample for gold points) are documented here rather than in the single parent field."
+parent = "paragraph_axis_1626_1630"
 
 [datasets.s6d_entity_alignment_gap_eval]
 tier = "hot"
@@ -298,6 +298,13 @@ path = "republic_ner_matching/output/s6b_session_fingerprint_match.jsonl"
 phase = "semi"
 description = "Content-fingerprint correspondence between resolutions_flat session ids and raw sessions_json_source sessions: one row per resolutions_flat session (150-char normalized fingerprint of its resolution text), matched by substring containment against same-inventory raw sessions' concatenated 'para'-class region text, with the uniquely-matched raw_session_id/raw_num/offset, or empty/ambiguous if none or more than one raw session contains it. 1059/1511 (70.1%) uniquely matched, 0 ambiguous, across inventories 3185/3186/3187/3188/3189/4562. Persists the 2026-09-21 S4f review's session-numbering-drift finding (previously only in unregistered scratch) as reproducible pipeline output; prerequisite for STEP_S6 section 2.2's session_date_verified anchor channel, not the channel itself"
 parent = "s4_session_date_region_scan"
+
+[datasets.fingerprint_assignment_audit]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_assignment_audit.jsonl"
+phase = "semi"
+description = "Diagnostic join of concordance enriched sitting -> flat session claims to uniquely content-verified flat -> raw session identity and raw index date labels. Conflicts, multiple claims, and missing/ambiguous matches remain visible; raw date labels are not promoted to truth and neither mapping nor placement changes."
+parent = "s6b_session_fingerprint_match"
 
 [datasets.s6_oracle_anchor_diagnostic]
 tier = "hot"
@@ -612,6 +619,13 @@ tier = "hot"
 path = "republic_ner_matching/output/anchor_set_reconciliation.jsonl"
 phase = "semi"
 description = "Reconciliation diagnostic (not a placement change): compares alignment_1626_1630.parquet's stored tier1_anchor rows (built by align_session_milestone_tiered against a flat-resolution-granularity Excel overlap lookup, build_overlap_lookups) with production's own paragraph-axis-granularity anchors, recomputed fresh via the exact align_session + build_axis_overlap codepath s4_corpus_paragraph_predictions.py uses at runtime -- which never reads this parquet or its tier1_anchor label at all. Per enriched resolution index, on the same-calendar-day axis population scripts.s6b_known_point_ledger.py uses, classifies agreement (both anchor sets fire, at what paragraph-index distance), resolution_only (stored tier1_anchor fires, production's own align_session finds no evidence-backed match there), or paragraph_only (the reverse). Answers whether s6b_known_point_ledger.py / s6b_anchor_harvest.py Group A / s6d_entity_mention_gap_placement.py's Step 3 chain -- all built on the stored tier1_anchor table -- describe the same constraint structure production's segment_day actually works against, per the state.json next_action flagging 'two unreconciled anchor sets' as the prerequisite before any future entity-alignment redesign."
+parent = "alignment_1626_1630"
+
+[datasets.tfidf_similarity_pair_discrimination_eval]
+tier = "hot"
+path = "republic_ner_matching/output/tfidf_similarity_pair_discrimination_eval.jsonl"
+phase = "semi"
+description = "Standalone diagnostic (no production wiring, does not change align_session's semantic_weight/use_embeddings defaults): does AlignmentEmbedder(backend='tfidf').compute_similarity_matrix -- the cheap TF-IDF backend of the content-comparison mechanism already wired into align_session but never run with use_embeddings=True (alignment_1626_1630.parquet's own semantic_similarity column is 0.0 on all 13,342 rows) -- separate correct enriched<->flat resolution pairings from wrong ones, unlike the entity-bag score (nw_matches_gt_rate 0.957 correct vs 0.962 false-positive, PLAN.md 'Hypothesis'). Positive pairs: a seeded stratified sample (by inventory) of alignment_1626_1630's tier1_anchor days (>=150 target days, ~150 days). Negative pairs: scripts/d1c_idf_band_order_eval.py's pooled-fixed-offset-derangement control, reused unchanged (deranged_indices/control_offsets), applied within each sampled day rather than corpus-wide so the negative is a same-day wrong pairing, not a different-date topic mismatch. One AlignmentEmbedder call per day (positive = diagonal, negative = derangement-indexed off-diagonal cells from the same fitted TF-IDF space). Reports mean/median similarity per group, a same-day top-1 accuracy, and a common-language effect size / AUC (P(random positive > random negative)) as the discrimination statistic comparable to nw_matches_gt_rate's framing. Diagnostic only."
 parent = "alignment_1626_1630"
 
 [datasets.d1c_idf_band_order_eval]

@@ -3,15 +3,27 @@
 
 This runner is separate from the 50-day boundary-gold benchmark. It emits
 corpus predictions or explicit abstentions and never reads review labels.
+
+Optional: wire semantic similarity into the alignment via --semantic_backend and --semantic_weight.
 """
 
 from __future__ import annotations
 
+import argparse
+import sys
 from collections import Counter, defaultdict
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
+# Ensure root directory is in path for imports
+_root = Path(__file__).parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
+from alignment_embeddings import AlignmentEmbedder, EmbeddingBackend
 from build_alignment_new import align_session, calculate_idf_weights
 from data_io import load, resolve, save_semi_structured
 from scripts.s4_paragraph_axis_baseline import build_axis_overlap, overlap_enriched_id
@@ -99,6 +111,54 @@ def axis_for_date(
     return axis_by_date.get(date, [])
 
 
+def load_enriched_texts_by_date() -> dict[str, list[str]]:
+    """Load enriched resolution full texts (as summaries), ordered by resolution_index per date."""
+    by_date: dict[str, list[tuple[int, str]]] = defaultdict(list)
+    for item in load(ENRICHED_DATASET):
+        date = str(item.get("date", ""))[:10]
+        if "1626-01-01" <= date <= "1630-12-31":
+            # Use 'text' field if available; otherwise fall back to concatenating 'title' + other fields
+            text = item.get("text", "")
+            if not text or not str(text).strip():
+                text = item.get("summary", "")
+            if not text or not str(text).strip():
+                text = item.get("title", "") or ""
+            idx = item.get("resolution_index", 0)
+            by_date[date].append((idx, str(text).strip() if text else " "))
+
+    result = {}
+    for date, indexed_texts in by_date.items():
+        indexed_texts.sort(key=lambda x: x[0])
+        result[date] = [text for _, text in indexed_texts]
+    return result
+
+
+def extract_axis_texts(axis_records: list[dict[str, Any]]) -> list[str]:
+    """Extract paragraph texts from axis records, maintaining order."""
+    texts = []
+    for record in axis_records:
+        # Priority: 'text', 'para', or 'content' field names common in paragraph_axis
+        text = record.get("text", "") or record.get("para", "") or record.get("content", "")
+        texts.append(str(text).strip() if text else " ")
+    return texts
+
+
+def compute_similarity_matrix(
+    enriched_texts: list[str],
+    axis_texts: list[str],
+    embedder: AlignmentEmbedder,
+) -> np.ndarray | None:
+    """Compute semantic similarity matrix; return None on error (graceful degradation)."""
+    try:
+        if not enriched_texts or not axis_texts:
+            return None
+        matrix = embedder.compute_similarity_matrix(enriched_texts, axis_texts)
+        return matrix if matrix is not None else None
+    except Exception as e:
+        print(f"Warning: failed to compute similarity matrix: {e}", file=sys.stderr)
+        return None
+
+
 def predict(
     date: str,
     enriched_ids: list[str],
@@ -106,12 +166,24 @@ def predict(
     lookup: dict[tuple[str, str], set[str]],
     idf_weights: dict[str, float],
     position_scores: dict[int, float] | None = None,
+    similarity_matrix: np.ndarray | None = None,
+    semantic_weight: float = 0.0,
+    min_semantic_threshold: float = 0.35,
 ) -> dict[str, Any]:
     base = {"date": date, "k_e": len(enriched_ids), "paragraph_count": len(axis), "unit": "paragraph_stream"}
     if not axis:
         return {**base, "status": "abstained", "reason": "missing_htr", "boundaries": []}
     axis_ids = [record["axis_id"] for record in axis]
-    alignments = align_session(enriched_ids, axis_ids, lookup, idf_weights)
+    # Wire semantic similarity into align_session if available
+    alignments = align_session(
+        enriched_ids,
+        axis_ids,
+        lookup,
+        idf_weights,
+        similarity_matrix=similarity_matrix,
+        semantic_weight=semantic_weight,
+        min_semantic_threshold=min_semantic_threshold,
+    )
     # S6c count-constrained segmentation DP (scripts/s6c_gap_segmentation.py) replaces
     # interpolate_positions here, same as the gold-day baseline -- see that module's
     # docstring. Group-C phrase-hit evidence was tried and measured NEGATIVE on the
@@ -135,6 +207,30 @@ def predict(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Run S4 corpus paragraph predictions with optional semantic similarity wiring.",
+    )
+    parser.add_argument(
+        "--semantic_backend",
+        type=str,
+        default="tfidf",
+        choices=["tfidf", "ollama", "transformers"],
+        help="Backend for semantic similarity computation (default: tfidf). Set to 'tfidf' for fast TF-IDF baseline.",
+    )
+    parser.add_argument(
+        "--semantic_weight",
+        type=float,
+        default=0.0,
+        help="Weight for semantic similarity in the NW aligner (default: 0.0, off). Range: 0.0-5.0 for testing.",
+    )
+    parser.add_argument(
+        "--min_semantic_threshold",
+        type=float,
+        default=0.35,
+        help="Minimum semantic similarity to allow a diagonal match in NW anchor gate (default: 0.35).",
+    )
+    args = parser.parse_args()
+
     axis = load(AXIS_DATASET)
     axis_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
     axis_by_session: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -147,10 +243,41 @@ def main() -> None:
     combined = pd.concat(overlaps, ignore_index=True)
     lookup = build_axis_overlap(axis, combined)
     idf_weights = calculate_idf_weights(combined)
-    predictions = [
-        predict(date, enriched_ids, axis_for_date(date, axis_by_date, axis_by_session, session_by_date), lookup, idf_weights)
-        for date, enriched_ids in sorted(grouped_enriched().items())
-    ]
+
+    # Initialize semantic similarity if requested
+    embedder: AlignmentEmbedder | None = None
+    enriched_texts_by_date: dict[str, list[str]] = {}
+    if args.semantic_weight > 0:
+        print(f"Initializing semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}")
+        embedder = AlignmentEmbedder(backend=args.semantic_backend)
+        enriched_texts_by_date = load_enriched_texts_by_date()
+        print(f"Loaded enriched texts for {len(enriched_texts_by_date)} dates")
+
+    predictions = []
+    for date, enriched_ids in sorted(grouped_enriched().items()):
+        axis_records = axis_for_date(date, axis_by_date, axis_by_session, session_by_date)
+
+        # Compute similarity matrix if semantic weight is active
+        similarity_matrix = None
+        if args.semantic_weight > 0 and embedder is not None:
+            enriched_texts = enriched_texts_by_date.get(date, [])
+            axis_texts = extract_axis_texts(axis_records)
+            if enriched_texts and axis_texts:
+                similarity_matrix = compute_similarity_matrix(enriched_texts, axis_texts, embedder)
+
+        pred = predict(
+            date,
+            enriched_ids,
+            axis_records,
+            lookup,
+            idf_weights,
+            position_scores=None,
+            similarity_matrix=similarity_matrix,
+            semantic_weight=args.semantic_weight,
+            min_semantic_threshold=args.min_semantic_threshold,
+        )
+        predictions.append(pred)
+
     output = save_semi_structured(predictions, logical_name=OUTPUT_DATASET, script=__file__)
     recovered = sum(
         1
@@ -174,6 +301,8 @@ def main() -> None:
     print(f"Abstentions: {dict(Counter(item['reason'] for item in predictions if item['status'] == 'abstained'))}")
     print(f"Days recovered via resolution_concordance_1626_1630's resolved_session_id (no same-day axis otherwise): {recovered}")
     print(f"Days where the resolved session's axis differs from the same-day stub (docs/DECISIONS.md 2026-09-22): {overridden}")
+    if args.semantic_weight > 0:
+        print(f"Semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}")
 
 
 if __name__ == "__main__":

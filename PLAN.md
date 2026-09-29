@@ -105,6 +105,45 @@ Lumped-paragraph UI remains at `uv run lumped-paragraph-gold-ui` (port 5055) if 
 
 ---
 
+## Secret resolutions track — inventories 4562 / 4861 (parked, separate line)
+<!-- doc-status: future -->
+
+**Parked by the user 2026-09-29 — recorded so it is not forgotten, deliberately not scoped.**
+Inventories 4562 and 4861 hold the **secret resolutions**. Only a minority of all resolutions
+were secret. Their content is **not present in the ordinary resolutions text**; it exists only in
+the enriched summaries. Recovering them is a **cherry-picking retrieval** problem over a separate
+corpus — tractable with TF-IDF, but a different design from the count-constrained stream
+alignment the rest of this plan uses. Full reasoning:
+[docs/writeup_mechanism_anchors.md](docs/writeup_mechanism_anchors.md), note dated 2026-09-29.
+
+**Why this is a track and not a bug.** A loss census of `resolution_concordance_1626_1630`
+(2026-09-29) found 5,746 of 19,120 enriched resolutions carry no paragraph range:
+`missing_htr` 4,482, `cross_day_shift` 1,137, `nihil_actum` 127. The 4,482 sit **entirely** in
+4562 (2,095) and 4861 (2,387) — inventories 3185–3189 have exactly **zero**, independently
+corroborating `plans/COLLISION_AVOIDANCE_TRACK.md` Step 6. 4861 is 100% unpaired, 4562 87.2%.
+Absent secret-series text in the ordinary stream is not a segmentation failure, so it must not be
+counted as one.
+
+**Implication for reporting, flagged not yet applied.** Stream-alignment performance is really an
+**annual-inventory story — 14,240 resolutions**, where the only unpaired causes are
+`cross_day_shift` (1,057) and `nihil_actum` (127). The three-denominator rule in the goal block
+(19,120 / 13,530 / 11,644) currently folds the secret series into the same ceiling. Whether to
+carry it as a fourth, separately-targeted population is an open reporting decision — do not change
+the headline denominators without deciding it explicitly.
+
+**Also explains two standing anomalies:** 4562 is the one confirmed exception to order-preservation
+(15 non-monotone steps), and it is anchor-starved (7.6% pinned vs. 18.9% corpus average, S6b).
+Both follow if secret resolutions are lifted out of the ordinary session flow — anchors cannot form
+against text that is not in the stream being anchored.
+
+| Item | Status |
+|------|--------|
+| Recover the `secret` per-resolution flag from source XML | **prerequisite, not done.** The field is `False` on **all 19,121** rows of `enriched_resolutions_1626_1630_complete.json` *and* the concordance — preserved structurally, dropped in content during derivation. Inventory id is today's only proxy, and it is inventory-level where the property is per-resolution. User 2026-09-29: "should be remedied, but not now." |
+| Calibrate TF-IDF for whole-inventory retrieval | **not started.** The validated AUC 0.9555 / top-1 0.9518 was measured on *same-day* discrimination (pool of 10–40). A retrieval pool 2–3 orders of magnitude larger admits many top-1 false positives at that AUC, so the existing number does **not** transfer. Needs a max-over-pool null (score against a same-size pool from a disjoint period, cut at the 99th percentile) plus a positive control for sensitivity — reuse the discipline in `scripts/tfidf_similarity_pair_discrimination_eval.py`. |
+| Design the retrieval step itself | **not scoped.** Blocked on both rows above. |
+
+---
+
 ## Workspace Standard Alignment & Organization (Completed)
 <!-- doc-status: active -->
 
@@ -1586,6 +1625,7 @@ Step status (details, tables and caveats in the track doc):
 | 2 — length-proportional placement prior | **done 2026-09-25, NEGATIVE** — hypothesis directionally true (ρ≈0.3) but a deterministic proportional allocation is worse than uniform; `segment_gap`'s uniform `ideal` stays. Dataset `length_prior_eval`. |
 | 3 — order-constrained alignment over all entities | **designed 2026-09-25, ready to build — take this next.** Its "settle the scoring design first" blocker is dissolved by a parameter-free formulation: today's NW aligns the *resolution* sequence with entities as a per-cell bag, so hypothesis 5 is untestable in the current code; moving the sequence's unit to the entity mention and aligning it with unit-cost edit distance (traceback kept, gap asymmetry fixed) tests order in isolation. Attacks the dominant loss channel directly. Scope it to `s6b_known_point_ledger.py`'s 947 open gaps, and encode no-insertion as a structural constraint (forbid the enriched-side gap move) rather than a gap penalty. |
 | 4 — close the anchor-correction loop | pending, prerequisite now satisfied by Step 1's order-preserving verified chain. An earlier note here ranked it ahead of Step 3 on readiness rather than value; corrected in the track doc. |
+| Fingerprint assignment audit (Step 4 prerequisite) | **built and run 2026-09-29** — [scripts/fingerprint_assignment_audit.py](scripts/fingerprint_assignment_audit.py) joins current enriched→flat sitting claims to unique flat→raw content matches and compares the raw index's date **label** without promoting it to truth. 1,123 sitting/session claims: 682 label agreements, 8 label conflicts, 82 reused-raw-session claims, 351 unmatched fingerprints. Missing/ambiguous matches and duplicate claims remain visible when present; no mapping or placement changed. Registered `fingerprint_assignment_audit`; conflict review and any correction policy remain pending. |
 | 5 — restate the state in alignment terms, then re-derive the bound | **5a + 5c.1 done 2026-09-25**; bound re-derivation pending, and **until it runs the acceptance table above is not restated** (Step 1 brackets the honest bound at 11,644 < ~11,986–12,147 < 12,973–13,197 < 14,258). 5c.1 cleared the scaffold framing on a correctness check: separated placements hit the exact gold start paragraph 62.8% vs 30.6% for non-separated, and production beats the uniform null 2.4–2.7× — but only on gold's segmentable days (0.639 exact, median displacement 0); review-code-M days score 0.271 with mean displacement 5.87 and are carved out. Dataset `separated_accuracy_eval`. |
 | 6 — session-level sequence alignment between the two streams | **done 2026-09-25, GATE DID NOT PASS — do not build the aligner.** The step's premise does not hold for the main corpus: in inventories 3185–3189 **every** enriched sitting already resolves to an HTR session (1,089/1,089) and there are **zero** `missing_htr` rows there; all 344 unresolved sittings / 4,482 resolutions sit in 4562 (2,095) and 4861 (2,387), where 4861 has no axis sessions at all. Its cited 1,137 `cross_day_shift` resolutions are not unmapped — every one carries a resolved session. The mechanism *is* confirmed where it applies: all 3 order-forced pairings are 20/22/36 days from their date label, beyond anything the ±1-day window can reach — but that is 40 of 19,120 resolutions against a stretch gap of 718. By-products: no-insertion verified at session level (holds in the annual inventories, 12/1,034; broken in 4562, 39); and **the enriched edition ends 1630-05-14 — do not extend beyond it** (user, 2026-09-25), which bars 184 axis sessions / 2,284 paragraphs (10.6%) dated to 1630-12-31, now enforced and asserted (0 claimed today). Upstream is already safe: the 11,644 day ceiling and Step 1's segment ceilings key paragraph counts on enriched dates, but a stream framing must bar them explicitly. Dataset `session_offset_eval`. Caveat: this closes "the mapping is *absent*", not "the mapping is *wrong*" — pin correctness is untested. |
 
@@ -2610,6 +2650,7 @@ the corrections list is fetched directly from MySQL.
 | `synthetic_boundary_folds`                     | `output/synthetic_boundary_folds.jsonl`                     | semi    |
 | `synthetic_boundary_eval_report`               | `output/synthetic_boundary_eval_report.jsonl`               | semi    |
 | `synthetic_boundary_gold50_transfer`           | `output/synthetic_boundary_gold50_transfer.jsonl`           | semi    |
+| `fingerprint_assignment_audit`                  | `output/fingerprint_assignment_audit.jsonl`                  | semi    |
 
 S4a completed 2026-09-01: registered both outputs in `data_manifest.toml` and
 documented the canonical key, ledger schema, and status semantics in
