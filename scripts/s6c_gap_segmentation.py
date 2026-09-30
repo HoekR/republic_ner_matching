@@ -29,7 +29,10 @@ This module replaces the *interpolation* step only, gap by gap, with a small DP 
 2. Inside each gap, chooses `count` non-decreasing paragraph positions (repeats allowed,
    which is what absorbs both failure modes above) that both stay close to an even split
    of the gap and prefer any group-C phrase-hit evidence available at that gap, via
-   `position_scores: dict[int, float]` (paragraph index -> bonus in roughly [0, 1]).
+   `position_scores: dict[int, float]` (paragraph index -> bonus in roughly [0, 1]), or, for
+   evidence that is specific to one resolution rather than to a paragraph, `rank_scores` /
+   `segment_day`'s `resolution_scores` -- see `similarity_rank_scores` and
+   plans/TFIDF_EMBEDDINGS_TRACK.md for what each form can and cannot express.
 
 Group B (`entity_surface_matches_1626_1630`, `s4_fuzzy_surface_form_scan`) is not wired
 into `position_scores` yet -- deliberately deferred, not overlooked. `s4_paragraph_axis_baseline.py`
@@ -46,7 +49,7 @@ keeps testing the *old* model.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 
@@ -58,6 +61,7 @@ def segment_gap(
     position_scores: dict[int, float] | None = None,
     phrase_weight: float = 3.0,
     dispersion_weight: float = 1.0,
+    rank_scores: Sequence[Mapping[int, float]] | None = None,
 ) -> list[int]:
     """Place `count` non-decreasing paragraph positions between two anchors.
 
@@ -67,6 +71,15 @@ def segment_gap(
     `position_scores` (phrase-hit similarity, roughly 0..1); `phrase_weight` /
     `dispersion_weight` set how many paragraphs of drift a perfect phrase hit is worth
     (default: about 3).
+
+    `rank_scores`, when given, supersedes `position_scores`: entry `rank_scores[rank - 1]`
+    is the paragraph -> bonus map for the *specific* resolution that occupies slot `rank`
+    of this gap. `position_scores` cannot express that -- it is one map shared by every
+    slot, so a per-resolution signal has to be collapsed across resolutions before it can
+    be passed (`similarity_position_scores` takes the per-paragraph max), which throws away
+    exactly the which-resolution-goes-where information such a signal carries. The DP
+    already fills slots in increasing rank and increasing position, so scoring slot `rank`
+    with its own resolution's evidence needs no change to the recurrence.
     """
     if count <= 0:
         return []
@@ -77,10 +90,14 @@ def segment_gap(
     span = high_anchor - low_anchor
     ideal = [low_anchor + (rank * span) // (count + 1) for rank in range(1, count + 1)]
 
+    def bonus(position: int, rank: int) -> float:
+        if rank_scores is not None and rank - 1 < len(rank_scores):
+            return rank_scores[rank - 1].get(position, 0.0)
+        return position_scores.get(position, 0.0)
+
     def score(position: int, rank: int) -> float:
-        bonus = position_scores.get(position, 0.0) * phrase_weight
         penalty = dispersion_weight * abs(position - ideal[rank - 1])
-        return bonus - penalty
+        return bonus(position, rank) * phrase_weight - penalty
 
     n = len(positions)
     neg = float("-inf")
@@ -139,11 +156,77 @@ def similarity_position_scores(
     return scores
 
 
+RANK_NORMALIZATIONS = ("raw", "rownorm", "zscore")
+
+
+def similarity_rank_scores(
+    similarity_matrix: np.ndarray,
+    scale: float = 1.0,
+    normalize: str = "rownorm",
+) -> dict[int, dict[int, float]]:
+    """Per-resolution paragraph bonuses for `segment_gap`'s `rank_scores`.
+
+    Keeps the similarity matrix's rows apart instead of collapsing them, so resolution `i`
+    is scored by its *own* similarity profile (row `i`), not by whichever resolution happens
+    to match a paragraph best.
+
+    `normalize` fixes what the bonus means, which matters more than `scale`: the measured
+    absolute similarity level (mean 0.1314 corpus-wide) is far larger than the
+    correct-vs-best-wrong margin (0.0201), so a bonus proportional to the raw level is
+    dominated by noise, whichever scale it is given (docs/DECISIONS.md, commit 8f90e4b).
+
+    * ``raw`` -- bonus = similarity. The form already measured NEGATIVE; kept as the null.
+    * ``rownorm`` -- bonus = similarity / row max, so each resolution's best paragraph scores
+      `scale` and the level cancels out. Comparable across resolutions by construction.
+    * ``zscore`` -- bonus = (similarity - row mean) / row std, clipped at 0, so only
+      paragraphs this resolution likes *more than its own average* score at all, in units of
+      that row's own dispersion.
+
+    Args:
+        similarity_matrix: shape (k_e, k_p) -- k_e resolutions, k_p paragraphs.
+        scale: multiplies every bonus; trades off against `segment_gap`'s dispersion penalty
+            of 1.0 per paragraph of drift (and is multiplied by `phrase_weight` on top).
+        normalize: one of `RANK_NORMALIZATIONS`.
+
+    Returns:
+        dict mapping resolution index -> {paragraph index -> bonus}, sparse (zero and
+        negative bonuses are omitted, which is what makes `zscore` a filter as well as a
+        rescaling).
+    """
+    if normalize not in RANK_NORMALIZATIONS:
+        raise ValueError(f"normalize must be one of {RANK_NORMALIZATIONS}, got {normalize!r}")
+    if similarity_matrix is None or similarity_matrix.size == 0:
+        return {}
+    matrix = np.asarray(similarity_matrix, dtype=float)
+    if matrix.ndim != 2:
+        return {}
+
+    if normalize == "raw":
+        weights = matrix
+    elif normalize == "rownorm":
+        row_max = matrix.max(axis=1, keepdims=True)
+        weights = np.divide(matrix, row_max, out=np.zeros_like(matrix), where=row_max > 0)
+    else:
+        row_mean = matrix.mean(axis=1, keepdims=True)
+        row_std = matrix.std(axis=1, keepdims=True)
+        weights = np.divide(
+            matrix - row_mean, row_std, out=np.zeros_like(matrix), where=row_std > 0
+        )
+    weights = np.clip(weights, 0.0, None) * scale
+
+    return {
+        int(row): {int(column): float(weights[row, column]) for column in np.flatnonzero(weights[row])}
+        for row in range(weights.shape[0])
+        if weights[row].any()
+    }
+
+
 def segment_day(
     enriched_count: int,
     axis_count: int,
     alignments: Sequence[tuple[int | None, int | None]],
     position_scores: dict[int, float] | None = None,
+    resolution_scores: Mapping[int, Mapping[int, float]] | None = None,
 ) -> list[int]:
     """Count-constrained replacement for `interpolate_positions` that never abstains.
 
@@ -151,6 +234,12 @@ def segment_day(
     open (resolution 0 is implicitly the session start). Unlike `interpolate_positions`,
     this always returns a list -- callers that want to keep an abstention path for other
     reasons (missing HTR, cross-day shift, ...) apply it before calling this.
+
+    `resolution_scores` maps *enriched resolution index* -> {paragraph -> bonus} and is
+    sliced per gap into `segment_gap`'s rank-ordered `rank_scores`: slot `rank` of the gap
+    after anchor `left_enriched` is resolution `left_enriched + rank`. Use it for evidence
+    that is specific to one resolution (e.g. `similarity_rank_scores`); `position_scores`
+    stays for evidence that only says "this paragraph looks like a boundary".
     """
     if enriched_count <= 1:
         return []
@@ -188,7 +277,12 @@ def segment_day(
         gap = right_enriched - left_enriched - 1
         if gap <= 0:
             continue
-        chosen = segment_gap(left_axis, right_axis, gap, position_scores)
+        rank_scores = (
+            [resolution_scores.get(left_enriched + rank, {}) for rank in range(1, gap + 1)]
+            if resolution_scores
+            else None
+        )
+        chosen = segment_gap(left_axis, right_axis, gap, position_scores, rank_scores=rank_scores)
         for offset, position in enumerate(chosen, start=1):
             positions[left_enriched + offset] = position
 

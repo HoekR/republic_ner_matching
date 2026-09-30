@@ -1,4 +1,12 @@
-from scripts.s6c_gap_segmentation import segment_day, segment_gap
+import numpy as np
+import pytest
+
+from scripts.s6c_gap_segmentation import (
+    segment_day,
+    segment_gap,
+    similarity_position_scores,
+    similarity_rank_scores,
+)
 
 
 def test_no_resolutions_needs_no_slots():
@@ -62,6 +70,83 @@ def test_segment_day_never_aborts_on_folded_non_monotone_anchors():
     result = segment_day(4, 10, [(1, 4), (2, 4)])
     assert len(result) == 3
     assert result == sorted(result)
+
+
+def test_rank_scores_pull_each_slot_to_its_own_resolutions_evidence():
+    # Two slots in a gap from 0 to 12 (ideal split: 4, 8). Slot 1's resolution likes
+    # paragraph 2 and slot 2's likes paragraph 10 -- a single shared `position_scores` map
+    # cannot express that, since it would offer both hits to both slots.
+    assert segment_gap(0, 12, 2, rank_scores=[{2: 1.0}, {10: 1.0}]) == [2, 10]
+
+
+def test_rank_scores_cannot_invert_the_order_of_two_slots():
+    # Slot 1's evidence sits *after* slot 2's. The DP fills slots in increasing position, so
+    # the result must stay non-decreasing -- at most one of the two hits can be honoured.
+    result = segment_gap(0, 12, 2, rank_scores=[{10: 1.0}, {2: 1.0}])
+    assert result == sorted(result)
+
+
+def test_rank_scores_supersede_position_scores_for_the_slots_they_cover():
+    # The shared map's hit at 6 is ignored where a rank-specific map exists, even an empty one.
+    assert segment_gap(0, 10, 1, {6: 1.0}, rank_scores=[{}]) == [5]
+    assert segment_gap(0, 10, 1, {6: 1.0}, rank_scores=[{3: 1.0}]) == [3]
+
+
+def test_segment_day_routes_resolution_scores_to_the_right_gap_slot():
+    # Gap after the (0, 0) sentinel holds enriched resolutions 1 and 2 (anchor at 3).
+    # Keying by enriched index -- not by rank -- is what makes the evidence addressable.
+    positions = segment_day(
+        4, 12, [(3, 10)], resolution_scores={1: {2: 1.0}, 2: {7: 1.0}}
+    )
+    assert positions == [2, 7, 10]
+
+
+def test_segment_day_ignores_resolution_scores_for_anchored_resolutions():
+    # Resolution 3 is pinned by an anchor, so its own similarity row must not move it.
+    assert segment_day(4, 12, [(3, 10)], resolution_scores={3: {5: 1.0}}) == segment_day(
+        4, 12, [(3, 10)]
+    )
+
+
+def test_rank_scores_keep_rows_apart_where_the_collapsed_form_cannot():
+    # Resolution 0 matches paragraph 0, resolution 1 matches paragraph 2. The collapsed
+    # per-paragraph max reports both paragraphs as equally good for everyone; the per-rank
+    # form retains which row each hit came from. This is the mechanism difference the
+    # corpus re-run tests, stated as an assertion rather than prose.
+    matrix = np.array([[0.9, 0.1, 0.2], [0.2, 0.1, 0.8]])
+    collapsed = similarity_position_scores(matrix, scale=1.0)
+    assert collapsed[0] == pytest.approx(0.9)
+    assert collapsed[2] == pytest.approx(0.8)
+    per_rank = similarity_rank_scores(matrix, scale=1.0, normalize="raw")
+    assert per_rank[0][0] == pytest.approx(0.9)
+    assert per_rank[1][2] == pytest.approx(0.8)
+    assert per_rank[1][0] == pytest.approx(0.2)
+
+
+def test_rownorm_cancels_the_absolute_similarity_level():
+    # Two resolutions with the same *shape* but 10x different levels -- the failure mode
+    # commit 8f90e4b diagnosed -- must produce identical bonuses under rownorm.
+    matrix = np.array([[0.02, 0.01], [0.20, 0.10]])
+    scores = similarity_rank_scores(matrix, scale=1.0, normalize="rownorm")
+    assert scores[0] == pytest.approx(scores[1])
+    assert scores[0][0] == pytest.approx(1.0)
+
+
+def test_zscore_keeps_only_paragraphs_above_a_resolutions_own_mean():
+    matrix = np.array([[0.30, 0.10, 0.10, 0.10]])
+    scores = similarity_rank_scores(matrix, scale=1.0, normalize="zscore")
+    assert set(scores[0]) == {0}
+
+
+def test_similarity_rank_scores_tolerates_an_empty_or_degenerate_matrix():
+    assert similarity_rank_scores(np.zeros((0, 0))) == {}
+    # A flat row has no dispersion to standardise by and must not divide by zero.
+    assert similarity_rank_scores(np.array([[0.5, 0.5]]), normalize="zscore") == {}
+
+
+def test_similarity_rank_scores_rejects_an_unknown_normalization():
+    with pytest.raises(ValueError):
+        similarity_rank_scores(np.array([[0.5, 0.1]]), normalize="softmax")
 
 
 def test_segment_day_clips_an_out_of_order_anchor_instead_of_aborting():

@@ -73,6 +73,15 @@ ceiling but 56.2% of the stream ceiling. It reveals headroom, it does not flatte
 fingerprint, independent of the drifted session label: 1,059/1,511 (70.1%). Its docstring ends
 "Building the channel itself is deferred to a follow-up session." That follow-up never happened.
 
+> **2026-09-30 — the execution design for this track's working hypothesis now exists:**
+> [`plans/STAGED_ANCHOR_CONSOLIDATION.md`](STAGED_ANCHOR_CONSOLIDATION.md). It specifies the
+> procedure (objective anchors first → reconcile → subdivide gaps → reconcile → repeat), promotes
+> `s6b_known_point_ledger`'s gap-size distribution to the objective, and identifies **partial
+> abstention in `segment_day`** as the one code change with real reach. Two measurements made while
+> writing it: the DP consumes only ~4–7% of available anchors on the seed days, because
+> `align_session`'s `anchor_only_diagonal` gate makes groups B/C/D *structurally invisible* rather
+> than merely down-weighted. Finding D above is that doc's direct precursor.
+
 ## Working hypothesis (user, 2026-09-25)
 
 1. If resolutions were recognized correctly, applying `k_e` sequentially along an inventory would
@@ -766,7 +775,18 @@ against 5c.1's numbers as the baseline to beat (exact 0.639 / within-1 0.911 on 
 against `separated`.
 
 ### Step 6 — Session-level sequence alignment between the two streams
-<!-- status: done 2026-09-25 — GATE DID NOT PASS; do not build the aligner. Premise overturned below. -->
+<!-- status: retired 2026-09-25 — see the three-part form in docs/ITERATION_POLICY.md ("Retired step").
+     (1) Gate did not pass, on its own premise rather than on a metric: the session mapping is not
+         *absent* in the five annual inventories, so the aligner's motivation does not hold. Do not
+         build the aligner now.
+     (2) Establishes, regardless of the verdict: 1,089/1,089 annual-inventory sittings already pin to
+         an HTR session; order reaches correspondences the date label provably cannot (3/3 determined
+         bracket pairings, at 20, 22 and 36 days — mechanism confirmed, population too small to carry
+         the step); no-insertion is 95.5% true at session level, broken only by 4562; the post-edition
+         bar (1630-05-14) is now measured and enforced rather than assumed.
+     (3) Re-evaluate if: 4562/4861 gain axis coverage; the determined-bracket population grows beyond
+         40 resolutions; or the pinned-but-wrong caveat below proves widespread, which would change
+         the premise this step was retired on. -->
 
 **Result (2026-09-25).** `scripts/session_offset_eval.py` (+ `tests/test_session_offset_eval.py`,
 13/13 passing) → dataset `session_offset_eval`. Thresholds were fixed in the script docstring before
@@ -857,6 +877,41 @@ pinned sittings, compare the enriched date against the date of the *content-veri
 (`s6b_session_fingerprint_match`) rather than against the flat label the concordance already used.
 70 pinned sittings already resolve to a session whose label is more than a day away, so the
 population to check is identifiable.
+
+**Addendum, 2026-09-30 — the caveat above is not hypothetical; here is a pinned-but-implausible
+instance in scope.** `1630-02-22` (inventory 3189, part of the fully-pinned population the table
+above counts as resolved — 108/108): 28 enriched resolutions, `resolution_source == ledger_direct`,
+`inventory_ambiguous == False` for all 28, nothing in the concordance's own confidence signals
+flags it. Its axis carries only 12 paragraphs. Entity-overlap anchor evidence (the same per-cell
+test `align_session` itself runs, `entity_match_score > 0`) shows two collapses that are not alike:
+
+- idx 0–6 (7 resolutions): **zero** anchor evidence anywhere in this axis, all placed at paragraph
+  0 — the axis's literal first paragraph, so there is no paragraph *before* it a genuine anchor
+  could sit on. Bracketed on one side only.
+- idx 15–22 (8 resolutions): also zero anchor evidence, but bracketed on **both** sides by real,
+  confirmed anchors from this same session (paragraph 7 before, paragraph 8 after), one paragraph
+  apart.
+
+The one-sided pile is exactly the shape a mis-mapped session boundary produces — genuine content
+would be expected to leave *some* faint entity overlap somewhere across 12 paragraphs, and none of
+the seven have any. The two-sided pile is bracketed by confirmed anchors from *this* session and
+reads as ordinary axis coarseness instead. The two are distinguishable per gap (does a zero-anchor
+run have a real anchor on both sides, or only one?), not just by day-level ratios.
+
+**Refinement to finding D / working hypothesis point 3 — a confirmed cross-day anchor pins a cut,
+but a cut plus a count is not yet a correction.** Point 3 says misplaced day anchors can be
+corrected by the resolutions that do align confidently. That is right about *where*: a confirmed
+anchor into a neighboring day's axis marks the resolution-index cut point, and the count of
+resolutions on each side of that cut is then known for free — no extra measurement needed. But
+that count cannot simply be reassigned to "the neighboring day" as one relocation, because the
+flanking group can itself be **lumped**: a compression of more than one true upstream session, not
+a clean displacement of exactly one. Knowing "7 resolutions belong before this cut" does not say
+whether they belong to one prior session or are themselves a merge of two or more. The correction
+channel finding D calls "never wired up" has to resolve *how many* distinct sessions are
+compressed in each bracket, not just relocate a count — otherwise it trades one mis-partition (this
+day) for another, unresolved one (the neighboring day, now carrying an unattributed lump of its
+own). This is finding C's ceiling-honesty note one level down: the correction inherits the same
+partition-dependency problem as the diagnostic it is meant to fix.
 
 **Consequence: Step 3 is next**, which is where the track's own gate said it would go if Step 6
 closed — reached by a different route than the gate anticipated.

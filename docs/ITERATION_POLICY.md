@@ -37,6 +37,28 @@ session, and for recognizing when a track should be closed instead of continued.
   gap like `res_start` or `htr_classified_lines.csv` against inventories 3185-3189). Distinguished
   from ordinary stagnation because it is backed by a specific diagnostic, not "we tried a bit and it
   didn't move."
+- **Retired step**: a step whose gate did not pass. Record it as three things, never as a bare
+  verdict: **(1)** what the gate said *now*, and against *which metric*; **(2)** what it established
+  that survives the verdict — mechanism confirmed, population sized, constraint measured, premise
+  overturned; **(3)** the conditions under which it should be re-evaluated. A retired step is
+  sometimes a wrong idea, but often a right idea at the wrong time, and it may evaluate differently
+  against a future evolved state. A bare "NEGATIVE" destroys exactly the information needed to
+  recognise when that time has arrived, and the compressed one-line form in `PLAN.md` destroys what
+  is left.
+
+  *Worked example (2026-09-30).* The per-rank TF-IDF wiring was recorded "NEGATIVE globally (best
+  −25 separated)". Scoring the same condition for **correctness** against gold then found it
+  *improves* placement — exact start agreement 0.5032 → 0.5865 applied everywhere, better than the
+  gated variant's 0.5321. The original verdict was accurate against `separated_count` and
+  misleading as a summary, because the metric it was gated on and the metric the project ultimately
+  cares about disagree in sign on solid days. Had the entry read "does not pass on
+  `separated_count`; establishes that per-row normalisation moves placements at all where the
+  absolute-level form provably could not; re-evaluate if correctness replaces coverage as the
+  gating metric", the reversal would have been visible without re-deriving it.
+
+  The same applies to a caveat *inside* a retired step: a step's verdict closes only the question it
+  gated on. An unresolved caveat does not inherit the step's `done` status — give it its own
+  `docs/DECISIONS.md` entry (see 2026-09-30: "Pinned-but-wrong session mapping").
 
 ## Choosing the next track
 

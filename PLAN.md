@@ -43,9 +43,21 @@
 
 2. **`tfidf-embeddings-wiring`** ([plans/TFIDF_EMBEDDINGS_TRACK.md](plans/TFIDF_EMBEDDINGS_TRACK.md))
    - TF-IDF similarity AUC 0.893 (paragraph granularity)
-   - Not yet wired into segmentation pipeline
+   - Collapsed `position_scores` wiring NEGATIVE; mechanism diagnosed (bonus tracks the absolute similarity level, not the margin)
+   - Per-rank `rank_scores` wiring measured corpus-wide, no gold: NEGATIVE everywhere (best −25), **POSITIVE gated to weak_separation days (+315, 8,315 → 8,630)**
+   - Gated gain scored for correctness on gold (2026-09-29): **real** — exact start agreement 0.3218 → 0.4253 on weak days, 18 of 22 adjudicable moved rows go toward gold
+   - **But the gate is wrong**: ungated scores *better* on correctness (exact 0.5865 vs gated 0.5321), so the corpus-wide −25 `separated` is a coverage loss that is a correctness gain
+   - Next: decide whether `separated` or gold correctness rules when they disagree (`docs/DECISIONS.md`) — blocks any placement change
 
-3. **`resolution-loss-census`** (newly completed 2026-09-29)
+3. **`staged-anchor-consolidation`** ([plans/STAGED_ANCHOR_CONSOLIDATION.md](plans/STAGED_ANCHOR_CONSOLIDATION.md), opened 2026-09-30)
+   - Execution design for `COLLISION_AVOIDANCE_TRACK`'s working hypothesis (2026-09-25), not a new framing
+   - A clump is an **unresolved gap**, not a result — so no schema change, and gap-minimisation is not gameable
+   - Objective: shrink gap mass via staged propagation (objective anchors → reconcile → subdivide → repeat); measure already exists (`s6b_known_point_ledger` gap-size distribution, baseline 947 gaps / 70.7% of unplaced work)
+   - Measured: the DP consumes only ~4–7% of available anchors; groups B/C/D are **structurally invisible** to `align_session`'s `anchor_only_diagonal` gate, not merely down-weighted
+   - One code change with reach: **partial abstention** in `segment_day` (today it never abstains, so it fabricates precision — `1630-02-22` emits 28 placements where 7 + 2 gaps is honest)
+   - Blocked on: sizing the pinned-but-wrong population (`docs/DECISIONS.md` 2026-09-30) — the procedure's most objective anchor class is the one with an open correctness question
+
+4. **`resolution-loss-census`** (newly completed 2026-09-29)
    - 621 of 1,137 cross_day_shift sit on verified sessions; 552 (93%) collision-locked
    - 27 are true date-label conflicts; 516 lack fingerprint verification
    - Diagnostic: identifies which unplaced mass is recoverable (relabelling) vs structural (collisions)
