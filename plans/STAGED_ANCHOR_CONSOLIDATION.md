@@ -349,10 +349,14 @@ output on the pathology corpus seed days.
 **Gate:** on `1630-02-22`, output is 7 placements + 2 characterised gaps; corpus-wide gap-mass and
 gold correctness both reported.
 
-**Result, 2026-10-01:** Gate PASS (2 abstained gaps on 1630-02-22, matching expected). Gap-mass
-measured on seed days: 2 gaps abstained, 16 resolutions unresolved (1630-02-22 only; other seed days
-have no forced-collapse gaps). Implementation: `segment_day` returns `list[int | None]` where `None`
-marks unresolved positions; callers filter `None` before building boundaries. All 50 tests pass.
+**Result, 2026-10-01:** Gate PASS on both metrics. **Gap-mass:** seed day 1630-02-22 has exactly
+2 abstained gaps with 16 total unresolved resolutions (matching expected); other seed days have
+adequate room for their resolutions. **Gold correctness (Guardrail 5):** measured on 19 scoreable
+boundary_gold_sample days using existing separated_accuracy_eval convention (exact-start-paragraph
+agreement): 0.5080 before and after abstention (no change). Abstaining on forced-collapse gaps does
+not hurt correctness on gold. Implementation: `segment_day` returns `list[int | None]` where `None`
+marks unresolved positions; callers filter `None` before building boundaries. All 50 existing tests
+pass; added 3 new unit tests for abstention behavior.
 
 ### Step 4 — Two ways to add channels, run as a comparison, not a single choice
 <!-- status: todo — split into 4a/4b 2026-10-01 after pathology-corpus's 0/85-chosen result
