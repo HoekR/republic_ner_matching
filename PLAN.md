@@ -57,7 +57,7 @@
    - One code change with reach: **partial abstention** in `segment_day` (today it never abstains, so it fabricates precision — `1630-02-22` emits 28 placements where 7 + 2 gaps is honest)
    - Step 1 DONE (2026-10-01): pinned-but-wrong population sized at 0.7% (8/1,123) confirmed
    - Step 2 DONE (2026-10-01): harvest char→paragraph join verified on 3 seed days; 93% of axis mismatches traced to harvest-side grouping defect, fix implemented
-   - Step 3 DONE (2026-10-01): partial abstention in `segment_day` implemented; gate PASS both metrics — gap-mass 2 abstained gaps on 1630-02-22 (expected), gold correctness 0.5080 before/after (Guardrail 5 satisfied)
+   - Step 3 DONE (2026-10-01): partial abstention in `segment_day` implemented; gate PASS both metrics — gap-mass 2 abstained gaps on 1630-02-22 (expected); gold correctness (re-measured live, first attempt read a stale cache — see `docs/DECISIONS.md`) exact-agreement 0.5431→0.6486, abstained population only 13.9% correct beforehand vs 54.3% baseline
    - Next: Step 4a/4b, staged vs unstaged channel wiring
 
 4. **`resolution-loss-census`** (newly completed 2026-09-29)

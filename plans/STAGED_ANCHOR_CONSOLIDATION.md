@@ -349,14 +349,21 @@ output on the pathology corpus seed days.
 **Gate:** on `1630-02-22`, output is 7 placements + 2 characterised gaps; corpus-wide gap-mass and
 gold correctness both reported.
 
-**Result, 2026-10-01:** Gate PASS on both metrics. **Gap-mass:** seed day 1630-02-22 has exactly
-2 abstained gaps with 16 total unresolved resolutions (matching expected); other seed days have
-adequate room for their resolutions. **Gold correctness (Guardrail 5):** measured on 19 scoreable
-boundary_gold_sample days using existing separated_accuracy_eval convention (exact-start-paragraph
-agreement): 0.5080 before and after abstention (no change). Abstaining on forced-collapse gaps does
-not hurt correctness on gold. Implementation: `segment_day` returns `list[int | None]` where `None`
-marks unresolved positions; callers filter `None` before building boundaries. All 50 existing tests
-pass; added 3 new unit tests for abstention behavior.
+**Result, 2026-10-01:** Gate PASS on both metrics (see `docs/DECISIONS.md` 2026-10-01 entry for the
+full account, including a correction to the first correctness measurement). **Gap-mass:** seed day
+1630-02-22 has exactly 2 abstained gaps with 16 total unresolved resolutions (matching expected);
+other seed days have adequate room. **Gold correctness (Guardrail 5):** measured by calling
+`align_session` + `segment_day` live per gold day (not by reading the cached
+`resolution_concordance_1626_1630` parquet, which turned out to still reflect the pre-abstention
+2026-09-29 production run and so could not show any before/after difference — a first attempt using
+that file wrongly reported "no change" and has been superseded), scored against `boundary_gold_sample`
+with `separated_accuracy_eval.accuracy()`'s own convention across all 50 gold days: **OLD
+exact-agreement 0.5431 (189/348) vs NEW 0.6486 (179/276)**; on exactly the 72 gold-scoreable
+resolutions NEW abstains on, OLD was right only 13.9% of the time (10/72) against its own 0.5431
+baseline — the abstained population is disproportionately the forced-repeat guesses this step
+targeted, not a neutral sample. Implementation: `segment_day` returns `list[int | None]` where
+`None` marks unresolved positions; callers filter `None` before building boundaries. All 50
+existing tests pass; added 3 new unit tests for abstention behavior.
 
 ### Step 4 — Two ways to add channels, run as a comparison, not a single choice
 <!-- status: todo — split into 4a/4b 2026-10-01 after pathology-corpus's 0/85-chosen result
