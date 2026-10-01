@@ -65,6 +65,7 @@ from typing import Any
 from fuzzy_search.search.phrase_searcher import FuzzyPhraseSearcher
 
 from data_io import load, resolve, save_semi_structured
+from scripts.s4_corpus_paragraph_predictions import axis_for_date, resolved_sessions, session_of
 from scripts.s6a_char_axis_evaluation import char_starts
 from scripts.s6b_known_point_ledger import (
     DEFAULT_END,
@@ -469,11 +470,26 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    axis_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    # Resolved per axis_for_date (plans/STAGED_ANCHOR_CONSOLIDATION.md Step 2), not the raw
+    # same-calendar-day grouping: 137/1,119 dates disagree between the two, and in 93% of
+    # those the resolved session is the one carrying the real content (e.g. a raw same-day
+    # axis that is empty, or that pulls in a second, unrelated inventory's paragraphs sharing
+    # the date label by coincidence). Harvesting the raw grouping silently skipped these dates
+    # or risked char_positions landing past the end of the axis the DP actually scores against.
+    raw_axis_by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    axis_by_session: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in load(AXIS_DATASET):
-        date = str(record["date"])
-        if args.start <= date <= args.end:
-            axis_by_date[date].append(record)
+        raw_axis_by_date[str(record["date"])].append(record)
+        axis_by_session[session_of(record["flat_id"])].append(record)
+    session_by_date = resolved_sessions()
+
+    candidate_dates = {date for date in raw_axis_by_date if args.start <= date <= args.end}
+    candidate_dates |= {date for date in session_by_date if args.start <= date <= args.end}
+    axis_by_date: dict[str, list[dict[str, Any]]] = {
+        date: resolved
+        for date in candidate_dates
+        if (resolved := axis_for_date(date, raw_axis_by_date, axis_by_session, session_by_date))
+    }
 
     alignment = load(ALIGNMENT_DATASET)
     alignment = alignment[

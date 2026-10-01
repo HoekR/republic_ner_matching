@@ -164,12 +164,13 @@ expected unlocked mass, not by size alone, and measure that claim rather than as
 
 ## Guardrails and open problems
 
-1. **The foundation is circular until the mapping question is sized.** Confidence order puts
-   `session_boundary` first at weight 5.0, but a confidently-pinned session can be wrong with
-   nothing flagging it — `1630-02-22` is `ledger_direct`, `inventory_ambiguous == False`, 28
-   resolutions against a 12-paragraph axis. The open `docs/DECISIONS.md` 2026-09-30 item
-   (“Pinned-but-wrong session mapping”) is therefore a **prerequisite for step 1 of the procedure**,
-   not optional housekeeping.
+1. **The foundation is circular until the mapping question is sized — now sized, 2026-10-01
+   (`docs/DECISIONS.md`).** Confidence order puts `session_boundary` first at weight 5.0; the
+   date-identity failure mode is small (8/1,123 pinned sittings, 0.7%, confirmed wrong by
+   content fingerprint vs raw archival date) and does not block it. But `1630-02-22` — the
+   instance that raised this guardrail — itself comes back `date_label_agrees`: its problem
+   (28 resolutions, 12-paragraph axis, one-sided zero-anchor pile) is **not** a date-mapping
+   error, so this guardrail does not cover it. That failure mode is Steps 3/4's to fix.
 2. **Greedy staging is the failure mode this track already named.** `COLLISION_AVOIDANCE_TRACK`
    Step 5c.1: “Gap-filling around unverified anchors propagates error both ways — a wrong anchor
    corrupts the gap on each side of it.” Anchors placed early must remain **revisable**. Constraint
@@ -193,11 +194,16 @@ expected unlocked mass, not by size alone, and measure that claim rather than as
 ## Steps
 
 ### Step 1 — Size the pinned-but-wrong population
-<!-- status: todo — prerequisite, see guardrail 1 -->
-Run the cheap follow-up Step 6 named and never executed: for pinned sittings, compare the enriched
-date against the content-verified raw session date (`s6b_session_fingerprint_match`) rather than the
-flat label. 70 pinned sittings already resolve to a session labelled more than a day away.
-**Gate:** how large is the population whose most objective anchor is untrustworthy?
+<!-- status: DONE 2026-10-01 -- see docs/DECISIONS.md "Pinned-but-wrong session mapping, sized". -->
+Ran `scripts/fingerprint_assignment_audit.py` (already written, never executed): joins every pinned
+sitting through `s6b_session_fingerprint_match`'s content fingerprint to `session_index_all`'s raw
+archival date, independent of resolutions_flat's own (possibly drifted) label.
+**Gate result:** 1,123 pinned sittings — 8 (0.7%) confirmed `date_label_conflict`, 82 (7.3%)
+`raw_session_reused` (known multi-claim collisions, not new wrongness), 351 (31.3%)
+`unmatched_fingerprint` (unverifiable either way), 682 (60.7%) `date_label_agrees`. Small enough
+that `session_boundary`/D stays first in `CHANNEL_WEIGHT` order without further gating. **Does not
+explain `1630-02-22`** (comes back `date_label_agrees`) — that instance's crowding is a Step 3/4
+problem, not a date-mapping one; do not re-litigate this step to chase it.
 
 ### Step 2 — Verify the harvest join and scope
 <!-- status: DONE on the 3 seed days ONLY 2026-10-01 -- PASSED there, but see the
@@ -306,6 +312,15 @@ proposed. 93% are a harvest-side grouping defect (fixable by switching the harve
 `axis_for_date`, no placement question involved); the remaining 7% are a session-date-drift
 question that belongs to Step 1, not to anchor placement at all.
 
+**Harvest fix implemented, 2026-10-01, not yet re-run.** `scripts/s6b_anchor_harvest.py`'s
+date enumeration now resolves each date via `axis_for_date` (same `axis_by_date` /
+`axis_by_session` / `resolved_sessions()` idiom as `s4_corpus_paragraph_predictions.py` and
+its other callers) instead of grouping `paragraph_axis_1626_1630` by raw calendar date. This
+closes the 93% class outright and adds dates whose raw same-day axis was empty (e.g.
+`1626-01-17`) to the harvested population. The 7% session-date-drift class (9 dates) is
+unaffected -- it is Step 1's question, not this one. **Not yet re-run** (heavy compute, full
+corpus rebuild) -- needs a user-run pass before `s6b_anchor_harvest.jsonl` reflects this.
+
 **Real finding, already documented elsewhere, newly consequential here: harvest group A is stale.**
 Cross-checking `tier1_entity_nw` against the paragraph indices already hand-verified for
 `1630-02-22` in `plans/PATHOLOGY_CORPUS_RUNLOG.md` Step 1 (9->1, 11->4, 12->5, 14->7, 23->8,
@@ -345,9 +360,9 @@ gold correctness both reported.
 Both modes below are blocked on the same prerequisite: **Step 2** (char→paragraph join,
 guardrail 6) must land first — B/C/D anchors are `char_position`-keyed; neither mode can place
 them on the paragraph axis `align_session` uses until that join is verified. **Step 1** (sizing
-the pinned-but-wrong population, guardrail 1) matters specifically for `session_boundary`/D at
-weight 5.0, the first channel in both orderings below — a wrong D anchor corrupts whatever is
-staged or combined on top of it.
+the pinned-but-wrong population, guardrail 1) is done, 2026-10-01: `session_boundary`/D at weight
+5.0, the first channel in both orderings below, is wrong for only 0.7% of pinned sittings
+(confirmed) — not a blocker for either mode.
 
 **4a — Staged (sequential), as originally specified.** Add channels in `CHANNEL_WEIGHT` order
 (D -> A -> C -> B). At each stage: place that channel's anchors *only inside gaps not yet
