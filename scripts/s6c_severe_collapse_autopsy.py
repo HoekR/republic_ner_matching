@@ -23,6 +23,20 @@ Cause classes (mutually exclusive, from prediction fields only — no NW re-run)
 Also joins Tier O span-gap day flags so we can see how many collapse days sit
 inside ``weak_separation`` interrupters vs elsewhere.
 
+**Correction, 2026-09-30 (pathology-corpus Step 2 Stage A,
+plans/PATHOLOGY_CORPUS_RUNLOG.md):** ``pigeonhole_floor`` above divides by the whole day's
+``paragraph_count``, which assumes every paragraph is reachable from every resolution. It
+is not — resolutions are boxed between real anchors, and the room between two anchors can
+be far narrower than the whole day's axis. Checked directly on all 58 ``axis_requires_repeats``
+/ ``room_on_axis`` days: **every one** is fully forced once the real anchor backbone is used
+instead (span-level floor == observed pile, 179/179 gaps, zero exceptions) — so
+``excess_over_floor``/``cause_class`` above should not be read as "avoidable collapse" for
+these two classes. ``span_verdict_for_day`` below adds the corrected, anchor-aware verdict
+(this one NW re-run per already-flagged severe day, not per corpus day — ~83 re-runs, not
+~1,100). The whole-day fields are kept unchanged, for continuity and because
+``pigeonhole_forced`` itself (floor computed with the *maximum possible* room) remains a
+valid, anchor-independent lower bound.
+
 Usage:
     uv run python scripts/s6c_severe_collapse_autopsy.py
 """
@@ -41,8 +55,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from build_alignment_new import align_session, calculate_idf_weights
 from data_io import load, save_semi_structured
+from scripts.build_pathology_corpus import load_axis_indexes
 from scripts.metrics_span_gap_map import SEVERE_COLLAPSE_MIN, severe_collapse_dates
+from scripts.pathology_corpus_stage_a import load_combined_overlap, spans_for_day
+from scripts.s4_corpus_paragraph_predictions import axis_for_date, grouped_enriched
+from scripts.s4_paragraph_axis_baseline import build_axis_overlap
 
 PRED_DATASET = "s4_corpus_paragraph_predictions"
 SPAN_GAP_DATASET = "metrics_span_gap_map"
@@ -114,6 +133,93 @@ def collapse_day_record(row: dict[str, Any]) -> dict[str, Any] | None:
         "cause_class": classify_cause(k_e=k_e, paragraph_count=paragraph_count),
         "axis_shorter_than_k_e": bool(paragraph_count < k_e),
     }
+
+
+def span_verdict_for_day(
+    date: str,
+    k_e: int,
+    axis_count: int,
+    enriched_by_date: dict[str, list[str]],
+    axis_by_date: dict[str, list[dict[str, Any]]],
+    axis_by_session: dict[str, list[dict[str, Any]]],
+    session_by_date: dict[str, str],
+    combined_overlap: pd.DataFrame,
+    idf_weights: dict[str, float],
+) -> dict[str, Any]:
+    """The anchor-aware correction to `pigeonhole_floor` for one already-flagged severe day.
+
+    Re-runs `align_session` (production defaults, no similarity wiring -- same as
+    `pathology_corpus_stage_a.py`) to get the real anchor backbone, then takes the WORST
+    (highest `excess_over_floor`) anchor-bracketed gap on the day: any single provably
+    avoidable pile makes the day's collapse partly a choice, not purely forced.
+    `span_verdict` is `anchor_forced` when even the worst gap is at its floor, `chosen_excess`
+    otherwise -- see the module docstring's 2026-09-30 correction note for why this differs
+    from `cause_class` above.
+    """
+    enriched_ids = enriched_by_date.get(date)
+    axis = axis_for_date(date, axis_by_date, axis_by_session, session_by_date)
+    if not enriched_ids or not axis:
+        return {
+            "span_pigeonhole_floor": None,
+            "span_excess_over_floor": None,
+            "span_verdict": "no_axis_or_enriched",
+            "span_worst_gap": None,
+        }
+    axis_ids = [record["axis_id"] for record in axis]
+    lookup = build_axis_overlap(axis, combined_overlap)
+    alignments = align_session(enriched_ids, axis_ids, lookup, idf_weights)
+    spans = spans_for_day(k_e, len(axis_ids), alignments)
+    if not spans:
+        return {
+            "span_pigeonhole_floor": 0,
+            "span_excess_over_floor": 0,
+            "span_verdict": "anchor_forced",
+            "span_worst_gap": None,
+        }
+    worst = max(spans, key=lambda s: s["excess_over_floor"])
+    verdict = "anchor_forced" if worst["excess_over_floor"] <= 0 else "chosen_excess"
+    return {
+        "span_pigeonhole_floor": worst["pigeonhole_floor"],
+        "span_excess_over_floor": worst["excess_over_floor"],
+        "span_verdict": verdict,
+        "span_worst_gap": {
+            "left_enriched": worst["left_enriched"],
+            "right_enriched": worst["right_enriched"],
+            "unanchored_count": worst["unanchored_count"],
+            "paragraph_room": worst["paragraph_room"],
+        },
+    }
+
+
+def attach_span_correction(
+    days: list[dict[str, Any]],
+    enriched_by_date: dict[str, list[str]],
+    axis_by_date: dict[str, list[dict[str, Any]]],
+    axis_by_session: dict[str, list[dict[str, Any]]],
+    session_by_date: dict[str, str],
+    combined_overlap: pd.DataFrame,
+    idf_weights: dict[str, float],
+) -> list[dict[str, Any]]:
+    """Add the span-level correction to every already-built day record. Only touches
+    days already identified severe by `collapse_day_record` -- one NW re-run per severe
+    day (~83), not per corpus day (~1,100)."""
+    return [
+        {
+            **day,
+            **span_verdict_for_day(
+                day["enriched_date"],
+                int(day["k_e"]),
+                int(day["paragraph_count"]),
+                enriched_by_date,
+                axis_by_date,
+                axis_by_session,
+                session_by_date,
+                combined_overlap,
+                idf_weights,
+            ),
+        }
+        for day in days
+    ]
 
 
 def load_span_gap_day_index(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -312,6 +418,23 @@ def main() -> None:
 
     records = build_records(predictions, span_gap)
     meta = records[0]
+    days = [r for r in records[1:] if r.get("record_type") == "day"]
+    implicated = [r for r in records[1:] if r.get("record_type") == "implicated_gap"]
+
+    # Span-level correction (2026-09-30, see module docstring): one NW re-run per
+    # already-flagged severe day, not per corpus day.
+    axis_by_date, axis_by_session, session_by_date = load_axis_indexes()
+    combined_overlap = load_combined_overlap()
+    idf_weights = calculate_idf_weights(combined_overlap)
+    enriched_by_date = grouped_enriched()
+    days = attach_span_correction(
+        days, enriched_by_date, axis_by_date, axis_by_session, session_by_date,
+        combined_overlap, idf_weights,
+    )
+    span_verdict_totals = Counter(d.get("span_verdict") for d in days)
+    meta["span_verdict_totals"] = dict(span_verdict_totals)
+    meta["n_chosen_excess_days"] = int(span_verdict_totals.get("chosen_excess", 0))
+    records = [meta, *days, *implicated]
 
     path = save_semi_structured(
         records,
@@ -348,6 +471,11 @@ def main() -> None:
     )
     print(f"recommended_focus={meta['recommended_focus']}")
     print(meta["global_spans_note"])
+    print(
+        f"span_verdict_totals={meta['span_verdict_totals']} "
+        f"(n_chosen_excess_days={meta['n_chosen_excess_days']}) -- "
+        "anchor-aware correction; see module docstring 2026-09-30"
+    )
 
 
 if __name__ == "__main__":

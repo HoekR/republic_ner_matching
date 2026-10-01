@@ -206,8 +206,8 @@ path disagreement in `data_manifest.toml:271` — resolved in the NW path's favo
 
 ## Step 2 — Span segmentation + corpus-wide classifier at width 0
 
-**Status: not started.** Restructured into Stage A (forced vs chosen) / Stage B (classify the chosen
-residue only) per the review above.
+**Status: Stage A implemented, not yet run.** Restructured into Stage A (forced vs chosen) / Stage B
+(classify the chosen residue only) per the review above.
 
 **Scope up, do not start corpus-wide** (user, 2026-09-30). Run one inventory or one month first, and
 only widen once that output has been read. Rationale from Step 1's own history: three defects that
@@ -216,3 +216,201 @@ rows — at corpus scale they would have produced ~1,100 days of silently wrong 
 obvious signal. A month is enough to see whether Stage A's forced/chosen split behaves, and cheap
 enough to throw away. Suggested order: one month → one inventory → corpus. Per `CLAUDE.md` the user
 runs heavy compute.
+
+**Built:** `scripts/pathology_corpus_stage_a.py` — per-span (one anchor-bracketed gap in
+`segment_day`'s backbone) `pigeonhole_floor` / `observed_pile` / `excess_over_floor`, classified
+`forced` (pile == floor) vs `chosen` (pile > floor). Reuses `align_session` at production defaults
+(no similarity wiring) so the anchors it sees are the anchors `segment_day` sees, and calls
+`build_anchor_backbone` / `segment_gap` directly rather than re-deriving the DP's behaviour —
+`build_anchor_backbone` was extracted out of `segment_day` (`scripts/s6c_gap_segmentation.py`) for
+this, a pure refactor (`tests/test_s6c_gap_segmentation.py` still green, 21/21, no behaviour change).
+No dataset write, no manifest entry — same posture as Step 1. Not run yet: per `CLAUDE.md` this is
+the user's compute to run.
+
+**Next action (user):**
+`PYTHONPATH=. uv run python -m scripts.pathology_corpus_stage_a --month 1630-02`
+(covers seed day `1630-02-22`) — read the raw per-span output before widening to one inventory,
+then the corpus.
+
+### Run result, 1630-02: 92 spans, 92 forced, 0 chosen — verified, not a bug
+
+User ran the month; every span classified `forced`. Checked directly against the stored
+`s4_corpus_paragraph_predictions` row and `s6c_severe_collapse_autopsy` for `1630-02-22`, since that
+day is the plan's own "9-deep pile / floor 3 / excess 6" example and a null result there would have
+been the sharpest possible sign of a bug.
+
+**Confirmed real, not a bug.** The stored row does show `max_on_paragraph=9` (two piles of 9, at
+paragraphs 0 and 7) and the autopsy computes `excess_over_floor=6` from the **whole-day** floor
+`ceil(28/12)=3`. But the real anchor backbone (re-derived here, and matching Step 1's already-gated
+ledger exactly: idx 9→1, 11→4, 12→5, 14→7, 23→8, 25→10, 26→11) puts both 9-piles in gaps with
+**room=1** — the next real anchor is one paragraph away. Local floor there is `ceil(8/1)=8`; observed
+pile is 8. `excess_over_floor=0`. Both piles are **fully forced** once anchor position is respected,
+not 6-chosen as the day-level statistic implies.
+
+**Consequence — not confined to this one day.** `s6c_severe_collapse_autopsy`'s `excess_over_floor`
+(whole-day floor, ignores anchor position) overstates avoidable collapse whenever a day's anchors are
+uneven, which is the common case (Step 1: DP anchors only 7-8/28 resolutions on solid days). Stage B's
+plan (see linear-foraging-goblet.md Step 2) currently intends to attach this field as a day-context
+cell as-is — that should be re-examined before Stage B runs, not trusted as "the" excess measure
+alongside span-level `excess_over_floor`.
+
+**Why the whole month is `chosen=0`, structurally, not just on this day.** No `position_scores` /
+`resolution_scores` are wired at production defaults (the gated TF-IDF change is undecided, per
+`tfidf-embeddings-wiring` in PLAN.md). `segment_gap`'s scoring with no bonus term is pure distance-
+to-even-split minimization, which by construction lands at or near the pigeonhole floor. "Chosen"
+collapse, as the plan's Context section framed it ("the unanchored default is capacity-blind"), is a
+claim about evidence *warping* placement away from even-split — with zero evidence wired in there is
+structurally little for Stage A to catch. This does not contradict `staged-anchor-consolidation`
+(PLAN.md track 3); it sharpens it: the two room=1 gaps here are exactly what more anchors from groups
+B/C/D would open up, not something Stage B's fill classifier can fix.
+
+**Not yet done:** confirming this pattern (span floor == observed almost everywhere) holds across
+more of the severe-collapse population before concluding Stage A closes with a structural null.
+
+**Script extended:** `--severe-collapse-ambiguous` targets exactly the 58 (of 83 total)
+`s6c_severe_collapse_autopsy` days with `cause_class` in `{axis_requires_repeats, room_on_axis}` —
+the day-level-floor-is-below-7-but-still-reports-excess population, i.e. where the 1630-02-22
+disagreement could recur. The other 25 (`pigeonhole_forced`) already have day-level floor >= 7,
+so are not ambiguous and are skipped. Prints each day's span-level result next to its day-level
+`cause_class` / `excess_over_floor` and flags `day_level_disagreements` where the day-level metric
+claims nonzero excess but every span is `forced`.
+
+**Next action (user):**
+`PYTHONPATH=. uv run python -m scripts.pathology_corpus_stage_a --severe-collapse-ambiguous`
+— 58 days, spans 1626-03-18 to 1630-05-03. Heavier than one month (58 lookup builds vs 28), but
+still far short of corpus-wide, and it is the exact population this question is about.
+
+### Run result, `--severe-collapse-ambiguous`: 58/58 days, 179/179 spans, zero chosen
+
+Unanimous, not a trend. Every anchor-bracketed gap across all 58 days flagged
+`axis_requires_repeats`/`room_on_axis` by `s6c_severe_collapse_autopsy` is exactly at its span-level
+pigeonhole floor. `1630-02-22` was not a special case.
+
+**Settles three things:**
+
+1. `s6c_severe_collapse_autopsy`'s `excess_over_floor` measures nothing real for any of these 58
+   days — the whole-day floor (`ceil(k_e/paragraph_count)`) is the wrong denominator across the
+   whole population, not just once. Any downstream use of that field as "avoidable collapse"
+   (`metrics_span_gap_map`'s `severe_collapse_implicated`, Stage B's planned day-context cell) is
+   reading an artifact.
+2. Stage A's "chosen" residue — the entire mining target Stage B (`linear-foraging-goblet.md` Step
+   2) was scoped around — is empty in exactly the population most likely to contain it. Given
+   `segment_gap` scores pure distance-to-even-split with no bonus term at production defaults, this
+   is very likely structural (it always lands at the floor absent evidence), not a property of these
+   58 days specifically — though that stronger claim is not formally proven here, only observed on
+   179/179 spans.
+3. Corroborates, does not contradict, `staged-anchor-consolidation` (PLAN.md track 3): the fill step
+   is already optimal given its anchors; the lever is more anchors (groups B/C/D), not a smarter fill
+   classifier.
+
+**Open decision for the user:** Stage B as currently scoped ("classify the chosen-collapse residue
+only") has no residue to classify under current default wiring. Options: (a) retire Stage B, fold
+this null result into the pathology-corpus writeup as the finding itself; (b) re-scope Stage B to
+mine `row_tie_divergence`/`column_contention` over *all* spans regardless of forced/chosen, since
+those were originally about row-local-vs-NW-traceback disagreement (Step 1's tie mechanism), a
+different axis from forced/chosen and not actually gated by it in the plan's own record schema; (c)
+correct `s6c_severe_collapse_autopsy`'s `excess_over_floor` in place (would ripple into
+`metrics_span_gap_map`'s `severe_collapse_implicated`). Not decided here — belongs in
+`docs/DECISIONS.md` once chosen.
+
+### Fix implemented (2026-10-01): anchor-aware span correction added to `s6c_severe_collapse_autopsy.py`
+
+Picked a variant of option (c) from the open decision above: non-destructive rather than
+in-place. Added `span_verdict_for_day` / `attach_span_correction` alongside the existing
+whole-day fields instead of overwriting `excess_over_floor`, so `metrics_span_gap_map`'s
+`severe_collapse_implicated` is untouched. `span_verdict_for_day` re-runs `align_session`
+once per already-flagged severe day (~83, not ~1,100 corpus days) via
+`pathology_corpus_stage_a.spans_for_day`, takes the gap with the worst `excess_over_floor`
+on that day, and labels the day `anchor_forced` (worst gap at floor) or `chosen_excess`
+(worst gap above floor) — a day is only "chosen" if at least one gap provably is.
+`attach_span_correction` wires this into the day rows inside `main()`; the module docstring
+carries the same note. Whole-day `pigeonhole_floor` / `excess_over_floor` / `cause_class`
+are kept unchanged, for continuity and because `pigeonhole_forced` (whole-day floor) remains
+a valid, anchor-independent lower bound on its own terms.
+
+**Verified clean, not yet regenerated.** `python3 -m py_compile scripts/s6c_severe_collapse_autopsy.py`
+and `uv run pytest tests/test_s6c_severe_collapse_autopsy.py -q` both pass (4/4). `main()`
+itself — which re-runs NW alignment over the ~83 severe days and overwrites the
+`s6c_severe_collapse_autopsy` dataset — has not been run; per `CLAUDE.md` that run is the
+user's to trigger, not run by default here.
+
+**Next action (user):** `PYTHONPATH=. uv run python -m scripts.s6c_severe_collapse_autopsy`,
+then read the printed `span_verdict_totals` / `n_chosen_excess_days`. Given Step 2's 58/58
+unanimous-forced finding above, a near-zero `n_chosen_excess_days` across the remaining 25
+`pigeonhole_forced` days would confirm the pattern, not surprise it.
+
+### Run result, full corpus regeneration: 85/85 severe days, `n_chosen_excess_days=0`
+
+**Run:** `PYTHONPATH=. uv run python -m scripts.s6c_severe_collapse_autopsy` (user, 2026-10-01).
+152 records written. `cause_class_totals={pigeonhole_forced: 25, axis_requires_repeats: 49,
+room_on_axis: 11}` — 85 severe days total, up from 83 at Step 2's time (corpus/inputs moved
+slightly between runs; not investigated, not material to this result). `span_verdict_totals=
+{anchor_forced: 85}`, `n_chosen_excess_days=0`.
+
+**This extends, not just repeats, the 58/58 finding.** Step 2's `--severe-collapse-ambiguous`
+check covered the 58 `axis_requires_repeats`/`room_on_axis` days as of that run; this
+regeneration covers the current full 85-day severe population, including the 25
+`pigeonhole_forced` days (expected trivially forced, since their whole-day floor already implies
+it) and the now-60 `axis_requires_repeats`/`room_on_axis` days (the population actually in
+question). Zero exceptions anywhere.
+
+**Settles the open decision above, for Stage B as scoped — correction below narrows what "settles" means.**
+Stage B's mining target ("classify the chosen-collapse residue") is empty across the *entire*
+severe-collapse population at production defaults, not a 58-day sample. Of the three options
+listed there: (a) retire Stage B / fold this into the writeup as the finding, (b) re-scope Stage B
+to `row_tie_divergence`/`column_contention` instead, (c) correct `excess_over_floor` in place —
+this result makes (a) the only one with anything left to act on for the forced/chosen axis
+specifically; (b) remains live as a *separate* axis (row-local-vs-NW-traceback disagreement, Step
+1's tie mechanism, not gated by forced/chosen); (c) was done non-destructively instead (see
+above) rather than in place, so the original dataset fields are preserved for any consumer still
+reading them. Not yet written to `docs/DECISIONS.md` — this doc's own front matter says durable
+decisions belong there, not here; do that before closing the track.
+
+### Correction (2026-10-01): "0/85 chosen" is a group-A-only result, not a verdict on placement quality
+
+The anchor backbone `span_verdict_for_day` re-derives comes from `align_session` at production
+defaults — which, per `plans/STAGED_ANCHOR_CONSOLIDATION.md` ("Groups B/C/D are structurally
+invisible, not merely down-weighted"), only ever sees **group A** (tagger-entity overlap,
+`tier1_entity_nw`), measured at ~4-7% of all harvested anchor evidence. So "every gap is forced"
+means *forced given group-A-only evidence*, not "forced, period." Said plainly to the user when
+first reported as "settles the decision" — that framing was too strong and is corrected here.
+
+**Manually verified, not just inferred from code, on two of the 85 days (user asked for this
+before trusting the aggregate):**
+
+- `1629-06-26`: 20 resolutions, but the day's real HTR only breaks into **2 paragraphs** total
+  (checked the actual Dutch text via `axis_for_date`). `pigeonhole_forced` — no anchor tier can
+  fix this; the ceiling is paragraph-segmentation granularity itself (the separately blocked
+  line-level track), not anchor coverage.
+- `1630-01-05`: 20 resolutions, **17 real paragraphs** of text — room exists in principle. Yet 16
+  pile onto one paragraph because the worst gap's anchor-bracketed window has `paragraph_room=1`:
+  the nearest group-A anchors on either side sit right next to each other near the end of the day,
+  so nothing can spread the other 15 resolutions across the 17 paragraphs a few lines away. This
+  is exactly the shape more anchor tiers would target.
+
+**Checked this isn't a one-off:** across the 60 days that are not trivially whole-day-forced
+(`axis_requires_repeats` + `room_on_axis`), **36/60 have a worst gap with `paragraph_room=1`**
+— an anchor-starved gap, not a lack of underlying text. Confirms `1630-01-05`'s shape is the
+dominant one in this population, not an outlier.
+
+**Consequence:** today's result is real (the fill algorithm, `segment_gap`, is already optimal
+given what it currently sees) but it is not evidence to retire the anchor track — if anything
+it is a concrete, corpus-measured argument *for* `staged-anchor-consolidation`: the lever left on
+the table is anchor coverage (groups B/C/D), not a smarter classifier over group-A-only gaps.
+
+### Field reference — the per-gap table (`spans_for_day`, `scripts/pathology_corpus_stage_a.py`)
+
+| field | meaning |
+|---|---|
+| gap (enriched range) | `[left_enriched, right_enriched]` — the two anchored resolution indices bracketing this stretch; everything strictly between is unanchored |
+| axis window | `[left_axis, right_axis)` — the paragraph range those two anchors pin, i.e. where the unanchored resolutions must land |
+| unanchored | `unanchored_count = right_enriched - left_enriched - 1` — how many resolutions in this gap carry no anchor at all |
+| room | `paragraph_room = max(1, right_axis - left_axis)` — how many distinct paragraph slots `segment_gap` has to place them in; mirrors `segment_gap`'s own slot count exactly, not re-derived independently |
+| floor | `pigeonhole_floor = ceil(unanchored / room)` — arithmetic minimum: the least any single paragraph in this gap must hold under a non-decreasing assignment, regardless of algorithm |
+| observed pile | `observed_pile` — the actual max resolutions-per-paragraph the DP (`segment_gap`) produced for this gap |
+| excess | `excess_over_floor = observed_pile - floor` — 0 means the DP did exactly as well as arithmetic allows; positive means it piled up more than the room required |
+| class | `collapse_class` — `forced` (excess ≤ 0, not a defect, not mined) vs `chosen` (excess > 0, Stage B's only mining target) |
+
+The correction over `s6c_severe_collapse_autopsy`'s day-level `pigeonhole_floor` is that **room**
+and **floor** here come from each gap's real anchor positions, not from the day's total
+`paragraph_count` — see the 1630-02-22 result above for why that changes the verdict.

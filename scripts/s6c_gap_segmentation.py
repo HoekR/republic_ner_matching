@@ -221,6 +221,42 @@ def similarity_rank_scores(
     }
 
 
+def build_anchor_backbone(
+    enriched_count: int,
+    axis_count: int,
+    alignments: Sequence[tuple[int | None, int | None]],
+) -> list[tuple[int, int]]:
+    """Non-decreasing anchor backbone, bounded by the structural session start/end
+    sentinels `(0, 0)` and `(enriched_count, axis_count)` (STEP_S6 section 2.2 group D).
+
+    An anchor that would go backwards relative to the previous one is clipped forward
+    rather than aborting the day. Extracted from `segment_day` so both the live placement
+    path and pathology-corpus span accounting (`scripts/pathology_corpus_stage_a.py`)
+    walk the identical backbone -- duplicating this logic would risk the two drifting apart.
+    """
+    raw_anchors = sorted(
+        {
+            (int(enriched_index), int(axis_index))
+            for enriched_index, axis_index in alignments
+            if enriched_index is not None
+            and axis_index is not None
+            and 0 < enriched_index < enriched_count
+            and 0 <= axis_index < axis_count
+        }
+    )
+
+    backbone: list[tuple[int, int]] = [(0, 0)]
+    last_axis = 0
+    for enriched_index, axis_index in raw_anchors:
+        if enriched_index <= backbone[-1][0]:
+            continue
+        clipped = min(max(axis_index, last_axis), axis_count - 1)
+        backbone.append((enriched_index, clipped))
+        last_axis = clipped
+    backbone.append((enriched_count, axis_count))
+    return backbone
+
+
 def segment_day(
     enriched_count: int,
     axis_count: int,
@@ -244,30 +280,7 @@ def segment_day(
     if enriched_count <= 1:
         return []
 
-    raw_anchors = sorted(
-        {
-            (int(enriched_index), int(axis_index))
-            for enriched_index, axis_index in alignments
-            if enriched_index is not None
-            and axis_index is not None
-            and 0 < enriched_index < enriched_count
-            and 0 <= axis_index < axis_count
-        }
-    )
-
-    # Non-decreasing backbone, always bounded by the structural session start/end
-    # sentinels (STEP_S6 section 2.2 group D) -- an anchor that would go backwards
-    # relative to the previous one is clipped forward rather than aborting the day.
-    backbone: list[tuple[int, int]] = [(0, 0)]
-    last_axis = 0
-    for enriched_index, axis_index in raw_anchors:
-        if enriched_index <= backbone[-1][0]:
-            continue
-        clipped = min(max(axis_index, last_axis), axis_count - 1)
-        backbone.append((enriched_index, clipped))
-        last_axis = clipped
-    backbone.append((enriched_count, axis_count))
-
+    backbone = build_anchor_backbone(enriched_count, axis_count, alignments)
     positions = [0] * enriched_count
     for enriched_index, axis_index in backbone:
         if enriched_index < enriched_count:

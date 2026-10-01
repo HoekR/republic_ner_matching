@@ -292,6 +292,13 @@ phase = "semi"
 description = "S6b anchor harvest table: (date, inventory, char_position, channel, group, weight, payload) rows over the 1626-1630 paragraph axis, spanning provenance groups A (tier-1 entity NW), B (entity_surface_matches_1626_1630 dictionary lookup, s4_fuzzy_surface_form_scan), C (s2_anchor_phrase_inventory, s4_opening_phrase_candidates), and D (session start/end sentinels only -- DAT date hooks and para_start are not yet included, see description in STEP_S6 guide section 2.2). Positions are unresolved to an enriched index except for group A; per-group density is reported separately from any enriched-index-pinned placement"
 parent = "alignment_1626_1630"
 
+[datasets.axis_mismatch_es_provenance]
+tier = "hot"
+path = "formulation/output/axis_mismatch_es_provenance_2026_10_01.jsonl"
+phase = "explore"
+description = "Live REPUBLIC Elasticsearch provenance (inventory_num, session_id, session_date, page_ids, scan_ids from the full_resolutions-2026-03-25 index, lean _source only -- no coordinates/text) for the 2,617 flat_ids touched by the 137/1,119 dates (plans/STAGED_ANCHOR_CONSOLIDATION.md Step 2) where axis_for_date's resolved-session axis disagrees with paragraph_axis_1626_1630's naive same-calendar-day grouping. Exported one-off via formulation/scripts/export_resolution_es_provenance.py (generic flat_ids->ES-provenance tool, reusable for other id lists -- not specific to this run). 1,412/2,617 ids found in this ES index; 1,205 missing (concentrated in high resolution-numbers within large 3185/3186 sessions -- this ES snapshot does not fully mirror this project's own resolutions_flat numbering, checked directly, not assumed)."
+parent = ""
+
 [datasets.s6b_session_fingerprint_match]
 tier = "hot"
 path = "republic_ner_matching/output/s6b_session_fingerprint_match.jsonl"

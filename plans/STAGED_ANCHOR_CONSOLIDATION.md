@@ -200,10 +200,131 @@ flat label. 70 pinned sittings already resolve to a session labelled more than a
 **Gate:** how large is the population whose most objective anchor is untrustworthy?
 
 ### Step 2 — Verify the harvest join and scope
-<!-- status: todo -->
+<!-- status: DONE on the 3 seed days ONLY 2026-10-01 -- PASSED there, but see the
+     corpus-scope finding below, which this check's own by-product search makes clear does
+     NOT generalize. Script: scripts/s6b_char_paragraph_join_check.py, 3 seed days, 292 rows. -->
 Confirm the char→paragraph mapping and the harvest's `window` scope (guardrail 6). Without this the
 ensemble cannot be placed on the axis the DP uses.
 **Gate:** every seed-day anchor maps to exactly one paragraph index; harvest scope is known.
+
+**Result, scoped to exactly 3 calendar dates (`1630-02-22`, `1629-06-03`, `1627-10-06`), 292
+anchor rows total across all 8 channels (132 / 85 / 75) -- not a random sample, not corpus-wide:**
+- `axis_for_date` (what the DP scores against) is paragraph-for-paragraph identical to the
+  same-calendar-day axis `s6b_anchor_harvest.py` used to compute char positions (`axes_match=True`,
+  all 3 days) -- the two are not guaranteed identical in general (`axis_for_date` prefers a
+  resolved session's own axis when one exists, `scripts/s4_corpus_paragraph_predictions.py:111-116`),
+  so this was checked, not assumed.
+- Every one of the 292 harvested anchors resolves to exactly one in-bounds paragraph index via
+  `bisect` over `char_starts(axis)` -- no separator ambiguity (`char_starts` concatenates
+  paragraph text directly, `scripts/s6a_char_axis_evaluation.py:66-73`), no off-by-one, **on
+  these 3 dates**.
+- `window` scope: confirmed to mean the harvest run's date range (1626-01-01..1630-12-31,
+  `s6b_anchor_harvest.jsonl` meta record), not a per-anchor field -- no ambiguity there, and it
+  does cover all 3 seeds.
+
+**Corpus-scope finding (does not generalize from the above, found while answering a follow-up
+question, not originally scoped into this step): the raw-vs-resolved axis mismatch is common,
+not rare.** Checking all `session_by_date` entries corpus-wide: **137 of 1,119 dates (12.2%)**
+have `axis_for_date(date) != axis_by_date[date]`. All 3 pathology-corpus seeds happen to fall in
+the clean 982/1,119 bucket, so the PASS above says nothing about whether the join holds on the
+other 12%. Two concrete failure shapes found there, not hypothetical:
+- `1626-01-17`: the raw same-day axis is **empty** (0 paragraphs); `axis_for_date` resolves to
+  `session-3185-num-13`, which has **39 real paragraphs**. The harvest script enumerates dates
+  from the raw axis-by-calendar-date grouping, so it never runs `_harvest_date_worker` for this
+  date at all -- groups B/C/D are silently never harvested here, not because no evidence exists.
+- `1626-01-12`: the raw same-day axis has **11** paragraphs (9 from `session-3185-num-10` + 2
+  from an unrelated inventory, `session-4562-num-161`, sharing the calendar-date label by
+  coincidence); `axis_for_date` correctly isolates the 9 that belong to the resolved session. A
+  B/C anchor the harvest found inside those 2 foreign paragraphs would carry a char_position past
+  the end of the 9-paragraph axis the DP actually uses -- exactly the `out_of_bounds`/
+  `end_of_axis` case this script's join-mechanics check would catch, which is why it did not
+  fire on the 3 (clean) seeds but should be expected to on a chunk of the other 137 dates.
+
+**Consequence:** before Step 4 runs on anything beyond the 3 seeds, re-run
+`scripts/s6b_char_paragraph_join_check.py` (or a corpus-wide variant of it) against a sample of
+the 137 mismatching dates specifically, not just more random dates -- they are the population
+this step's gate has not actually tested yet.
+
+### Follow-up (2026-10-01): the 137 mismatches, classified -- and a new, more consequential finding
+
+**Classified all 137 for free, no ES needed, using the inventory number already embedded in
+each flat_id's `session-{inventory}-num-{n}-resolution-{r}` format:**
+
+| class | n | shape |
+|---|---|---|
+| `cross_inventory_contamination` | 66 (48%) | raw same-day grouping pulls in a different inventory's paragraphs, like `1626-01-12` (3185 + 4562) |
+| `raw_empty_or_subset` | 62 (45%) | raw same-day axis is empty or a strict subset; `axis_for_date`'s resolved axis adds real content, like `1626-01-17` |
+| `same_inventory_diff` | 9 (7%) | raw axis also contains a second, same-inventory session under this date label |
+
+In both of the first two classes (113/137, 93%), `axis_for_date`'s resolved axis is clearly the
+one to trust -- confirmed by the id-derived inventory check alone, no live lookup required for
+this part. **Neither class resembles the original "adjoining text, shift the anchor N paragraphs"
+hypothesis** that motivated checking this in the first place -- that hypothesis is now settled
+false for the population it was raised about.
+
+**The remaining 9 are not boundary drift either, and are more consequential than expected.**
+Pulled their actual diff content: each one is a *second, fully-numbered, unrelated session* of
+the same inventory sharing the calendar-date label -- e.g. `1626-09-21`'s raw axis holds all 16
+resolutions of `session-3185-num-156` alongside the resolved `session-3185-num-148`, not an
+adjacent 1-2 paragraph spillover. Checked both sessions' real dates via ES `session_metadata`
+(`formulation/scripts/export_resolution_es_provenance.py`, built as a **general, reusable
+flat-ids-to-ES-provenance tool**, not scoped to this one check -- see
+`data_manifest.toml`'s `axis_mismatch_es_provenance` for the one-off 2,617-id pull this produced
+as a byproduct):
+
+| mismatching date | resolved session (what `axis_for_date` returns) | ES's own `session_date` for it | "extra" same-inventory session in raw grouping | ES's `session_date` for *that* |
+|---|---|---|---|---|
+| 1626-09-21 | session-3185-num-148 | **1626-08-30** | session-3185-num-156 | **1626-09-13** |
+| 1627-10-19 | session-3186-num-179 | 1627-09-29 | session-3186-num-184 | 1627-10-05 |
+| 1628-11-04 | session-3187-num-256 | 1628-11-03 | session-3187-num-283 | 1628-11-26 |
+| 1629-02-17 | session-3188-num-46 | 1629-02-19 | session-3188-num-52 | 1629-02-25 |
+| 1629-05-18 | session-3188-num-129 | 1629-05-17 | session-3188-num-79 | 1629-03-24 |
+| 1629-06-12 | session-3188-num-147 | 1629-06-10 | session-3188-num-151 | 1629-06-16 |
+| ... | | | | |
+
+**Neither side of these 9 mismatches carries a `session_date` matching our own pipeline's
+calendar-date label, in ES's independent reading.** This is not, by itself, a bug to fix here --
+it is consistent with the already-known, already-worked phenomenon this project's whole
+concordance effort exists to correct (`resolutions_flat`'s session numbering drifting from the
+archive, `docs/DECISIONS.md` 2026-09-21 S4f review) -- but it means these 9 are concrete,
+freshly-surfaced instances where even the **resolved** (trusted, `day_status=="resolved_auto"`)
+session disagrees with an independent date source, not just the naive raw grouping. That is
+exactly the shape of guardrail 1 / Step 1's open "pinned-but-wrong" question ("a confidently-
+pinned session can be wrong with nothing flagging it"), which has been blocked pending sizing.
+**Do not treat this as resolved either way** -- adjudicating which date is right needs this
+project's own existing verification tool (`s6b_session_fingerprint_match`'s content-fingerprint
+method), not a naive "trust ES's date" assumption; ES's `session_date` field has not itself been
+checked against that same standard here.
+
+**Consequence for Step 1:** these 9 dates are a ready-made, already-identified starter sample
+for Step 1's sizing work, found as a byproduct of Step 2 rather than Step 1's own planned method
+-- worth feeding in rather than re-deriving independently.
+
+**Consequence for Step 4:** confirmed again, more strongly -- of the 137 raw/resolved axis
+disagreements, **zero** show the small-scale boundary-shift shape the original hypothesis
+proposed. 93% are a harvest-side grouping defect (fixable by switching the harvest to
+`axis_for_date`, no placement question involved); the remaining 7% are a session-date-drift
+question that belongs to Step 1, not to anchor placement at all.
+
+**Real finding, already documented elsewhere, newly consequential here: harvest group A is stale.**
+Cross-checking `tier1_entity_nw` against the paragraph indices already hand-verified for
+`1630-02-22` in `plans/PATHOLOGY_CORPUS_RUNLOG.md` Step 1 (9->1, 11->4, 12->5, 14->7, 23->8,
+25->10, 26->11) found 3/7 wrong or missing: enriched index 11 absent from the harvest entirely,
+23 and 26 mapped one paragraph short. Root cause is already on record, not a new bug:
+`docs/DECISIONS.md` 2026-09-29 rebuilt `s6b_known_point_ledger` to use production's live
+`align_session` anchors (`production_points()`) because they diverge from the stored
+`alignment_1626_1630` TIER1 rows at only 62.9% exact-position agreement corpus-wide — and that
+same entry explicitly notes `s6b_anchor_harvest.py`'s group A channel reads the stored rows
+directly and **was not** part of that rebuild. This check is the first time that known gap was
+actually exercised against this harvest file rather than just cited.
+
+**Consequence for Step 4 (both 4a and 4b).** Do not read group A from
+`s6b_anchor_harvest`'s `tier1_entity_nw` rows. Compute group A live per day from
+`align_session`/`build_axis_overlap`, exactly as `scripts/pathology_corpus_stage_a.py` and
+`s6c_severe_collapse_autopsy.span_verdict_for_day` already do — only groups B/C/D should be
+drawn from the harvest file, joined onto the live axis via the now-verified char→paragraph
+mapping. (The 2026-10-01 "0/85 chosen" pathology-corpus result is unaffected by this finding —
+it never read the harvest file, it called `align_session` directly.)
 
 ### Step 3 — Partial abstention in `segment_day`
 <!-- status: todo -->
@@ -213,9 +334,49 @@ output on the pathology corpus seed days.
 **Gate:** on `1630-02-22`, output is 7 placements + 2 characterised gaps; corpus-wide gap-mass and
 gold correctness both reported.
 
-### Step 4 — Staged propagation, one channel at a time
-<!-- status: todo -->
-Add channels in `CHANNEL_WEIGHT` order, measuring gap-mass reduction and gold correctness per
-channel added. Contradiction rule and termination condition fixed before the run (guardrails 3, 4).
-**Gate:** does each channel reduce gap mass without degrading correctness? A channel that reduces
-gap mass while degrading correctness is rejected, per guardrail 5.
+### Step 4 — Two ways to add channels, run as a comparison, not a single choice
+<!-- status: todo — split into 4a/4b 2026-10-01 after pathology-corpus's 0/85-chosen result
+     (plans/PATHOLOGY_CORPUS_RUNLOG.md, "Correction (2026-10-01)"), which showed the current
+     fill algorithm is optimal given group-A-only evidence and 36/60 ambiguous severe-collapse
+     days have a worst gap with paragraph_room=1 -- anchor-starved, not room-starved. That
+     motivates actually wiring B/C/D in, but the plan's own "why staging makes weak anchors
+     safe" argument (line 79) is itself a claim, not yet tested against the alternative. -->
+
+Both modes below are blocked on the same prerequisite: **Step 2** (char→paragraph join,
+guardrail 6) must land first — B/C/D anchors are `char_position`-keyed; neither mode can place
+them on the paragraph axis `align_session` uses until that join is verified. **Step 1** (sizing
+the pinned-but-wrong population, guardrail 1) matters specifically for `session_boundary`/D at
+weight 5.0, the first channel in both orderings below — a wrong D anchor corrupts whatever is
+staged or combined on top of it.
+
+**4a — Staged (sequential), as originally specified.** Add channels in `CHANNEL_WEIGHT` order
+(D -> A -> C -> B). At each stage: place that channel's anchors *only inside gaps not yet
+resolved by a higher channel*, lock the result, recompute the residual gap boundaries (shrinking
+`paragraph_room` for the next stage), then move to the next channel. Mechanically: iterate
+`build_anchor_backbone` / `segment_gap` (`scripts/s6c_gap_segmentation.py`,
+`scripts/pathology_corpus_stage_a.py`) so each stage's lookup is restricted to the one channel
+being added, operating only on the previous stage's residual gaps. Measure gap-mass reduction
+*and* gold correctness (guardrail 5) after each stage, cumulatively.
+
+**4b — Combined (unstaged), new, added as a control.** One pass: merge all four groups' anchor
+evidence into a single lookup and relax `align_session`'s `anchor_only_diagonal` gate to accept
+a diagonal when *any* group's weighted score clears threshold (today it only checks group A's
+`entity_match_score`), with no gap-shrinking between groups and no stage order. Measure the same
+two metrics in the same single pass.
+
+**Why run both instead of picking one.** The plan's own justification for staging ("Why staging
+makes weak anchors safe", line 79) is that a weak channel is only safe *because* a stronger
+channel already narrowed the room before it runs — unstaged, the same fuzzy hit over a wide-open
+12-paragraph day is reckless. That is a testable claim, not an assumption to build on:
+- If **4b matches 4a** on both gap-mass and gold correctness, staging order doesn't matter here
+  and the simpler one-shot wiring (4b) is preferable — less code, no contradiction-resolution
+  machinery (guardrail 3) needed.
+- If **4b matches 4a on gap-mass but loses on gold correctness**, that is the predicted failure
+  mode and confirms staging is load-bearing, not just tidier.
+- If **4a underperforms 4b on gap-mass**, the per-stage locking is leaving recoverable gaps on
+  the table (a stage's placement may be blocking a later channel's correct answer) — a different
+  bug, in the staging mechanism itself.
+
+**Gate:** per guardrail 5, neither mode is judged on gap-mass alone. Run on the three pathology
+seed days first (cheap, same idiom as `PATHOLOGY_CORPUS_RUNLOG.md` Step 1/2), before the 85
+severe-collapse days, before any corpus-wide claim.
