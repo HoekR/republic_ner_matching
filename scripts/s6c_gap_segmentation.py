@@ -20,19 +20,27 @@ since lumped scoring de-duplicates by paragraph. So the fix is not a smarter sea
 anchors (S6b already showed the anchor supply is not the bottleneck) -- it is letting the
 placement step degrade to repeated paragraph assignments instead of abstaining.
 
-This module replaces the *interpolation* step only, gap by gap, with a small DP that:
+This module implements two mechanisms for gap-filling:
 
 1. Builds a non-decreasing anchor backbone (out-of-order anchors are clipped forward
    rather than aborting the day), always anchored at the structural session start/end
    sentinels `(0, 0)` and `(k_e, axis_count)` per STEP_S6 section 2.2 group D, matching
    `s6b_known_point_ledger.py`'s chain convention.
-2. Inside each gap, chooses `count` non-decreasing paragraph positions (repeats allowed,
-   which is what absorbs both failure modes above) that both stay close to an even split
-   of the gap and prefer any group-C phrase-hit evidence available at that gap, via
-   `position_scores: dict[int, float]` (paragraph index -> bonus in roughly [0, 1]), or, for
-   evidence that is specific to one resolution rather than to a paragraph, `rank_scores` /
-   `segment_day`'s `resolution_scores` -- see `similarity_rank_scores` and
-   plans/TFIDF_EMBEDDINGS_TRACK.md for what each form can and cannot express.
+
+2. Inside each gap, applies one of two strategies:
+   - For gaps with `pigeonhole_floor > 1` (where k resolutions cannot fit into room
+     paragraphs, so at least one paragraph must hold >1 resolution by arithmetic):
+     **partial abstention** -- returns None for every slot in that gap, marking those
+     resolutions as unresolved rather than fabricating precision with forced repeats.
+   - For gaps with `pigeonhole_floor == 1` (where each resolution has room for a unique
+     paragraph in principle): calls `segment_gap` to choose `count` non-decreasing
+     paragraph positions (repeats allowed for numerical tolerance) that stay close to an
+     even split and prefer any available evidence via `position_scores` or `rank_scores`.
+
+`position_scores: dict[int, float]` is per-paragraph bonus (roughly [0, 1]); for
+evidence specific to one resolution rather than a paragraph, use `rank_scores` /
+`segment_day`'s `resolution_scores` -- see `similarity_rank_scores` and
+plans/TFIDF_EMBEDDINGS_TRACK.md for what each form can and cannot express.
 
 Group B (`entity_surface_matches_1626_1630`, `s4_fuzzy_surface_form_scan`) is not wired
 into `position_scores` yet -- deliberately deferred, not overlooked. `s4_paragraph_axis_baseline.py`
@@ -49,6 +57,7 @@ keeps testing the *old* model.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 
 import numpy as np
@@ -263,13 +272,20 @@ def segment_day(
     alignments: Sequence[tuple[int | None, int | None]],
     position_scores: dict[int, float] | None = None,
     resolution_scores: Mapping[int, Mapping[int, float]] | None = None,
-) -> list[int]:
-    """Count-constrained replacement for `interpolate_positions` that never abstains.
+) -> list[int | None]:
+    """Count-constrained gap-filling with partial abstention on forced-collapse gaps.
 
     Returns the `enriched_count - 1` paragraph positions at which resolutions 1..k_e-1
-    open (resolution 0 is implicitly the session start). Unlike `interpolate_positions`,
-    this always returns a list -- callers that want to keep an abstention path for other
-    reasons (missing HTR, cross-day shift, ...) apply it before calling this.
+    open (resolution 0 is implicitly the session start). Each entry is either:
+    - An int >= 0: the paragraph index where this resolution opens.
+    - None: this resolution's paragraph is unresolved because its gap was provably
+      unseparable at paragraph granularity (pigeonhole_floor > 1).
+
+    For gaps where `pigeonhole_floor = ceil(gap_count / paragraph_room) > 1`, the
+    resolutions cannot fit without forced repeats by arithmetic alone. These gaps return
+    None for all slots instead of calling segment_gap, honestly abstaining rather than
+    fabricating precision. This partial abstention follows the "defensible abstention"
+    principle documented in plans/STAGED_ANCHOR_CONSOLIDATION.md.
 
     `resolution_scores` maps *enriched resolution index* -> {paragraph -> bonus} and is
     sliced per gap into `segment_gap`'s rank-ordered `rank_scores`: slot `rank` of the gap
@@ -281,7 +297,7 @@ def segment_day(
         return []
 
     backbone = build_anchor_backbone(enriched_count, axis_count, alignments)
-    positions = [0] * enriched_count
+    positions: list[int | None] = [0] * enriched_count
     for enriched_index, axis_index in backbone:
         if enriched_index < enriched_count:
             positions[enriched_index] = axis_index
@@ -290,13 +306,24 @@ def segment_day(
         gap = right_enriched - left_enriched - 1
         if gap <= 0:
             continue
-        rank_scores = (
-            [resolution_scores.get(left_enriched + rank, {}) for rank in range(1, gap + 1)]
-            if resolution_scores
-            else None
-        )
-        chosen = segment_gap(left_axis, right_axis, gap, position_scores, rank_scores=rank_scores)
-        for offset, position in enumerate(chosen, start=1):
-            positions[left_enriched + offset] = position
+
+        # Calculate paragraph room and pigeonhole floor for this gap
+        room = max(1, right_axis - left_axis)
+        pigeonhole_floor = math.ceil(gap / room)
+
+        # If gap is provably unseparable at paragraph granularity, abstain
+        if pigeonhole_floor > 1:
+            for offset in range(1, gap + 1):
+                positions[left_enriched + offset] = None
+        else:
+            # Gap has room for each resolution to get a unique paragraph in principle
+            rank_scores = (
+                [resolution_scores.get(left_enriched + rank, {}) for rank in range(1, gap + 1)]
+                if resolution_scores
+                else None
+            )
+            chosen = segment_gap(left_axis, right_axis, gap, position_scores, rank_scores=rank_scores)
+            for offset, position in enumerate(chosen, start=1):
+                positions[left_enriched + offset] = position
 
     return positions[1:]

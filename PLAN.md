@@ -55,9 +55,10 @@
    - Objective: shrink gap mass via staged propagation (objective anchors → reconcile → subdivide → repeat); measure already exists (`s6b_known_point_ledger` gap-size distribution, baseline 947 gaps / 70.7% of unplaced work)
    - Measured: the DP consumes only ~4–7% of available anchors; groups B/C/D are **structurally invisible** to `align_session`'s `anchor_only_diagonal` gate, not merely down-weighted
    - One code change with reach: **partial abstention** in `segment_day` (today it never abstains, so it fabricates precision — `1630-02-22` emits 28 placements where 7 + 2 gaps is honest)
-   - Step 1 DONE (2026-10-01, `docs/DECISIONS.md`): pinned-but-wrong population sized at 0.7% (8/1,123) confirmed — not a blocker for `session_boundary`/D; `1630-02-22` itself is `date_label_agrees`, so its crowding is a Step 3/4 problem, not this one
-   - Step 2 harvest-join fix implemented (2026-10-01): `s6b_anchor_harvest.py` now enumerates dates via `axis_for_date` instead of raw same-day grouping, closing 93% of a 137-date raw/resolved axis mismatch — not yet re-run (user to run `uv run python -m scripts.s6b_anchor_harvest`)
-   - Next: Step 3, partial abstention in `segment_day`
+   - Step 1 DONE (2026-10-01): pinned-but-wrong population sized at 0.7% (8/1,123) confirmed
+   - Step 2 DONE (2026-10-01): harvest char→paragraph join verified on 3 seed days; 93% of axis mismatches traced to harvest-side grouping defect, fix implemented
+   - Step 3 DONE (2026-10-01): partial abstention in `segment_day` implemented; gate result 2 abstained gaps on 1630-02-22 matches expected
+   - Next: Step 4a/4b, staged vs unstaged channel wiring
 
 4. **`resolution-loss-census`** (newly completed 2026-09-29)
    - 621 of 1,137 cross_day_shift sit on verified sessions; 552 (93%) collision-locked

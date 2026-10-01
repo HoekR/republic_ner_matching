@@ -192,7 +192,9 @@ def predict_day(
     # soft in-gap evidence. interpolate_positions itself is untouched -- it stays the
     # deliberately unmodified placement model s6_oracle_anchor_diagnostic.py measures.
     positions = segment_day(day["k_e"], len(axis_ids), alignments, {index: hit[2] for index, hit in hits.items()})
-    snapped = snap_boundaries(positions, hits)
+    # Filter out None values (unresolved positions from forced-collapse gaps)
+    resolved_positions = [p for p in positions if p is not None]
+    snapped = snap_boundaries(resolved_positions, hits)
     return {
         **base,
         "status": "predicted",

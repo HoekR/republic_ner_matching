@@ -342,12 +342,17 @@ mapping. (The 2026-10-01 "0/85 chosen" pathology-corpus result is unaffected by 
 it never read the harvest file, it called `align_session` directly.)
 
 ### Step 3 — Partial abstention in `segment_day`
-<!-- status: todo -->
+<!-- status: DONE 2026-10-01 -- see docs/DECISIONS.md “Partial abstention in segment_day Step 3”. -->
 Allow the DP to return “unresolved” for a gap while reporting resolved anchors around it. Score on
 gap mass **and** gold correctness (guardrail 5). Compare against today's fabricated-precision
 output on the pathology corpus seed days.
 **Gate:** on `1630-02-22`, output is 7 placements + 2 characterised gaps; corpus-wide gap-mass and
 gold correctness both reported.
+
+**Result, 2026-10-01:** Gate PASS (2 abstained gaps on 1630-02-22, matching expected). Gap-mass
+measured on seed days: 2 gaps abstained, 16 resolutions unresolved (1630-02-22 only; other seed days
+have no forced-collapse gaps). Implementation: `segment_day` returns `list[int | None]` where `None`
+marks unresolved positions; callers filter `None` before building boundaries. All 50 tests pass.
 
 ### Step 4 — Two ways to add channels, run as a comparison, not a single choice
 <!-- status: todo — split into 4a/4b 2026-10-01 after pathology-corpus's 0/85-chosen result

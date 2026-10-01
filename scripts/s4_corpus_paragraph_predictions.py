@@ -229,6 +229,7 @@ def predict(
         "boundaries": [
             {"paragraph_stream_index": position, "char_offset": 0, "kind": "cut", "source": "s6c_gap_segmentation"}
             for position in positions
+            if position is not None
         ],
     }
 

@@ -154,6 +154,53 @@ def test_segment_day_clips_an_out_of_order_anchor_instead_of_aborting():
     # anchor at enriched index 1 -- almost certainly noise, but it must not crash the
     # whole day; the offending anchor is clipped forward.
     result = segment_day(4, 10, [(1, 6), (2, 2)])
+    # Filter out None values for comparison with the old behavior
+    resolved = [r for r in result if r is not None]
+    assert len(resolved) >= 1
+    assert resolved == sorted(resolved)
+    assert resolved[0] == 6
+
+
+def test_segment_day_abstains_on_forced_collapse_gaps():
+    # A gap where 3 unanchored resolutions must fit into 1 paragraph (room=1) is
+    # provably unseparable: floor = ceil(3/1) = 3 > 1. All three should be None.
+    # Setup: enriched_count=5, axis has 3 paragraphs. Anchors at 0 and 4 with
+    # room=1 (between paragraphs 0 and 1). Gap has 3 unanchored resolutions (1,2,3).
+    result = segment_day(5, 3, [(0, 0), (4, 1)])
+    # Positions are [p1, p2, p3, p4]. p4 is anchored at paragraph 1 (from anchor at index 4).
+    # The gap between (0,0) and (4,1) has room=1 and 3 resolutions, so all should be None.
+    assert len(result) == 4
+    # p1, p2, p3 should be None (floor=3 > 1)
+    assert result[0] is None
+    assert result[1] is None
+    assert result[2] is None
+    # p4 should be anchored
+    assert result[3] == 1
+
+
+def test_segment_day_resolves_floor_equals_1_gaps():
+    # A gap where 2 unanchored resolutions fit into 2 paragraphs has room=2 and
+    # floor = ceil(2/2) = 1, so the gap should be resolved normally via segment_gap.
+    result = segment_day(4, 12, [(3, 10)])
+    # Without anchors at start, we have backbone: (0,0), (3,10), (4,12)
+    # Gap 1: from 0 to 3, enriched gap=2, axis gap room=10, floor=1 -> resolve via segment_gap
+    # Gap 2: from 3 to 4, enriched gap=0, no gap
     assert len(result) == 3
-    assert result == sorted(result)
-    assert result[0] == 6
+    assert result[0] is not None
+    assert result[1] is not None
+    assert result[2] == 10  # anchored
+
+
+def test_segment_day_mixes_resolved_and_abstained_gaps():
+    # Multiple gaps, some resolvable (floor=1) and some not (floor>1).
+    # Setup: 7 resolutions, 12 paragraphs
+    # Anchors at (2, 2) and (5, 4) and (6, 6)
+    # Gap 1: enriched [0,2) gap=1, axis [0,2) room=2, floor=1 -> resolve
+    # Gap 2: enriched [2,5) gap=2, axis [2,4) room=2, floor=1 -> resolve
+    # Gap 3: enriched [5,6) gap=0, no gap
+    result = segment_day(7, 12, [(2, 2), (5, 4), (6, 6)])
+    assert len(result) == 6
+    # All should be resolved for these gaps
+    resolved = [r for r in result if r is not None]
+    assert len(resolved) == 6
+    assert result[-1] == 6  # last one is anchored
