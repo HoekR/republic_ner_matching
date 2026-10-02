@@ -1,4 +1,7 @@
 # Phase 1b Results: TF-IDF Semantic Weight Calibration
+<!-- doc-status: retired -->
+<!-- Historical snapshot: Phase 1c (corpus-scale run) already executed on this result,
+     docs/DECISIONS.md 2026-09-29 "Phase 1c: Corpus-scale semantic similarity run". -->
 
 **Date**: 2026-09-29  
 **Status**: ✓ PASS — semantic similarity improves placement on gold days  

@@ -1,4 +1,5 @@
 # Orphan remotes — decisions (2026-09-28)
+<!-- doc-status: active -->
 
 | Local path | Decision | Remote |
 |------------|----------|--------|

@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-09-29 16:35",
+  "last_updated": "2026-10-02 08:47",
   "active_focus": "Resolution loss diagnosis: inventorying where the 5,746 unpaired resolutions sit, and deciding which unbanks for free (cross_day_shift on confirmed sessions) vs which needs more work (the 340-day pile-up).",
   "tasks": [
     {
@@ -119,12 +119,6 @@
       "title": "Resolution concordance completeness (N-status gaps, candidate scoring, window-widen)",
       "status": "done",
       "notes": "Accepted as final 2026-09-18 (docs/DECISIONS.md): 70.7% resolved_auto, 28.6% missing_htr (structural ceiling, 49.7% of ledger has no HTR within +/-14d), 0.6% nihil_actum. Window-widen to +/-7d unlocked zero new confident matches. Closed track, not open for further work."
-    },
-    {
-      "id": "hoe-classifier-other-bucket",
-      "title": "HOE classifier -- reduce the 'other' bucket (31% unclassified)",
-      "status": "done",
-      "notes": "RETIRED 2026-09-24. hoe_classify.py pipeline is done end-to-end and produced the 16-category breakdown cited in PLAN.md ('other' ~1.32M rows/31%), but neither input needed to continue (raw ~/Downloads/annotations-unaggregated/annotations-layer_HOE.tsv.gz source, nor the pipeline's own prior data/hoe_vocab.parquet output) exists on this machine -- the only local hoe_vocab.parquet (data.bak/, 26MB) is from an unrelated older 6-category scheme, not usable. Re-run compute itself is cheap (~13 min single-threaded for the fuzzy-fallback stage, benchmarked directly) -- data availability, not compute, is the blocker. Retired rather than left open pending a data-location task with no owner. See docs/DECISIONS.md 2026-09-24."
     },
     {
       "id": "ner-finetuning-original-goal",
@@ -271,6 +265,13 @@
       "next_action": "Build scripts/resolution_loss_census.py joining s6b_session_fingerprint_match + fingerprint_assignment_audit against resolution_concordance_1626_1630; cross-tab by inventory/position_in_day/fingerprint_offset",
       "goal": "Bucket all 19,120 enriched resolutions by placement status; measure how many of the 1,057 cross_day_shift sit on content-confirmed sessions with merely mismatched date labels",
       "cost": "cheap"
+    },
+    {
+      "id": "staged-anchor-consolidation",
+      "title": "Staged anchor consolidation (plans/STAGED_ANCHOR_CONSOLIDATION.md)",
+      "status": "inprogress",
+      "notes": "Steps 1-3 done, Step 4 pre-check done 2026-10-02 (Group B deferred, see docs/DECISIONS.md). Steps 4a/4b (staged vs combined channel wiring) not yet run.",
+      "next_action": "Step 4a/4b: staged vs combined channel wiring, scoped to Groups A+C+D, on the 3 pathology seed days first"
     }
   ],
   "dependencies": [
@@ -461,12 +462,6 @@
       "name": "missing_htr_pct",
       "label": "Missing-HTR share (accepted structural ceiling)",
       "value": "28.6%"
-    },
-    {
-      "scope": "hoe-classifier-other-bucket",
-      "name": "other_bucket_pct",
-      "label": "'other' bucket share of the HOE layer",
-      "value": "31%"
     },
     {
       "scope": "S4",
@@ -1737,7 +1732,7 @@
       ]
     },
     {
-      "scope": "tfidf-similarity-discrimination-eval",
+      "scope": "tfidf-embeddings-wiring-discrimination-eval",
       "name": "auc_common_language_effect_size",
       "label": "TF-IDF similarity AUC, tier1_anchor pos vs within-day derangement neg",
       "value": "0.9555",
@@ -1769,6 +1764,30 @@
         {
           "date": "2026-09-29",
           "value": "0"
+        }
+      ]
+    },
+    {
+      "scope": "staged-anchor-consolidation",
+      "name": "step3_gold_exact_agreement",
+      "label": "Partial abstention Step 3 gate: gold exact-agreement, old 0.5431 vs new 0.6486",
+      "value": "0.6486",
+      "history": [
+        {
+          "date": "2026-10-02",
+          "value": "0.6486"
+        }
+      ]
+    },
+    {
+      "scope": "staged-anchor-consolidation",
+      "name": "step4_group_b_novel_exact",
+      "label": "Step 4 pre-check: Group B exact-agreement on cells Group A doesn't already cover (31/110) -- deferred, below ~65% baseline",
+      "value": "0.282",
+      "history": [
+        {
+          "date": "2026-10-02",
+          "value": "0.282"
         }
       ]
     }

@@ -1,4 +1,5 @@
 # Republic repos on `~/develop` — inventory, actuality, and cleanup
+<!-- doc-status: active -->
 
 *Updated 2026-09-28. Canonical pull fork: **`republicgit`**. No pushes to `HuygensING/republic-project`.*
 

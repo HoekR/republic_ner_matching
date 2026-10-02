@@ -1,4 +1,9 @@
 # Step 1: Semantic-Weight Calibration for TF-IDF Similarity Wiring
+<!-- doc-status: retired -->
+<!-- This step's own "Ready to start" line is stale: the work it describes already ran and
+     progressed well past it (docs/PHASE1B_RESULTS.md, Phase 1c in docs/DECISIONS.md
+     2026-09-29, and PLAN.md's tfidf-embeddings-wiring track, now on per-rank wiring). Kept
+     for history, not as a live step guide. -->
 
 **Status**: Ready to start (Step 0 gate passed 2026-09-29, AUC 0.9555)  
 **Goal**: Wire TF-IDF semantic similarity into the corpus predictor and calibrate its weight to improve placement accuracy.  

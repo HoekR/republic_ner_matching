@@ -1,4 +1,5 @@
 # NER data / scratch purge plan (`republic_ner_matching`)
+<!-- doc-status: active -->
 
 *Status: policy written 2026-09-28. Destructive moves are staged; run the commands below when ready.*
 

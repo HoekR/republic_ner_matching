@@ -1,0 +1,20 @@
+{
+  "tasks": [
+    {
+      "id": "hoe-classifier-other-bucket",
+      "title": "HOE classifier -- reduce the 'other' bucket (31% unclassified)",
+      "status": "done",
+      "notes": "RETIRED 2026-09-24. hoe_classify.py pipeline is done end-to-end and produced the 16-category breakdown cited in PLAN.md ('other' ~1.32M rows/31%), but neither input needed to continue (raw ~/Downloads/annotations-unaggregated/annotations-layer_HOE.tsv.gz source, nor the pipeline's own prior data/hoe_vocab.parquet output) exists on this machine -- the only local hoe_vocab.parquet (data.bak/, 26MB) is from an unrelated older 6-category scheme, not usable. Re-run compute itself is cheap (~13 min single-threaded for the fuzzy-fallback stage, benchmarked directly) -- data availability, not compute, is the blocker. Retired rather than left open pending a data-location task with no owner. See docs/DECISIONS.md 2026-09-24.",
+      "archived_at": "2026-10-02",
+      "archive_reason": "retired, never started per existing notes"
+    }
+  ],
+  "metrics": [
+    {
+      "scope": "hoe-classifier-other-bucket",
+      "name": "other_bucket_pct",
+      "label": "'other' bucket share of the HOE layer",
+      "value": "31%"
+    }
+  ]
+}

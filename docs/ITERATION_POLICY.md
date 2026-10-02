@@ -16,6 +16,15 @@ session, and for recognizing when a track should be closed instead of continued.
   `uv run python scripts/svz.py metric <task-id> <metric-name> <value> --label "..."` — this appends
   to the metric's `history`, it does not overwrite it. A track with no recorded metric can't be
   judged; that's a defect to fix by recording one, not a reason to skip the check.
+- When a track is closed (`done`/`blocked`) and its full history is no longer needed in every
+  session's view, move it out with `uv run python scripts/svz.py archive <task-id> [--reason ...]`
+  — this moves the task and its metrics to `docs/state_archive.json`, not deletes them; reverse
+  with `unarchive <task-id>`. List what's archived with `svz.py archived`. `doctor` cross-checks
+  both files so a task can never silently exist (or go missing) in both.
+- A decision (`svz.py decision ...`) can cite the metric it's based on with
+  `--metric <scope>:<name>` (repeatable) — this reads the value from the already-recorded metric
+  rather than letting the decision text restate a number that can later drift from it. Find which
+  decisions cite a given metric with `svz.py decisions-for <scope> [name]`.
 - At the **start** of a session, run `uv run python scripts/svz.py review` and read the "Active
   tracks needing a decision" section before choosing what to work on.
 

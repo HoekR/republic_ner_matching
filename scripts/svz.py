@@ -24,9 +24,16 @@ from typing import Any
 STATE_JSON = Path("docs/state.json")
 STATE_MD = Path("docs/STATE.md")
 DECISIONS_MD = Path("docs/DECISIONS.md")
+ARCHIVE_JSON = Path("docs/state_archive.json")
 MANUAL_MARKER = "<!-- Manual notes below this line are preserved by scripts/svz.py render. -->"
 VALID_STATUSES = {"todo", "inprogress", "done", "blocked"}
 DEFAULT_TREND_THRESHOLD = 0.03
+# Render-time only -- the stored value in docs/state.json is never truncated, only STATE.md's view
+# of it. A long task's notes or metric label is still a defect worth fixing at the source, but
+# that is a separate problem from STATE.md becoming unreadable in the meantime.
+METRIC_LABEL_RENDER_LIMIT = 160
+TASK_NOTES_RENDER_LIMIT = 400
+TRUNCATION_SUFFIX = "… (full text in docs/state.json)"
 
 
 def now_stamp() -> str:
@@ -48,6 +55,18 @@ def save_state(state: dict[str, Any]) -> None:
     STATE_JSON.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def load_archive() -> dict[str, Any]:
+    """Tolerant of a missing file, unlike `load_state()` -- most projects won't have
+    archived anything yet, so absence is the normal starting condition, not an error."""
+    if not ARCHIVE_JSON.exists():
+        return {"tasks": [], "metrics": []}
+    return json.loads(ARCHIVE_JSON.read_text(encoding="utf-8"))
+
+
+def save_archive(archive: dict[str, Any]) -> None:
+    ARCHIVE_JSON.write_text(json.dumps(archive, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def task_symbol(status: str) -> str:
     return {"done": "x", "inprogress": "/", "blocked": "!"}.get(status, " ")
 
@@ -65,6 +84,25 @@ def find_task(state: dict[str, Any], task_id: str) -> dict[str, Any] | None:
     for task in state.get("tasks", []):
         if task.get("id") == task_id:
             return task
+    return None
+
+
+def metric_scope_matches_task(scope: str, task_id: str) -> bool:
+    """A metric's scope is either a task id itself, or a finer-grained sub-id under it
+    (e.g. "S1-D1c" under "S1") -- the convention `doctor()` already validated before this
+    was extracted, now shared with `archive`'s task->metrics lookup so the two cannot
+    disagree on what "this task's metrics" means."""
+    return scope == task_id or scope.startswith(f"{task_id}-")
+
+
+def metrics_for_task(metrics: list[dict[str, Any]], task_id: str) -> list[dict[str, Any]]:
+    return [entry for entry in metrics if metric_scope_matches_task(str(entry.get("scope")), task_id)]
+
+
+def find_metric(metrics: list[dict[str, Any]], scope: str, name: str) -> dict[str, Any] | None:
+    for entry in metrics:
+        if entry.get("scope") == scope and entry.get("name") == name:
+            return entry
     return None
 
 
@@ -121,6 +159,13 @@ def preserved_notes() -> str:
     return content.split(MANUAL_MARKER, 1)[1].lstrip()
 
 
+def truncate_for_render(text: str, limit: int) -> str:
+    text = str(text)
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + TRUNCATION_SUFFIX
+
+
 def render_markdown(state: dict[str, Any]) -> str:
     tasks = state.get("tasks", [])
     metrics = state.get("metrics", [])
@@ -145,7 +190,7 @@ def render_markdown(state: dict[str, Any]) -> str:
     for task in tasks:
         node_id = mermaid_id(str(task.get("id", "task")))
         label = f"{task.get('id', '')}: {task.get('title', '')}".replace('"', "'")
-        lines.append(f"    {node_id}[\"{label}\"] :::{mermaid_class(str(task.get('status', 'todo')))}")
+        lines.append(f"    {node_id}[\"{label}\"]:::{mermaid_class(str(task.get('status', 'todo')))}")
     if dependencies:
         for dependency in dependencies:
             source = mermaid_id(str(dependency.get("from", "")))
@@ -162,10 +207,17 @@ def render_markdown(state: dict[str, Any]) -> str:
             status = str(task.get("status", "todo"))
             task_line = f"- [{task_symbol(status)}] {task.get('id')}: {task.get('title')}"
             if task.get("notes"):
-                task_line += f" — {task['notes']}"
+                task_line += f" — {truncate_for_render(task['notes'], TASK_NOTES_RENDER_LIMIT)}"
             lines.append(task_line)
     else:
         lines.append("No tasks recorded yet.")
+
+    archived_tasks = load_archive().get("tasks", [])
+    if archived_tasks:
+        lines.append(
+            f"\n_{len(archived_tasks)} further task(s) archived — see {ARCHIVE_JSON} or "
+            "`svz.py archived`._"
+        )
 
     lines.extend(["", "## Active Focus", "", str(state.get("active_focus") or "No active focus recorded."), ""])
     lines.extend(["## Key Intermediate Results & Metrics", ""])
@@ -177,6 +229,7 @@ def render_markdown(state: dict[str, Any]) -> str:
             prefix = f"{scope} — " if scope else ""
             verdict, delta = classify_trend(metric_entry.get("history", []), DEFAULT_TREND_THRESHOLD)
             trend = f" ({verdict}, Δ{delta:+.3f})" if delta is not None else ""
+            label = truncate_for_render(label, METRIC_LABEL_RENDER_LIMIT)
             lines.append(f"- **{prefix}{label}:** {value}{trend}")
     else:
         lines.append("No metrics recorded yet.")
@@ -285,19 +338,116 @@ def metric(args: argparse.Namespace) -> None:
     print(f"Recorded metric {args.name}={args.value}")
 
 
+def archive_task(args: argparse.Namespace) -> None:
+    state = load_state()
+    task = find_task(state, args.task_id)
+    if task is None:
+        raise SystemExit(f"No task {args.task_id!r} in {STATE_JSON}")
+    if task.get("status") not in {"done", "blocked"}:
+        raise SystemExit(
+            f"{args.task_id} is {task.get('status')!r} — archiving is not a way to hide "
+            "unfinished work; only 'done'/'blocked' tasks can be archived."
+        )
+    archive = load_archive()
+    state["tasks"] = [t for t in state.get("tasks", []) if t.get("id") != args.task_id]
+    moving_metrics = metrics_for_task(state.get("metrics", []), args.task_id)
+    state["metrics"] = [m for m in state.get("metrics", []) if m not in moving_metrics]
+
+    task["archived_at"] = today_date()
+    if args.reason:
+        task["archive_reason"] = args.reason
+    archive.setdefault("tasks", []).append(task)
+    archive.setdefault("metrics", []).extend(moving_metrics)
+
+    save_state(state)
+    save_archive(archive)
+    STATE_MD.write_text(render_markdown(state), encoding="utf-8")
+    print(f"Archived {args.task_id} + {len(moving_metrics)} metric(s) to {ARCHIVE_JSON}")
+
+
+def unarchive_task(args: argparse.Namespace) -> None:
+    archive = load_archive()
+    task = find_task(archive, args.task_id)
+    if task is None:
+        raise SystemExit(f"No task {args.task_id!r} in {ARCHIVE_JSON}")
+    state = load_state()
+    if find_task(state, args.task_id) is not None:
+        raise SystemExit(f"{args.task_id} already present in {STATE_JSON} — not restoring a duplicate")
+    archive["tasks"] = [t for t in archive.get("tasks", []) if t.get("id") != args.task_id]
+    moving_metrics = metrics_for_task(archive.get("metrics", []), args.task_id)
+    archive["metrics"] = [m for m in archive.get("metrics", []) if m not in moving_metrics]
+
+    state.setdefault("tasks", []).append(task)
+    state.setdefault("metrics", []).extend(moving_metrics)
+
+    save_state(state)
+    save_archive(archive)
+    STATE_MD.write_text(render_markdown(state), encoding="utf-8")
+    print(f"Restored {args.task_id} + {len(moving_metrics)} metric(s) from {ARCHIVE_JSON}")
+
+
+def archived(_: argparse.Namespace) -> None:
+    archive = load_archive()
+    tasks = archive.get("tasks", [])
+    print(f"Archived tasks: {len(tasks)}")
+    for task in tasks:
+        reason = f" — {task['archive_reason']}" if task.get("archive_reason") else ""
+        print(f"  [{task.get('status')}] {task.get('id')}: {task.get('title')} (archived {task.get('archived_at')}){reason}")
+
+
+def decisions_for(args: argparse.Namespace) -> None:
+    state = load_state()
+    matches = [
+        entry for entry in state.get("metrics", [])
+        if entry.get("scope") == args.scope and (args.name is None or entry.get("name") == args.name)
+    ]
+    if not matches:
+        print(f"No metric found for scope={args.scope!r} name={args.name!r}")
+        return
+    for entry in matches:
+        references = entry.get("decisions") or []
+        print(f"{entry.get('scope')}/{entry.get('name')} (current value: {entry.get('value')}):")
+        if not references:
+            print("  (no decisions reference this metric yet)")
+        for reference in references:
+            print(f"  - {reference.get('date')}: {reference.get('title')}")
+
+
 def decision(args: argparse.Namespace) -> None:
+    today = today_date()
+    state = None
+    metric_lines: list[str] = []
+    for raw_ref in args.metric or []:
+        if ":" not in raw_ref:
+            raise SystemExit(f"--metric must be SCOPE:NAME, got {raw_ref!r}")
+        scope, name = raw_ref.split(":", 1)
+        state = state if state is not None else load_state()
+        entry = find_metric(state.get("metrics", []), scope, name)
+        if entry is None:
+            raise SystemExit(
+                f"No recorded metric {scope}/{name} — run `svz.py metric {scope} {name} <value>` first"
+            )
+        entry.setdefault("decisions", []).append({"date": today, "title": args.title})
+        metric_lines.append(f"`{scope}/{name}` = {entry.get('value')} (as of {today})")
+
     DECISIONS_MD.parent.mkdir(parents=True, exist_ok=True)
     if not DECISIONS_MD.exists():
         DECISIONS_MD.write_text("# Decision Log\n\n", encoding="utf-8")
-    entry = (
-        f"\n## {datetime.now().strftime('%Y-%m-%d')}: {args.title}\n\n"
+    entry_text = (
+        f"\n## {today}: {args.title}\n\n"
         f"- **Context:** {args.context}\n"
         f"- **Decision:** {args.decision}\n"
         f"- **Reason:** {args.reason}\n"
     )
+    if metric_lines:
+        entry_text += f"- **Metrics:** {'; '.join(metric_lines)}\n"
     with DECISIONS_MD.open("a", encoding="utf-8") as handle:
-        handle.write(entry)
+        handle.write(entry_text)
     print(f"Appended decision to {DECISIONS_MD}")
+
+    if state is not None:
+        save_state(state)
+        STATE_MD.write_text(render_markdown(state), encoding="utf-8")
 
 
 def query(args: argparse.Namespace) -> None:
@@ -567,14 +717,17 @@ def doc_conformance_problems(repo_root: Path | None = None) -> list[str]:
     return problems
 
 
-def doctor(_: argparse.Namespace) -> None:
-    state = load_state()
+def validate_tasks_metrics(tasks: list[dict[str, Any]], metrics: list[dict[str, Any]]) -> list[str]:
+    """Structural integrity only: duplicate/unknown ids, invalid enum values. Shared by
+    `doctor()`'s check of docs/state.json and of docs/state_archive.json, so archiving a
+    task can never silently leave the archive itself in a state `doctor` would have caught
+    in the main file."""
     problems: list[str] = []
-    task_ids = [task.get("id") for task in state.get("tasks", [])]
+    task_ids = [task.get("id") for task in tasks]
     if len(task_ids) != len(set(task_ids)):
-        problems.append("Duplicate task ids in docs/state.json")
+        problems.append("Duplicate task ids")
     task_id_set = {str(task_id) for task_id in task_ids}
-    for task in state.get("tasks", []):
+    for task in tasks:
         if task.get("status") not in VALID_STATUSES:
             problems.append(f"Invalid status for {task.get('id')}: {task.get('status')}")
         if task.get("cost") and task.get("cost") not in VALID_COSTS:
@@ -582,19 +735,47 @@ def doctor(_: argparse.Namespace) -> None:
         for block in task.get("blocks") or []:
             if str(block) not in task_id_set:
                 problems.append(f"{task.get('id')} blocks unknown task id {block!r}")
-    for metric_entry in state.get("metrics", []):
+    for metric_entry in metrics:
         scope = str(metric_entry.get("scope"))
-        # Scopes may be a task id itself, or a finer-grained sub-id under it (e.g. "S1-D1c" under "S1").
-        if scope not in task_id_set and not any(scope.startswith(f"{task_id}-") for task_id in task_id_set):
+        if not any(metric_scope_matches_task(scope, task_id) for task_id in task_id_set):
             problems.append(
                 f"Metric {metric_entry.get('name')!r} has scope {metric_entry.get('scope')!r} "
                 "that does not match any task id (or <task_id>-<subid> pattern)"
             )
+    return problems
+
+
+def decisions_md_dates(text: str) -> list[str]:
+    return re.findall(r"^## (\d{4}-\d{2}-\d{2}):", text, re.MULTILINE)
+
+
+def doctor(_: argparse.Namespace) -> None:
+    state = load_state()
+    archive = load_archive()
+    problems = validate_tasks_metrics(state.get("tasks", []), state.get("metrics", []))
+    problems.extend(
+        f"[archive] {problem}" for problem in validate_tasks_metrics(archive.get("tasks", []), archive.get("metrics", []))
+    )
+    state_ids = {str(task.get("id")) for task in state.get("tasks", [])}
+    archive_ids = {str(task.get("id")) for task in archive.get("tasks", [])}
+    for duplicate in state_ids & archive_ids:
+        problems.append(f"Task {duplicate!r} present in both docs/state.json and {ARCHIVE_JSON}")
     problems.extend(doc_conformance_problems())
     if problems:
         for problem in problems:
             print(f"ERROR: {problem}", file=sys.stderr)
         raise SystemExit(1)
+
+    if DECISIONS_MD.exists():
+        dates = decisions_md_dates(DECISIONS_MD.read_text(encoding="utf-8"))
+        last_updated = str(state.get("last_updated") or "")[:10]
+        if dates and last_updated and max(dates) > last_updated:
+            print(
+                f"WARNING: {DECISIONS_MD} has entries newer than docs/state.json's last_updated "
+                f"({max(dates)} > {last_updated}) — check for untracked tracks.",
+                file=sys.stderr,
+            )
+
     print("SvZ state looks valid")
 
 
@@ -633,11 +814,36 @@ def build_parser() -> argparse.ArgumentParser:
     decision_parser.add_argument("--context", required=True)
     decision_parser.add_argument("--decision", required=True)
     decision_parser.add_argument("--reason", required=True)
+    decision_parser.add_argument(
+        "--metric", action="append", metavar="SCOPE:NAME",
+        help="Link this decision to an already-recorded metric (repeatable); value is read "
+             "from docs/state.json, never typed, so it cannot drift from what's recorded",
+    )
     decision_parser.set_defaults(func=decision)
 
     query_parser = subparsers.add_parser("query", help="Print state JSON if a term appears in it")
     query_parser.add_argument("term")
     query_parser.set_defaults(func=query)
+
+    archive_parser = subparsers.add_parser(
+        "archive", help="Move a done/blocked task + its metrics to docs/state_archive.json"
+    )
+    archive_parser.add_argument("task_id")
+    archive_parser.add_argument("--reason")
+    archive_parser.set_defaults(func=archive_task)
+
+    unarchive_parser = subparsers.add_parser("unarchive", help="Restore a task + its metrics from the archive")
+    unarchive_parser.add_argument("task_id")
+    unarchive_parser.set_defaults(func=unarchive_task)
+
+    subparsers.add_parser("archived", help="List archived tasks").set_defaults(func=archived)
+
+    decisions_for_parser = subparsers.add_parser(
+        "decisions-for", help="List decisions that cite a given metric scope (and optionally name)"
+    )
+    decisions_for_parser.add_argument("scope")
+    decisions_for_parser.add_argument("name", nargs="?", default=None)
+    decisions_for_parser.set_defaults(func=decisions_for)
 
     review_parser = subparsers.add_parser(
         "review", help="Classify each track's latest metric trend to support a continue/switch/stop call"
