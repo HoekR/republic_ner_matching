@@ -222,20 +222,30 @@ def extract_axis_texts(axis_records: list[dict[str, Any]]) -> list[str]:
     return texts
 
 
-def load_enriched_texts_by_date() -> dict[str, dict[str, str]]:
-    """Load enriched resolution texts indexed by (date, enriched_id)."""
-    from data_io import load as data_io_load
+def load_enriched_texts_by_date() -> dict[str, list[str]]:
+    """Load enriched resolution texts, ordered by `resolution_index` per date.
 
-    texts_by_date_and_id: dict[str, dict[str, str]] = defaultdict(dict)
-    for item in data_io_load("enriched_resolutions_1626_1630"):
+    Positional, not ID-keyed: gold's own `day["enriched_ids"]` (XML-filename ids like
+    `162915okt.xml#0`) and this dataset's `volgnr`/`resolution_index` fields don't share a
+    common string form, so the ID-keyed lookup this replaced always missed and silently fed
+    `compute_similarity_matrix` a placeholder string instead of real text (found via
+    plans/STAGED_ANCHOR_CONSOLIDATION.md's Step 4 redirect, 2026-10-02). `resolution_index`
+    is the one field both sides agree on positionally. Mirrors
+    `scripts/s4_corpus_paragraph_predictions.py`'s `load_enriched_texts_by_date`, which
+    already used this shape.
+    """
+    by_date: dict[str, list[tuple[int, str]]] = defaultdict(list)
+    for item in load("enriched_resolutions_1626_1630"):
         date = str(item.get("date", ""))[:10]
         if "1626-01-01" <= date <= "1630-12-31":
-            # Use volgnr if available, otherwise resolution_index
-            enriched_id = item.get("volgnr") or f"#{item.get('resolution_index', 0)}"
-            text = item.get("text", "") or item.get("summary", "") or item.get("title", "")
-            if text:
-                texts_by_date_and_id[date][str(enriched_id).strip()] = str(text).strip()
-    return texts_by_date_and_id
+            text = item.get("text", "") or item.get("summary", "") or item.get("title", "") or ""
+            idx = item.get("resolution_index", 0)
+            by_date[date].append((idx, str(text).strip()))
+    result: dict[str, list[str]] = {}
+    for date, indexed in by_date.items():
+        indexed.sort(key=lambda pair: pair[0])
+        result[date] = [text for _, text in indexed]
+    return result
 
 
 def compute_similarity_matrix(
@@ -299,12 +309,12 @@ def main() -> None:
 
     # Initialize semantic similarity if requested
     embedder: AlignmentEmbedder | None = None
-    enriched_texts_by_date_and_id: dict[str, dict[str, str]] = {}
+    enriched_texts_by_date: dict[str, list[str]] = {}
     if args.semantic_weight > 0:
         print(f"Initializing semantic similarity: backend={args.semantic_backend}, weight={args.semantic_weight}")
         embedder = AlignmentEmbedder(backend=args.semantic_backend)
-        enriched_texts_by_date_and_id = load_enriched_texts_by_date()
-        print(f"Loaded enriched texts for {len(enriched_texts_by_date_and_id)} dates")
+        enriched_texts_by_date = load_enriched_texts_by_date()
+        print(f"Loaded enriched texts for {len(enriched_texts_by_date)} dates")
 
     predictions = []
     for day in gold["days"]:
@@ -314,11 +324,15 @@ def main() -> None:
         # Compute similarity matrix if semantic weight is active
         similarity_matrix = None
         if args.semantic_weight > 0 and embedder is not None and axis_records:
-            # Load enriched texts for this day
-            enriched_texts = []
-            for enriched_id in day.get("enriched_ids", []):
-                text = enriched_texts_by_date_and_id.get(date_str, {}).get(str(enriched_id).strip(), "")
-                enriched_texts.append(text or f"enriched_{enriched_id}")
+            enriched_texts = enriched_texts_by_date.get(date_str, [])
+            expected = len(day.get("enriched_ids", []))
+            if len(enriched_texts) != expected:
+                print(
+                    f"Warning: {date_str} has {expected} gold enriched_ids but "
+                    f"{len(enriched_texts)} enriched texts; skipping semantic similarity for this day",
+                    file=sys.stderr,
+                )
+                enriched_texts = []
 
             axis_texts = extract_axis_texts(axis_records)
             if enriched_texts and axis_texts:
