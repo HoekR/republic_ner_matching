@@ -28,6 +28,7 @@
 > | Local: ≥ 50% of inventory ceiling | 3185–3189 all clear | **MET** |
 
 ## Status summary
+<!-- doc-status: active -->
 
 **Closed (complete):**
 - Segmentation-transfer S0–S6: S6c counts-constrained gap DP, `position_scores` tuning exhausted
@@ -58,7 +59,8 @@
    - Step 1 DONE (2026-10-01): pinned-but-wrong population sized at 0.7% (8/1,123) confirmed
    - Step 2 DONE (2026-10-01): harvest char→paragraph join verified on 3 seed days; 93% of axis mismatches traced to harvest-side grouping defect, fix implemented
    - Step 3 DONE (2026-10-01): partial abstention in `segment_day` implemented; gate PASS both metrics — gap-mass 2 abstained gaps on 1630-02-22 (expected); gold correctness (re-measured live, first attempt read a stale cache — see `docs/DECISIONS.md`) exact-agreement 0.5431→0.6486, abstained population only 13.9% correct beforehand vs 54.3% baseline
-   - Next: Step 4a/4b, staged vs unstaged channel wiring
+   - Step 4 pre-check DONE (2026-10-02): Group B (`entity_surface_matches`, `fuzzy_surface_scan`) measured, not wired — attributable to a specific enriched resolution only 9.6% of the time via the existing overlap data, and on the 24.6% of scored cells where Group A has no anchor (the only population wiring B would actually change), exact agreement is 28.2%, well below baseline. Deferred; see `docs/DECISIONS.md` 2026-10-02.
+   - Next: Step 4a/4b, staged vs unstaged channel wiring, scoped to Groups A+C+D
 
 4. **`resolution-loss-census`** (newly completed 2026-09-29)
    - 621 of 1,137 cross_day_shift sit on verified sessions; 552 (93%) collision-locked
@@ -72,6 +74,7 @@
 - **Workspace alignment** — Completed via `dighum_template` sync
 
 ## How to navigate
+<!-- doc-status: active -->
 
 1. **For work planning:** `uv run python scripts/svz.py review` shows active tracks and metrics
 2. **For decisions:** See [docs/DECISIONS.md](docs/DECISIONS.md) and [docs/ITERATION_POLICY.md](docs/ITERATION_POLICY.md)

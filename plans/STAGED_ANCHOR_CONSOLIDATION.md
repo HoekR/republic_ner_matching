@@ -411,3 +411,13 @@ channel already narrowed the room before it runs — unstaged, the same fuzzy hi
 **Gate:** per guardrail 5, neither mode is judged on gap-mass alone. Run on the three pathology
 seed days first (cheap, same idiom as `PATHOLOGY_CORPUS_RUNLOG.md` Step 1/2), before the 85
 severe-collapse days, before any corpus-wide claim.
+
+## Future diagnostic idea (user, 2026-10-02; not scoped, not implemented)
+
+Hypothesis: an enriched resolution's text length above the corpus mean correlates with it
+actually being several unseparated (lumped) resolutions rather than one — i.e. text length as a
+cheap prior for *where* to go looking for possible further separations, independent of the
+placement machinery this doc covers. If true, it would be a candidate signal for ranking gaps
+(the open "rank by expected unlocked mass, not size alone" question above), or for the separate
+question of enriched resolutions that bundle content the editors never split out at all. Not
+validated — measure before building anything on it.
