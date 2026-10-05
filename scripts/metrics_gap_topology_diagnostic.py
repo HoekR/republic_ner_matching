@@ -48,10 +48,16 @@ What the first run showed, so the two classes are read correctly:
   resolution's own 8 paragraphs, and a K=13 compression into a single paragraph), which is the user's
   observation that gaps and lumping co-occur in one session, now visible as two numbers.
 
-Deliberately NOT here: any placement or anchor-acceptance change. The proposed `delta_tau`
-gatekeeper (reject a candidate anchor if it raises total tension) is interesting but untested, needs a
-random-anchor null before anyone believes it, and is a placement change -- so it is gated on the
-`separated` ruling. See `PLAN.md`.
+**Scope boundary (user decision, 2026-10-05): this measure stays on gaps and never touches anchors.**
+It is a measurement, not a diagnosis: the only claim it is entitled to make is "there are x
+resolutions assigned here while the text supports about y". Having no causal content, it has no
+business adjudicating which anchors survive, so the proposed `delta_tau` gatekeeper (reject a
+candidate anchor if it raises total tension) is **out of scope by design**, not merely deferred. Two
+further reasons it would have been a bad bet even if it were in scope: inserting any anchor splits one
+gap into two, so a *correct* anchor usually raises `tau` as pure arithmetic and the rule would need a
+random-anchor null showing the correct and wrong `delta_tau` distributions actually separate; and as a
+withdrawal-type mechanism it is structurally disfavoured by the `separated` ruling. Do not revive it
+from the formula alone.
 
 Char offsets are used to measure *lengths* only, never to score boundary precision -- the same line
 `length_prior_eval` drew, and the tolerance-metric family stays excluded.
@@ -174,9 +180,17 @@ def gaps_for_day(
         l_char = sum(lengths[low:high + 1]) if low < len(lengths) else 0
         expected = k * mu
         eps = l_char / max(1.0, expected)
+        # The whole output in the units of the problem (user, 2026-10-05): the only claim this
+        # measure is entitled to make is "there are k_unplaced resolutions assigned here while the
+        # text supports about k_implied". `eps` is the same ratio with the units hidden, and
+        # `k_surplus` is how many resolutions have nowhere to go (positive) or how much text has no
+        # resolution claiming it, expressed as resolutions (negative).
+        k_implied = l_char / mu
         gaps.append({
             "date": date,
             "k_unplaced": k,
+            "k_implied": k_implied,
+            "k_surplus": k - k_implied,
             "room_paragraphs": high - low + 1,
             "l_char": l_char,
             "expected_char": expected,
@@ -260,8 +274,14 @@ def main() -> None:
     print(f"\ntop {args.top} friction peaks by |z| (K-aware; ranking by eps or tau would list "
           "tiny gaps instead):")
     ranked = frame.reindex(frame["z"].abs().sort_values(ascending=False).index)
-    print(ranked[["date", "k_unplaced", "room_paragraphs", "l_char", "eps", "tau", "z",
-                  "classification"]].head(args.top).to_string(index=False))
+    shown = ranked.head(args.top).copy()
+    shown["k_implied"] = shown["k_implied"].round(1)
+    shown["k_surplus"] = shown["k_surplus"].round(1)
+    print(shown[["date", "k_unplaced", "k_implied", "k_surplus", "room_paragraphs", "l_char",
+                 "eps", "z", "classification"]].to_string(index=False))
+    print("\nread a row as: k_unplaced resolutions are assigned here, the text supports about "
+          "k_implied; k_surplus is the shortfall in resolutions. That is the only claim this "
+          "measure makes -- it names no cause.")
 
     if args.no_write:
         return
