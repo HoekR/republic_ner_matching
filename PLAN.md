@@ -72,6 +72,71 @@
    - **Annotation finding, `1628-05-15` (2026-10-05):** user annotated resolutions 1-9 (cuts inserted), text then continues at resolution 16 — **1-based 10-15 are missing**. Probed per the upstream-first rule and confirmed absent, not mis-filed: none of the distinctive names from those six (Sir Thomas Lucas, Mourmont, Wollebrantsz/Tol, Wiggeringe) appear in the local paragraph axis for `session-3187-num-121` (9 paragraphs), in ES's own `paragraphs[].text` for that session, or anywhere in a 23-session window (`3187-num-110..132`). Upstream (stage 1-2) fault, same class as `1626-03-28`'s `#2-6` — left, per the stopping rule. **This day is still partially usable gold:** resolutions 1-9 and 16-18 have real text and real boundaries, unlike the three 4562 days which yield nothing.
    - **New recurring pathology found while annotating (2026-10-02), separate from the `1626-03-28` case above:** `1626-04-24` (`k_e=15`/`k_f=1`, inventory 4562) is the same shape — one genuine secret resolution present and complete (archive-confirmed, scan `NL_HANA_1_01_02_4562_0140`), the other 14 enriched resolutions have no corresponding text, all degenerately collapsed in production (`paragraph_start≈paragraph_end≈0`). `1626-07-17` (`k_e=28`, inventory 4562) is a related third shape: `k_f=0`, no resolved session at all — nothing to annotate. 2 of the original 5 hard-period days hit the first shape, 1 hits the second; only 2 of 5 (`1626-05-01`, `1626-05-29`) annotated normally. **Action for days like this:** no checkbox fits, place no markers, record in notes which resolutions are present/complete vs. absent, and (if inventory 4562) whether the present one is archive-confirmed secret.
 
+## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
+
+The user named the two core problems and their answers: **(1) we do not know how to divide or join
+paragraphs → place anchors**; **(2) the distribution of resolutions/paragraphs over sessions is
+unresolved → shift anchors**. Both are changes to *what an anchor is allowed to be* — finer (inside a
+paragraph) and freer (outside its date's own session). They are coupled: several shared-session splits
+are themselves sub-paragraph, so **P before S**.
+
+### Track P — "placing anchors": sub-paragraph division
+
+Sizing (measured 2026-10-05): sub-paragraph collision is the project's **largest single loss class** —
+**4,516 of 13,374 placed resolutions (34%)** share a start paragraph, against 774 lost to extent, and
+it concentrates into just **1,597 paragraphs**. Nothing needs re-harvesting: all **249,056**
+`s6b_anchor_harvest` anchors already carry `char_position` (verified on the day's concatenated char
+axis, max-position/day-chars ratio 0.99) and the placement model discards the offsets. Group A, which
+is all the DP really consumes, is 5,375 of those — about 2%.
+
+- **P0 — GATE, and it is a canonical-goal decision, not a metric tweak. Needs the user's explicit
+  sign-off before P3.** The acceptance criterion and the **11,644 paragraph-level ceiling** both assume
+  one resolution per paragraph ("several resolutions sharing one paragraph is a multi-mapping read").
+  Sub-paragraph anchors raise that ceiling, so `separated` (`label_separation`'s `unique_start`) must be
+  rekeyed from `paragraph_start_index` to `(paragraph, char_offset)` or it **structurally cannot see
+  the gain**. Consequence to accept deliberately: today's 8,084 = 68.8% "MET" becomes a smaller
+  fraction of a larger ceiling — real coverage rises while the headline number falls. Rekeying the
+  metric the `separated` ruling adjudicates on is also moving the goalposts unless it is decided
+  openly, which is why it is step zero.
+- **P1 — free pre-check, no annotation, do first.** Calibrate Group C interior candidates against the
+  **81 gold `mid_paragraph` opening cuts across 33 days** already in `boundary_gold_sample` (65) and
+  `boundary_gold_hard_period_sample` (9, plus 7 `start` slots) — a real sample, unlike the n=8/n=12
+  that defeated this session's other measurements. Score against a **uniform-random-position null
+  inside the same paragraph**; a candidate generator that does not beat that null is worthless however
+  available it is. Availability is already measured: Group C gives ≥1 interior candidate on 78% of the
+  1,597 colliding paragraphs and enough for every needed cut on **62%**, with the median case exactly
+  one candidate for one needed cut. Group B reaches 98%/94% but at median 9 candidates per cut, so it
+  is recall without precision. **Treat as channel calibration, not a track target metric — no
+  tolerance-threshold F1, per the standing ban.** If P1 fails, placing anchors is available but not
+  accurate, and the track stops here rather than proceeding on availability alone.
+- **P2 — bounded annotation, only if P1 passes.** `lumped_paragraph_gold_scaffold` holds **80 sampled
+  candidates, all `review_status: pending`, zero `gold_offsets`** (out of 463 lumped specs identified,
+  445 materialised) — the track was built and never started, which is why `lumped_paragraph_boundary_gold`
+  is absent from disk. UI (`build_lumped_paragraph_annotation_ui.py`) and merge script already exist.
+  This is the smallest annotation ask in the project and, unlike the hard-period sample, has a
+  guaranteed use: it is the only way to tell whether a candidate offset is the *right* cut.
+- **P3 — carry the offset through** `build_anchor_backbone`/`segment_gap` so one paragraph can host
+  several resolution starts at distinct offsets. Scored on the rekeyed `separated` corpus-wide against
+  the uniform null per the ruling; gold correctness as diagnostic only.
+
+### Track S — "shifting anchors": distribution over sessions
+
+The concordance is rigidly **one date → one session** (all 1,123 dates), while 67 sessions serve 2-3
+dates and the archive itself puts two days' business in one session. The container is the problem, not
+the matching. The harvest already addresses anchors as `(date, inventory, char_position)` — inventory,
+not session — so the address is partly free already.
+
+- **S1 — free diagnostic.** Size the shift demand: for the 25 heading-confirmed shared sessions, how
+  many resolutions would attach to a session other than their date's resolved one, and what does that
+  do to the measured surplus balance (gold+hard scope: **+186 resolutions with no text vs −186
+  resolutions' worth of text with nothing claiming it, net +60**)? That near-mirror is the reason to
+  suspect misallocation rather than absence; S1 tests whether the shifts actually absorb it.
+- **S2 — schema: many-to-many date↔session with paragraph ranges**, populated first only from the 25
+  verified shared sessions plus the 3 secret-flag-arbitrated spurious claims. Monotonicity brackets
+  stay hard constraints; fingerprint verification is never an arbiter (it identifies a raw session,
+  never which date owns it). Scored on `separated`.
+- **S3 — extend to the 42 undecided duplicates** via the entity channel.
+
 **Open design question (user, 2026-10-05): calibrate the anchor scoring instead of adding hard rules.**
 Three channels failed the same way in one day — Group C attribution (30.9% vs 47.9% baseline), the
 boundary-existence 2x2 (windows with no negatives), and heading attribution (376 fuzzy collisions
