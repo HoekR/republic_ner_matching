@@ -89,15 +89,35 @@ it concentrates into just **1,597 paragraphs**. Nothing needs re-harvesting: all
 axis, max-position/day-chars ratio 0.99) and the placement model discards the offsets. Group A, which
 is all the DP really consumes, is 5,375 of those — about 2%.
 
-- **P0 — GATE, and it is a canonical-goal decision, not a metric tweak. Needs the user's explicit
-  sign-off before P3.** The acceptance criterion and the **11,644 paragraph-level ceiling** both assume
-  one resolution per paragraph ("several resolutions sharing one paragraph is a multi-mapping read").
-  Sub-paragraph anchors raise that ceiling, so `separated` (`label_separation`'s `unique_start`) must be
-  rekeyed from `paragraph_start_index` to `(paragraph, char_offset)` or it **structurally cannot see
-  the gain**. Consequence to accept deliberately: today's 8,084 = 68.8% "MET" becomes a smaller
-  fraction of a larger ceiling — real coverage rises while the headline number falls. Rekeying the
-  metric the `separated` ruling adjudicates on is also moving the goalposts unless it is decided
-  openly, which is why it is step zero.
+- **Granularity rule (user, 2026-10-05), and it is what makes this tractable:** *within text*, anchor
+  placement may be **character-wise**, because the paragraph no longer holds as a container — a
+  resolution boundary inside a paragraph means that paragraph was never a real unit. For anchor
+  **shifting** (track S) everything is **translated back to paragraphs**, over the *new* paragraphs that
+  P's cuts create. So the char axis is an **intermediate** representation; the final address stays
+  paragraph-based, which preserves the canonical goal's verified archival address and every downstream
+  consumer.
+- **P0 — GATE, still a canonical-goal decision, but a smaller one than first drafted.** Because a char
+  cut **materialises as a new paragraph boundary**, `separated` does **not** need rekeying to
+  `(paragraph, char_offset)` — `label_separation`'s definition is untouched and simply runs over a finer,
+  corrected paragraph stream. (An earlier draft of this step proposed rekeying the metric; the user's
+  re-paragraphing architecture is better and supersedes it, because it leaves the criterion the
+  `separated` ruling adjudicates on exactly as it is.) What still needs explicit sign-off:
+  - **The ceiling rises.** The **11,644 paragraph-level ceiling** is a pigeonhole over today's
+    paragraphs; more paragraphs means more capacity, so today's 8,084 = 68.8% "MET" becomes a smaller
+    fraction of a larger denominator. Real coverage rises while the headline number falls. That is the
+    right trade but it must be chosen, not discovered.
+  - **Re-paragraphing scale (measured):** 1,597 paragraphs split into 4,516 pieces — **+2,919
+    paragraphs, +13.6% of the 21,519-paragraph axis**, touching 7.4% of it. Median 2 pieces per split
+    paragraph, p90 5.
+  - **It cuts both ways, and the cost is measured:** re-paragraphing unlocks up to 4,516
+    collision-blocked resolutions, but **809 currently-separated resolutions (10%) overlap a
+    to-be-split paragraph and 273 of them (3.4% of all separated) would then exceed `extent <= 3`** —
+    a resolution spanning a paragraph that becomes 3 pieces grows by 2. Roughly 16:1 in favour, but not
+    free, and `MAX_EXTENT_PARAGRAPHS = 3` was calibrated on *old* paragraphs, so the threshold's meaning
+    shifts in exactly those 7.4% and may need revisiting as part of this gate.
+  - **Migration:** every stored `paragraph_start_index` becomes stream-version dependent, so the axis
+    needs a versioned successor with provenance rather than an in-place edit. One thing gets *simpler*:
+    gold's `mid_paragraph` cuts become ordinary `paragraph_boundary` cuts in the new stream.
 - **P1 — free pre-check, no annotation, do first.** Calibrate Group C interior candidates against the
   **81 gold `mid_paragraph` opening cuts across 33 days** already in `boundary_gold_sample` (65) and
   `boundary_gold_hard_period_sample` (9, plus 7 `start` slots) — a real sample, unlike the n=8/n=12

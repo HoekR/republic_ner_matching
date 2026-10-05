@@ -17,3 +17,6 @@ data/hoe_graph/node_text_embeddings.npz
 data/LOC-annotations.json
 data/PER-annotations.json
 .aider*
+
+# npm cache from local tooling
+.npm-cache/
