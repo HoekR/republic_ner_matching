@@ -760,3 +760,17 @@ path = "republic_ner_matching/output/lumped_paragraph_boundary_gold.jsonl"
 phase = "semi"
 description = "Hand-verified mid_paragraph char cuts inside lumped HTR paragraphs (with notes/uncertain/clutter)."
 parent = "lumped_paragraph_gold_scaffold"
+
+[datasets.enriched_resolution_secret_flags]
+tier = "hot"
+path = "republic_ner_matching/data/derived/enriched_resolution_secret_flags.jsonl"
+phase = "semi"
+description = "Secret status flags for 1626-1630 enriched resolutions recovered from source XML: secreet_resolutie (bool), secreet_deel_count (int), register_citations (list). Rows keyed by (date, resolution_index) for joining to enriched_resolutions_1626_1630. Contains only the 381 resolutions with at least one marker."
+parent = "enriched_resolutions_1626_1630"
+
+[datasets.resolution_archival_provenance]
+tier = "hot"
+path = "republic_ner_matching/output/resolution_archival_provenance.jsonl"
+phase = "semi"
+description = "Per-resolution archival provenance pulled from the REPUBLIC Elasticsearch full_resolutions index: inventory_num, page_ids and derived scan_ids, so a flat resolution id can be pointed at the manuscript images that carry it. Scoped to inventories 3185-3189 plus the secret ledger 4562 (4861 has no rows in resolutions_flat). Uses metadata.page_ids carried on each resolution document directly -- no text matching and no session-level fallback. ES session_metadata.session_date is deliberately NOT carried: it is uncorrected first-pass output (docs/DECISIONS.md 2026-10-05); resolutions_flat's own date is the corrected value. Not every flat id resolves in ES (measured ~74% on a 400-id sample, ~90% for 4562); unresolved ids are written with found=false and no provenance rather than dropped."
+parent = "resolutions_flat"

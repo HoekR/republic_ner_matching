@@ -28,6 +28,20 @@ handle the edges and internal gaps:
   - A "first fragment is a continuation" checkbox flags that the visible text
     does not start a fresh resolution — it continues a resolution begun on a
     previous day — since there is no earlier text available to place a cut in.
+  - A NOTEXT marker for enriched resolutions with no text in this HTR at all
+    (an upstream HTR/ingestion gap, not a boundary the annotator could find).
+    `|||NOTEXT|||` marks one; `|||NOTEXT:6|||` marks a contiguous run of six,
+    which is how a missing block is usually encountered. Cuts map to
+    resolutions positionally, so without it a day whose
+    middle resolutions are missing would silently shift every later cut onto
+    the wrong resolution. NOTEXT consumes the transition slot but merges to a
+    deliberately unlocated record (`unit: "no_htr_text"`), which
+    `separated_accuracy_eval.is_located` scores as None rather than as a
+    placement — keeping the rest of the day usable without inventing one.
+  - A NOTE comment (`|||NOTE: ...|||`) for free-text annotator remarks. It is
+    stripped before marker parsing and preserved as `annotator_notes`. This
+    must be stripped first: an unrecognised `|||...|||` string is otherwise
+    walked as ordinary base text and displaces every later marker's position.
 
 Workflow:
     1. uv run python build_boundary_annotation_ui.py
@@ -57,6 +71,9 @@ MARKER_END = "|||END|||"  # optional: true end of a resolution (last resolution,
 MARKER_START = "|||START RES|||"  # optional: true start of the next resolution, after a boilerplate gap
 MARKER_DATE_END = "|||DATE_END|||"  # calendar-day / session-date cut: end of this date's content
 MARKER_DATE_START = "|||DATE_START|||"  # calendar-day / session-date cut: start of the next date's content
+MARKER_NOTEXT = "|||NOTEXT|||"  # one enriched resolution with NO text in this HTR at all
+NOTEXT_PATTERN = r"\|\|\|NOTEXT:(\d+)\|\|\|"  # a contiguous block of N absent resolutions
+NOTE_PATTERN = r"\|\|\|NOTE:[^|]*\|\|\|"  # free-text annotator comment; stripped, never a boundary
 SEPARATOR = "\n\n"  # joins paragraphs into one editable block; must match merge_boundary_annotations.py
 
 
@@ -149,7 +166,14 @@ h1 {{ margin: 0 0 6px; color: #1a365d; font-size: 1.4rem; }}
   Bracket <b>calendar-date / session-date</b> cuts with <code>{MARKER_DATE_END}</code> … <code>{MARKER_DATE_START}</code>
   (spillover from another day, or the next day's content starting mid-stream). Place exactly K_e - 1
   resolution transitions (cut + START RES). Date markers do not count toward that total.
-  Tick the checkbox if the first fragment continues a previous day.</p>
+  Tick the checkbox if the first fragment continues a previous day.
+  <br><b>If enriched resolutions have no text in this HTR at all</b>, mark the gap where it would have
+  fallen: <code>{MARKER_NOTEXT}</code> for a single absent resolution, or <code>|||NOTEXT:6|||</code>
+  for a contiguous run of six. They occupy their transition slots (so later resolutions stay correctly
+  aligned) but record no placement — without them every later cut shifts onto the wrong resolution and
+  the rest of the day is lost.
+  Free-text comments: <code>|||NOTE: your comment|||</code> — stripped on merge, kept in
+  <code>annotator_notes</code>, never counted as a boundary.</p>
   <div class='toolbar'>
     <span id='progress' class='meta'>0 / 0</span>
     <button class='muted' onclick='insertMarker()'>Insert cut</button>

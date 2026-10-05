@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -42,13 +43,40 @@ from build_boundary_annotation_ui import (
     MARKER_DATE_END,
     MARKER_DATE_START,
     MARKER_END,
+    MARKER_NOTEXT,
     MARKER_START,
+    NOTE_PATTERN,
+    NOTEXT_PATTERN,
     SEPARATOR,
     flat_paragraph_stream,
 )
 
 SAMPLE_FILE = OUTPUT_DIR / "boundary_gold_sample.json"
 ANNOTATIONS_FILE = OUTPUT_DIR / "boundary_gold_annotations.json"
+
+
+def expand_notext_counts(annotated_text: str) -> str:
+    """Rewrite ``|||NOTEXT:6|||`` into six plain ``|||NOTEXT|||`` markers.
+
+    Annotators mark a contiguous run of absent resolutions once and give its size,
+    rather than repeating the bare marker. Expanding before :func:`parse_markers`
+    keeps that function's single-pass catalog scan unchanged; because a recognised
+    marker contributes nothing to ``base_pos``, all N expanded markers resolve to
+    the same base offset, which is exactly the intent -- N consecutive unlocated
+    slots at one position.
+    """
+    return re.sub(NOTEXT_PATTERN, lambda m: MARKER_NOTEXT * int(m.group(1)), annotated_text)
+
+
+def strip_notes(annotated_text: str) -> tuple[str, list[str]]:
+    """Remove ``|||NOTE: ...|||`` comments, returning the cleaned text and the notes.
+
+    Must run before :func:`parse_markers`. An unrecognised ``|||...|||`` string would
+    otherwise be walked as ordinary base text, advancing ``base_pos`` by its own length
+    and silently displacing every later marker's recovered position.
+    """
+    notes = [m.group(0)[len("|||NOTE:") : -3].strip() for m in re.finditer(NOTE_PATTERN, annotated_text)]
+    return re.sub(NOTE_PATTERN, "", annotated_text), notes
 
 
 def parse_markers(
@@ -58,11 +86,19 @@ def parse_markers(
     start_marker: str,
     date_end_marker: str = MARKER_DATE_END,
     date_start_marker: str = MARKER_DATE_START,
+    notext_marker: str = MARKER_NOTEXT,
+    base_text: str | None = None,
 ) -> list[tuple[int, str]]:
     """Single-pass scan: ordered (base_offset, type) tokens with all markers removed.
 
-    type is one of "cut", "end", "start", "date_end", "date_start". Longer date
-    markers are matched before END / START RES so prefixes do not collide.
+    type is one of "cut", "end", "start", "date_end", "date_start", "notext". Longer
+    date markers are matched before END / START RES so prefixes do not collide.
+
+    Pass ``base_text`` (the unannotated paragraph stream) to recover offsets by
+    alignment rather than by counting every non-marker character. Without it, any
+    character the annotator added -- newlines around a marker, a mistyped
+    ``|||CUT|`` fragment -- inflates the recovered offset of every later marker,
+    which relocates cuts into the wrong paragraph with no error raised.
     """
     # Longest-first so DATE_END does not match as END, etc.
     catalog = sorted(
@@ -72,6 +108,7 @@ def parse_markers(
             (start_marker, "start"),
             (end_marker, "end"),
             (cut_marker, "cut"),
+            (notext_marker, "notext"),
         ],
         key=lambda item: len(item[0]),
         reverse=True,
@@ -80,6 +117,7 @@ def parse_markers(
     base_pos = 0
     i = 0
     n = len(annotated_text)
+    base_n = len(base_text) if base_text is not None else 0
     while i < n:
         matched = False
         for marker, kind in catalog:
@@ -88,7 +126,22 @@ def parse_markers(
                 i += len(marker)
                 matched = True
                 break
-        if not matched:
+        if matched:
+            continue
+        if base_text is None:
+            base_pos += 1
+            i += 1
+            continue
+        # Align against the real base text. Annotators type markers on their own
+        # lines, and that added whitespace is not in the paragraph stream; counting
+        # it would advance base_pos past where every later marker actually sits,
+        # silently relocating cuts into the wrong paragraph.
+        if base_pos < base_n and annotated_text[i] == base_text[base_pos]:
+            base_pos += 1
+            i += 1
+        elif annotated_text[i].isspace():
+            i += 1  # inserted whitespace: consume it, do not advance the base cursor
+        else:
             base_pos += 1
             i += 1
     return tokens
@@ -116,6 +169,19 @@ def locate_cut(base_offset: int, paragraphs: list[dict[str, Any]], separator: st
                 "char_offset": text_len,
                 "unit": "paragraph_boundary",
             }
+        if end < base_offset < end + len(separator) and i + 1 < len(paragraphs):
+            # The offset fell strictly inside the inter-paragraph separator (e.g. between
+            # the two newlines of "\n\n"). The annotator meant the break itself, so snap
+            # forward to the next paragraph's start rather than reporting out_of_range --
+            # which would discard a correctly placed cut.
+            nxt = paragraphs[i + 1]
+            return {
+                "paragraph_stream_index": i + 1,
+                "flat_id": nxt["flat_id"],
+                "para_index": nxt["para_index"],
+                "char_offset": 0,
+                "unit": "paragraph_boundary",
+            }
         cursor = end + len(separator)
     return {"paragraph_stream_index": len(paragraphs) - 1, "unit": "out_of_range", "char_offset": None}
 
@@ -125,9 +191,56 @@ def build_boundaries(
 ) -> list[dict[str, Any]]:
     """Turn ordered markers into boundary records: cuts, gaps, date cuts, trailing end."""
     boundaries: list[dict[str, Any]] = []
+
+    # A leading NOTEXT run means the day's FIRST resolutions are absent. Two things
+    # follow, and neither is expressible by the plain per-resolution slot alone:
+    # resolution 1 must abstain (``gold_start_paragraphs`` otherwise defaults it to
+    # paragraph 0, inventing a placement for text that is not here), and the first
+    # resolution that *is* present opens at paragraph 0 -- there is no marker for it
+    # because there is no earlier text to put one in. So emit an unlocated ``start``
+    # for resolution 1, unlocated cuts for the rest of the run, then a located cut at
+    # paragraph 0 for the first present resolution.
+    leading = 0
+    while leading < len(tokens) and tokens[leading][1] == "notext":
+        leading += 1
+    if leading and paragraphs:
+        boundaries.append(
+            {"paragraph_stream_index": None, "flat_id": None, "char_offset": None, "unit": "no_htr_text", "kind": "start"}
+        )
+        for _ in range(leading - 1):
+            boundaries.append(
+                {"paragraph_stream_index": None, "flat_id": None, "char_offset": None, "unit": "no_htr_text", "kind": "cut"}
+            )
+        first = paragraphs[0]
+        boundaries.append(
+            {
+                "paragraph_stream_index": 0,
+                "flat_id": first["flat_id"],
+                "para_index": first["para_index"],
+                "char_offset": 0,
+                "unit": "paragraph_boundary",
+                "kind": "cut",
+            }
+        )
+        tokens = tokens[leading:]
+
     for i, (offset, kind) in enumerate(tokens):
         if kind == "cut":
             boundaries.append({**locate_cut(offset, paragraphs, separator), "kind": "cut"})
+        elif kind == "notext":
+            # An enriched resolution with no text in this HTR at all. Occupies its
+            # positional cut slot so later resolutions stay aligned, but is deliberately
+            # unlocated -- `separated_accuracy_eval.is_located` scores it as None rather
+            # than as a placement, which is the honest outcome (no fabricated precision).
+            boundaries.append(
+                {
+                    "paragraph_stream_index": None,
+                    "flat_id": None,
+                    "char_offset": None,
+                    "unit": "no_htr_text",
+                    "kind": "cut",
+                }
+            )
         elif kind == "start":
             preceded_by_gap = i > 0 and tokens[i - 1][1] == "end"
             entry = {**locate_cut(offset, paragraphs, separator), "kind": "start"}
@@ -184,6 +297,16 @@ def main() -> None:
         default=ANNOTATIONS_FILE,
         help="Exported annotations JSON.",
     )
+    parser.add_argument(
+        "--allow-blanking",
+        action="store_true",
+        help=(
+            "Permit replacing a day that already has opening slots with an export carrying none. "
+            "Off by default: the UI stores every rendered day under one shared localStorage key, so "
+            "an export routinely contains unmarked base text for days the annotator never touched, "
+            "and merging that would silently erase existing hand annotations."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.annotations.exists():
@@ -205,11 +328,13 @@ def main() -> None:
 
     now = datetime.now(timezone.utc).isoformat()
     updated = 0
+    skipped: list[tuple[str, int]] = []
     for day in sample["days"]:
         state = annotated_by_date.get(day["date"])
         if state is None:
             continue
-        annotated_text = state.get("text", "")
+        annotated_text, notes = strip_notes(state.get("text", ""))
+        annotated_text = expand_notext_counts(annotated_text)
 
         paragraphs = flat_paragraph_stream(res_df, day["flat_ids"])
         base_len = sum(len(p["text"]) for p in paragraphs) + len(separator) * max(0, len(paragraphs) - 1)
@@ -220,10 +345,19 @@ def main() -> None:
             marker_start,
             marker_date_end,
             marker_date_start,
+            base_text=separator.join(p["text"] for p in paragraphs),
         )
         boundaries = build_boundaries(tokens, paragraphs, separator, base_len)
 
+        existing_openings = len([b for b in (day.get("boundaries") or []) if b.get("kind") in ("cut", "start")])
+        new_openings = len([b for b in boundaries if b.get("kind") in ("cut", "start")])
+        if existing_openings and not new_openings and not args.allow_blanking:
+            skipped.append((day["date"], existing_openings))
+            continue
+
         day["boundaries"] = boundaries
+        if notes:
+            day["annotator_notes"] = notes
         day["starts_mid_resolution"] = bool(state.get("startsMid", False))
         day["annotator"] = args.annotator
         day["annotated_at"] = now
@@ -231,11 +365,27 @@ def main() -> None:
 
     args.sample.write_text(json.dumps(sample, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Merged {updated} annotated day(s) into {args.sample}")
+    if skipped:
+        print(
+            f"PROTECTED {len(skipped)} already-annotated day(s) whose export carried no openings "
+            f"(pass --allow-blanking to overwrite them anyway):"
+        )
+        for date, n in skipped:
+            print(f"  {date}: kept {n} existing opening slot(s)")
 
     def transitions(day: dict[str, Any]) -> list[dict[str, Any]]:
         return [b for b in (day.get("boundaries") or []) if b.get("kind") in ("cut", "start")]
 
-    complete = sum(1 for d in sample["days"] if len(transitions(d)) == d["k_e"] - 1)
+    def expected_slots(day: dict[str, Any]) -> int:
+        """K_e - 1 cuts, plus one more when an explicit leading ``start`` slot is present.
+
+        ``gold_start_paragraphs`` consumes a leading ``start`` as resolution 1's own
+        position rather than as a transition, so such a day carries K_e slots.
+        """
+        slots = transitions(day)
+        return day["k_e"] if slots and slots[0].get("kind") == "start" else day["k_e"] - 1
+
+    complete = sum(1 for d in sample["days"] if len(transitions(d)) == expected_slots(d))
     mid_paragraph = sum(1 for d in sample["days"] for b in transitions(d) if b.get("unit") == "mid_paragraph")
     gaps = sum(1 for d in sample["days"] for b in (d.get("boundaries") or []) if b.get("preceded_by_gap"))
     date_cuts = sum(
