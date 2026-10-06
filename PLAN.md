@@ -168,8 +168,27 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   | in ES but absent here — **recoverable** | 26 | 313 | 7% |
   | absent from the HTR corpus altogether | 272 | 3,535 | 79% |
 
-  The recoverable slice is small but concrete, and carries an authoritative inventory from ES
-  (3186: 117 docs, 3185: 105, 3188: 86, 3189: 21, 3187: 15) rather than a candidate guess.
+  **Then withdrawn too (user, 2026-10-06): `resolutions_flat` was built from the ES resolutions
+  dump**, so ES is upstream of this corpus and holds no text it lacks — the 0.99 median character
+  ratio had already said so. The 26 dates are a *date-attribution* question, not missing text.
+- **Which turned out to be the live finding: the date headings were never ingested.** The axis
+  descends from `resolutions_flat`, which carries resolution text; ES classes text regions and the
+  headings live in `date`-class ones (`attendance` too). `session-3185-num-98` opens mid-attendance
+  list on the axis, while ES holds `Heeren Grave, Rantwijck, De Bie, Halewijn, Mercurij den xxen.
+  Maij 1626` for it. An earlier weekday test against the axis returned 23 of 24 "no signal" — read
+  as a mute channel, actually un-imported evidence.
+- **Re-run against ES `date` regions with predictions fixed first**
+  (`scripts/h_weekday_date_attribution.py`): **H1 16, H0 1, H2 0**, 5 no signal, 1 undecidable.
+  So for **16 of 24 contested dates — 207 resolutions — the enriched date is right and this
+  corpus' corrected session date is wrong**; the text is here under another date. **H2
+  (Julian/Gregorian) is refuted** — all three 10-day offsets came out H1, and the 10-day offset was
+  the only reason to suspect it. Two method fixes, both from the user reading the manuscript: only
+  a session's *first* heading dates it, and `Praeside et Praesentibus qui heri` names **yesterday**,
+  so such headings shift one day forward — which is why `session-3185-num-16`, reading 20 January
+  on the image, is correctly dated the 21st here.
+- **Next, not done:** applying the 16 H1 verdicts is a change to the day-status ledger and has not
+  been designed; ingesting `date`/`attendance` regions is the prerequisite for using this channel
+  anywhere else.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 

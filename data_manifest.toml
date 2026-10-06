@@ -740,6 +740,20 @@ phase = "semi"
 description = "Boundary-splitter model predictions on real fold_in_candidates() sessions (scripts/s4_day_status_resolution.py): for each session shared by 2+ dates via ?-status recovery, the predicted cut char offset(s) with surrounding context, to check whether the trained model lands on a real day-boundary within genuinely concatenated session text (unlike the earlier lumped-paragraph gold task, exactly one real cut is known to exist per date pair)."
 parent = "session_date_status_1626_1630"
 
+[datasets.h_weekday_date_attribution]
+tier = "hot"
+path = "republic_ner_matching/output/h_weekday_date_attribution.jsonl"
+phase = "semi"
+description = "Hypothesis test (scripts/h_weekday_date_attribution.py, predictions fixed in the docstring before the run): for the 24 enriched dates that resolve to no HTR session but which ES dates a session to, does that session's own heading say whether the enriched date or this corpus corrected label is right? H0 heading day and weekday both agree with our label (correction right); H1 both agree with the enriched date (correction wrong); H2 day agrees with the enriched date while weekday agrees with ours, which is the Julian/Gregorian signature because a weekday is a property of the physical day and does not shift between styles while the day number does. Stated in advance: offsets divisible by 7 are undecidable (both dates share a weekday), most cases are expected to yield no readable heading since the channel was already measured mute here, and any class below n=5 is a direction not a finding. Diagnostic only, no placement change."
+parent = "unplaced_date_review"
+
+[datasets.unplaced_date_review]
+tier = "hot"
+path = "republic_ner_matching/output/unplaced_date_review.jsonl"
+phase = "semi"
+description = "Human review worklist (scripts/build_unplaced_date_review.py) for enriched dates that found no HTR session. One row per non-secret no_session date with k_e, what ES full_resolutions holds for that date (session id, resolution count, page/scan ids) and IIIF manuscript image URLs. NOT a recovery list: resolutions_flat was built from the ES resolutions dump, so ES is upstream of this corpus and holds no text it lacks (ES/axis char ratio 0.99 median over 1,316 sessions). What differs is the date -- ES carries the uncorrected first-pass session_date, this corpus the corrected one -- so for 26 dates the enriched edition records business while the session ES dates to that day sits here under a later date (23 of 24 later, by 1-21 days, with 10-day cases worth a Julian/Gregorian weekday check). The session-heading channel was tried and is mute here: 2 of 14 matched only the ES date, 0 only our label, 12 no usable signal. Adjudication therefore falls to a human reading the date off the image, which is what resolution_archival_provenance was built to make possible. Diagnostic only, no placement change."
+parent = "resolution_concordance_1626_1630"
+
 [datasets.running_axis_snapshot]
 tier = "hot"
 path = "republic_ner_matching/output/running_axis_snapshot.jsonl"
