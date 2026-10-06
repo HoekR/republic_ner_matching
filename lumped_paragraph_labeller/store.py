@@ -12,6 +12,11 @@ from data_io import load, resolve
 SCAFFOLD_DATASET = "lumped_paragraph_gold_scaffold"
 ANNOTATIONS_LOGICAL = "lumped_paragraph_gold_annotations"
 MARKER = "|||CUT|||"
+# Marks where resolution text begins when the paragraph opens with non-resolution
+# matter (attendance list, heading). At most one per paragraph, and never a cut:
+# it is the paragraph's head offset, not an interior resolution start. Introduced
+# by hand in the 2026-09-28 pass (1629-07-25#p0) before the tooling knew it.
+START_MARKER = "|||START|||"
 
 # cuts: mid_paragraph offsets present
 # no_cut: human says one/partial resolution — no interior cut

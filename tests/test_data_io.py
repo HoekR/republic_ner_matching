@@ -85,10 +85,11 @@ phase = "frozen"
         manager.resolve("x")
 
 
-def test_save_semi_structured_sidecar(manifest_dir: Path) -> None:
-    import os
-
-    os.chdir(manifest_dir)
+def test_save_semi_structured_sidecar(manifest_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # monkeypatch.chdir restores the original working directory at teardown; a bare
+    # os.chdir leaked this temp directory into every later test, so anything resolving a
+    # real dataset afterwards got this fixture's two-entry manifest instead.
+    monkeypatch.chdir(manifest_dir)
     records = [{"id": 1, "text": "hello"}]
     path = save_semi_structured(
         records,
@@ -104,10 +105,11 @@ def test_save_semi_structured_sidecar(manifest_dir: Path) -> None:
     assert load_jsonl(path) == records
 
 
-def test_save_parquet_metadata_and_sidecar(manifest_dir: Path) -> None:
-    import os
-
-    os.chdir(manifest_dir)
+def test_save_parquet_metadata_and_sidecar(manifest_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # monkeypatch.chdir restores the original working directory at teardown; a bare
+    # os.chdir leaked this temp directory into every later test, so anything resolving a
+    # real dataset afterwards got this fixture's two-entry manifest instead.
+    monkeypatch.chdir(manifest_dir)
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
     path = save_parquet(df, logical_name="sample_parquet", script="test_script.py")
     assert path.exists()

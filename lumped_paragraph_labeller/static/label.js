@@ -5,6 +5,7 @@
   const exampleId = form.dataset.exampleId;
   const nextId = form.dataset.nextId;
   const marker = form.dataset.marker || "|||CUT|||";
+  const startMarker = form.dataset.startMarker || "|||START|||";
   const expectedCuts = form.dataset.expectedCuts || "?";
   const statusEl = document.getElementById("save-status");
   const progress = document.getElementById("progress");
@@ -24,8 +25,10 @@
     if (!cutCount || !editor) return;
     const n = countCuts(editor.value);
     const verdict = selectedVerdict();
-    cutCount.textContent = `${n} / ${expectedCuts} cuts`;
-    const ok = verdict !== "cuts" || String(n) === String(expectedCuts);
+    cutCount.textContent = `${n} cuts (concordance says ${expectedCuts})`;
+    // "pending" here means "not yet annotated", not "wrong": a count differing from
+    // the concordance is a legitimate, savable verdict.
+    const ok = verdict !== "cuts" || n > 0;
     cutCount.className = "status-pill " + (ok ? "done" : "pending");
   }
 
@@ -44,10 +47,17 @@
   async function save(andNext) {
     const verdict = selectedVerdict();
     const n = countCuts(editor.value);
-    if (verdict === "cuts" && String(n) !== String(expectedCuts)) {
-      statusEl.textContent = `cuts verdict needs ${expectedCuts} markers (found ${n}), or choose no_cut / false_lump / skip.`;
+    if (verdict === "cuts" && n === 0) {
+      statusEl.textContent = `cuts verdict needs at least one ${marker} marker, or choose no_cut / false_lump / skip.`;
       statusEl.className = "save-status err";
       return;
+    }
+    // A count other than expectedCuts does NOT block the save. expectedCuts is the
+    // concordance's n_share prediction, which is the thing under test — the human
+    // disagreeing with it is the finding, not a form error. Warn, then save.
+    let disagree = false;
+    if (verdict === "cuts" && String(n) !== String(expectedCuts)) {
+      disagree = true;
     }
     if ((verdict === "no_cut" || verdict === "false_lump") && n > 0) {
       statusEl.textContent = `${verdict} cannot keep CUT markers — remove them or use cuts.`;
@@ -67,7 +77,9 @@
       if (progress && body.stats) {
         progress.textContent = `${body.stats.labelled} / ${body.stats.total} labelled`;
       }
-      statusEl.textContent = "Saved to disk.";
+      statusEl.textContent = disagree
+        ? `Saved to disk — ${n} cuts recorded against the concordance's ${expectedCuts}.`
+        : "Saved to disk.";
       statusEl.className = "save-status ok";
       if (andNext && nextId) {
         window.location.href = `/label/${encodeURIComponent(nextId)}`;
@@ -85,13 +97,24 @@
 
   document.getElementById("btn-save-stay")?.addEventListener("click", () => save(false));
 
-  document.getElementById("btn-insert-cut")?.addEventListener("click", () => {
+  function insertMarker(text) {
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
-    editor.value = editor.value.slice(0, start) + marker + editor.value.slice(end);
-    editor.selectionStart = editor.selectionEnd = start + marker.length;
+    editor.value = editor.value.slice(0, start) + text + editor.value.slice(end);
+    editor.selectionStart = editor.selectionEnd = start + text.length;
     editor.focus();
     updateCutPill();
+  }
+
+  document.getElementById("btn-insert-cut")?.addEventListener("click", () => insertMarker(marker));
+
+  document.getElementById("btn-insert-start")?.addEventListener("click", () => {
+    if (editor.value.includes(startMarker)) {
+      statusEl.textContent = `${startMarker} is already placed — remove it first.`;
+      statusEl.className = "save-status err";
+      return;
+    }
+    insertMarker(startMarker);
   });
 
   editor?.addEventListener("input", updateCutPill);

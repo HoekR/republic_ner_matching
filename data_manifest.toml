@@ -740,6 +740,13 @@ phase = "semi"
 description = "Boundary-splitter model predictions on real fold_in_candidates() sessions (scripts/s4_day_status_resolution.py): for each session shared by 2+ dates via ?-status recovery, the predicted cut char offset(s) with surrounding context, to check whether the trained model lands on a real day-boundary within genuinely concatenated session text (unlike the earlier lumped-paragraph gold task, exactly one real cut is known to exist per date pair)."
 parent = "session_date_status_1626_1630"
 
+[datasets.running_axis_snapshot]
+tier = "hot"
+path = "republic_ner_matching/output/running_axis_snapshot.jsonl"
+phase = "semi"
+description = "RunningAxis state snapshot (scripts/build_running_axis_snapshot.py): one record per HTR session with its half-open character span on its inventory's continuous coordinate (ordered by session_num/resolution_num/para_index from flat_id, not restarted per day), plus every date claiming it under BOTH attributions -- label_dates from the axis record's own date field, resolved_dates from the concordance. One record per enriched date with k_e, status, its resolved session and an addressability class: labelled / dropped_by_label_grouping / nihil_actum / no_session. The third class is the point: s6b_known_point_ledger groups by the axis date label and skips any date with none, filing 535 dates (5,590 resolutions) under a fabricated inventory named no_axis -- but 66 of those dates (983 resolutions) already carry a concordance-resolved session and are lost only to the grouping rule. The meta record carries the model's coverage, the reported window, and every figure as a population-named tally, so a figure can never again be quoted without the window it describes. Diagnostic only, no placement change, no tolerance-family metric."
+parent = "paragraph_axis_1626_1630"
+
 [datasets.lumped_paragraph_gold_scaffold]
 tier = "hot"
 path = "republic_ner_matching/output/lumped_paragraph_gold_scaffold.jsonl"
@@ -758,7 +765,7 @@ parent = "lumped_paragraph_gold_scaffold"
 tier = "hot"
 path = "republic_ner_matching/output/lumped_paragraph_boundary_gold.jsonl"
 phase = "semi"
-description = "Hand-verified mid_paragraph char cuts inside lumped HTR paragraphs (with notes/uncertain/clutter)."
+description = "Hand-verified mid_paragraph char cuts inside lumped HTR paragraphs (with notes/uncertain/clutter). record_type 'gold' carries verdict 'cuts' (gold_offsets non-empty) or 'no_cut' (gold_offsets [], an informative negative: the concordance's n_share>=2 lump is spurious); record_type 'false_lump' quarantines rows the annotator rejected outright. expected_cuts is the concordance prediction and is NOT enforced against gold_offsets — disagreement is flagged expected_cuts_disagrees. head_offset marks where resolution text begins when the paragraph opens with an attendance list or heading (never a cut)."
 parent = "lumped_paragraph_gold_scaffold"
 
 [datasets.enriched_resolution_secret_flags]

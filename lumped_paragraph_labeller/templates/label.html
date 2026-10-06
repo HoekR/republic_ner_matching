@@ -30,12 +30,13 @@
   </p>
 </section>
 
-<form id="label-form" class="card" data-example-id="{{ row.example_id }}" data-next-id="{{ next_id or '' }}" data-marker="{{ marker }}" data-expected-cuts="{{ expected_cuts }}">
+<form id="label-form" class="card" data-example-id="{{ row.example_id }}" data-next-id="{{ next_id or '' }}" data-marker="{{ marker }}" data-start-marker="{{ start_marker }}" data-expected-cuts="{{ expected_cuts }}">
   <div class="form-header">
     <h2>Paragraph HTR</h2>
     <div class="actions-inline">
       <button type="button" class="btn secondary" id="btn-insert-cut">Insert cut marker</button>
-      <span id="cut-count" class="status-pill {{ 'done' if cuts_ok else 'pending' }}">{{ n_cuts }} / {{ expected_cuts }} cuts</span>
+      <button type="button" class="btn secondary" id="btn-insert-start">Insert start marker</button>
+      <span id="cut-count" class="status-pill {{ 'done' if cuts_ok else 'pending' }}">{{ n_cuts }} cuts (concordance says {{ expected_cuts }})</span>
       <span class="status-pill {{ 'done' if row.labelled else 'pending' }}">{{ 'Saved' if row.labelled else 'Unsaved' }}</span>
     </div>
   </div>
@@ -43,7 +44,10 @@
   <fieldset class="verdict-box">
     <legend>Verdict</legend>
     <label class="check"><input type="radio" name="verdict" value="cuts" {{ 'checked' if verdict == 'cuts' else '' }}>
-      <b>cuts</b> — place <code>{{ marker }}</code> at each true interior start</label>
+      <b>cuts</b> — place <code>{{ marker }}</code> at each true interior start
+      (any number; the concordance's count is a prediction, not a target)</label>
+    <p class="notes-hint"><code>{{ start_marker }}</code> is not a cut: place it, on any verdict, where
+      resolution text begins if the paragraph opens with an attendance list or heading.</p>
     <label class="check"><input type="radio" name="verdict" value="no_cut" {{ 'checked' if verdict == 'no_cut' else '' }}>
       <b>no_cut</b> — single / partial resolution; no interior cut</label>
     <label class="check"><input type="radio" name="verdict" value="false_lump" {{ 'checked' if verdict == 'false_lump' else '' }}>

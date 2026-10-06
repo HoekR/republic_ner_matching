@@ -49,7 +49,7 @@ lumped-paragraph-gold-ui = "lumped_paragraph_labeller.app:main"
 boundary-day-gold-ui = "boundary_day_labeller.app:main"
 
 [tool.setuptools.packages.find]
-include = ["generate_alignment", "lumped_paragraph_labeller", "boundary_day_labeller", "data_io", "tests"]
+include = ["generate_alignment", "lumped_paragraph_labeller", "boundary_day_labeller", "data_io", "running_axis", "tests"]
 
 [tool.setuptools.package-data]
 lumped_paragraph_labeller = ["templates/*", "static/*"]

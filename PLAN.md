@@ -72,6 +72,86 @@
    - **Annotation finding, `1628-05-15` (2026-10-05):** user annotated resolutions 1-9 (cuts inserted), text then continues at resolution 16 — **1-based 10-15 are missing**. Probed per the upstream-first rule and confirmed absent, not mis-filed: none of the distinctive names from those six (Sir Thomas Lucas, Mourmont, Wollebrantsz/Tol, Wiggeringe) appear in the local paragraph axis for `session-3187-num-121` (9 paragraphs), in ES's own `paragraphs[].text` for that session, or anywhere in a 23-session window (`3187-num-110..132`). Upstream (stage 1-2) fault, same class as `1626-03-28`'s `#2-6` — left, per the stopping rule. **This day is still partially usable gold:** resolutions 1-9 and 16-18 have real text and real boundaries, unlike the three 4562 days which yield nothing.
    - **New recurring pathology found while annotating (2026-10-02), separate from the `1626-03-28` case above:** `1626-04-24` (`k_e=15`/`k_f=1`, inventory 4562) is the same shape — one genuine secret resolution present and complete (archive-confirmed, scan `NL_HANA_1_01_02_4562_0140`), the other 14 enriched resolutions have no corresponding text, all degenerately collapsed in production (`paragraph_start≈paragraph_end≈0`). `1626-07-17` (`k_e=28`, inventory 4562) is a related third shape: `k_f=0`, no resolved session at all — nothing to annotate. 2 of the original 5 hard-period days hit the first shape, 1 hits the second; only 2 of 5 (`1626-05-01`, `1626-05-29`) annotated normally. **Action for days like this:** no checkbox fits, place no markers, record in notes which resolutions are present/complete vs. absent, and (if inventory 4562) whether the present one is archive-confirmed secret.
 
+## Strategy (user, 2026-10-06) and the model it required
+
+The user's stated working order, to which the tracks below are subordinate:
+
+1. **Find the good sequence.** 2. **Identify the gaps in it.** 3. **Resolve the biggest gaps first**,
+by (a) placing additional anchors and (b) shifting anchors — learning from successes and failures,
+since only a limited number of things can be wrong. 4. **Iterate**, with an explicit way to say
+*enough* or *methods exhausted*. Hand editing is reserved for genuinely unclear, unsolvable cases.
+
+**`running_axis/` — DONE 2026-10-06** (new package, 95 tests, `pyproject.toml` registered; dataset
+`running_axis_snapshot`; `docs/DECISIONS.md` 2026-10-06). Built because steps 3–4 are *mutations* that
+must preserve monotonicity, and because recomputing the sequence from dispersed sources per script is
+what let **three gap counts** circulate for one ledger (120 from the one-month run on disk, 947 cited
+in this file from an earlier full run, and a third fabricated set, now withdrawn). One loaded object,
+every window a *view* of it, so a month and a corpus figure cannot contradict.
+
+- **The `no_axis` defect, and the free win inside it.** `s6b_known_point_ledger` groups the axis by
+  each paragraph's `date` field and `continue`s past any date with none, filing them under a
+  fabricated inventory named `no_axis` (`scripts/s6b_known_point_ledger.py:412`) — although
+  `axis_for_date` exists to prefer the concordance-resolved session and is simply never called.
+  Decomposed and machine-checked: **1,594 enriched dates = 1,059 labelled + 66
+  dropped_by_label_grouping + 125 nihil_actum + 344 no_session**; **19,120 resolutions = 13,530 + 983
+  + 125 + 4,482**. The **66 dates / 983 resolutions already carry a resolved session** and are lost
+  only to the grouping rule — a defect in the ledger's *measurement*, since production does call
+  `axis_for_date`. October 1628 decomposes 31 = 15 + 3 + 2 + 11 instead of "15 with an axis, 16
+  without".
+- **Ambiguous counts are now inexpressible, not merely discouraged.** `running_axis/tally.py` binds
+  every count to a registered population and a window; cross-population subtraction, overlapping-window
+  addition, cross-unit ratios and empty denominators all raise. The four date counts that read as a
+  contradiction were each correct over a different population: **1,240** axis date labels, **1,594**
+  enriched dates, **1,059** both, **535** enriched without a label, **181** axis labels that are not
+  enriched dates (180 past the edition's 1630-05-14 end while the axis runs to 1630-12-31).
+- **Gap accounting and brackets DONE 2026-10-06** (`running_axis/chain.py`, 19 tests). Both
+  structures, kept distinct because they are easy to conflate: **gaps** are resolution-level within a
+  day (`s6b_known_point_ledger`), **brackets** are session-level within an inventory
+  (`session_offset_eval`). The model **reproduces the ledger field-for-field** from its own chains —
+  120 gaps, determined 70 / nearly_determined 36 / open 14, resolutions 0 / 49 / 61, chars 168,197 /
+  92,920 / 51,796, `settled_share_by_gap` 0.8833 and `open_share_by_resolution` 0.5545, all twelve
+  fields — and reproduces `session_offset_eval` on sittings (344, k_e 4,482) and determined pairings
+  (3 sittings, k_e 40). **One documented difference:** unclaimed sessions are 263 here against its 79,
+  which is exactly its 79 + the 184 sessions beyond the enriched edition's 1630-05-14 end that it
+  drops via `restrict_to_enriched_span` and this model deliberately keeps visible. Production anchors
+  are *not* re-derived — the ledger computes those live through `align_session`, and a second
+  implementation of the thing whose numbers we want to check would be worthless as a check.
+
+### What `missing_htr` actually means (2026-10-06)
+
+Definition (`scripts/s4_day_status_resolution.py`): a ledger `N` row with no same-inventory HTR session
+within ±14 days. So it means *no session in what upstream delivered*, *not* "no text exists".
+
+- **Our own manipulations are cleared.** The axis carries exactly what `resolutions_flat` holds
+  in-window — session numbers match per inventory (184/184, 200/200, 275/275, 266/266, 289/289), the
+  136 axis-absent numbers are absent upstream too, and 4562's 102-vs-297 gap is entirely its date range
+  (upstream 1615–1924; of its 288 dates exactly 98 fall in 1626–1630 and **all 98 are on the axis**).
+- **No surplus of parsed HTR:** 344 unresolved sittings against **79 unclaimed sessions**
+  (`session_offset_eval`), so reassignment cannot absorb them.
+- **An orphan-page hypothesis was raised and REFUTED.** 420 scans appeared to sit between consecutive
+  resolved sessions, 86 of them in 37 gaps bracketing a `missing_htr` date. Queried against
+  `session_text_regions-2026-03-25`: all 86 carry text (1,216 regions, 8,720 lines) and **all 86 belong
+  to the left bracketing session**. `metadata.page_ids` names only the page a resolution *starts* on,
+  so session extents derived from resolutions are systematically too narrow. The derived "~311
+  recoverable resolutions" is withdrawn.
+- **A second hypothesis — under-transcription in our snapshot — was also tested and REFUTED, same
+  day.** `session-3185-num-23` showed ES `para` text at 43,770 characters against our axis's 13,122
+  (3.3x, same content: 54.5% of our distinct 6+ letter tokens appear in it), which looked like a lead.
+  Generalised over **all 1,316 sessions** by server-side aggregation on `stats.chars`: **median ratio
+  0.99, total 1.07** (per inventory 0.95-1.16), so the two snapshots carry the same resolution text
+  overall and that session was an outlier, not a pattern. Per-session spread is nonetheless wide (p10
+  0.42, p75 1.13, p90 2.97; 379 sessions where ES has less, 522 where it has more) while totals match
+  — a signature that would fit text moving between adjacent sessions, but **that was tested too and
+  does not hold**: correlation of ratio(N) with ratio(N+1) is **+0.005**, where displacement into a
+  neighbour would read negative, and pooling adjacent pairs narrows the spread about as much as
+  averaging any two noisy measurements. The variance is real and unexplained; no mechanism is claimed.
+- **So `missing_htr` is not yet explained by anything, and four candidate explanations are now closed:**
+  our own manipulations (cleared), reassignment of unclaimed sessions (only 79 available for 344
+  sittings), orphan imaged pages (refuted — all belong to the left bracketing session), and
+  under-transcription in the frozen snapshot (refuted — totals agree). The remaining honest reading is
+  that for most of those 344 dates the text is not in the HTR corpus at all. Any further claim needs
+  evidence that has not been produced yet.
+
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
 The user named the two core problems and their answers: **(1) we do not know how to divide or join
@@ -129,12 +209,231 @@ is all the DP really consumes, is 5,375 of those — about 2%.
   is recall without precision. **Treat as channel calibration, not a track target metric — no
   tolerance-threshold F1, per the standing ban.** If P1 fails, placing anchors is available but not
   accurate, and the track stops here rather than proceeding on availability alone.
+  - **DONE (2026-10-05) — PASS, and it hands back a calibration decision rather than just a verdict.**
+    `scripts/s6c_group_c_interior_offset_calibration.py` (diagnostic only, no dataset write). Population
+    as costed: 81 `mid_paragraph` opening slots / 33 days, of which **8 carry `char_offset == 0`** — a
+    mid-paragraph marker on the paragraph's first character, i.e. a paragraph boundary in the other
+    unit's terms with no interior position to find — leaving **73 interior cuts in 63 host paragraphs**
+    (54 host one cut, 8 two, 1 three). The 7 `mid_paragraph`/`start` slots are in the *original* sample,
+    not the hard-period one (65 cut + 7 start vs 9 cut); the 81/33 totals hold. Coordinate assumption
+    verified, not assumed: the live `axis_for_date` stream is text-identical to
+    `boundary_gold_paragraph_axis` on 30/30 days that have gold-axis records (the 3 hard-period days
+    have none), which also regression-checks what `s6c_group_c_boundary_existence_check.py` assumes
+    silently. Nulls are **exact, closed-form over the paragraph's interior positions** — no Monte Carlo,
+    no seed — and **count-matched**, because nearest-of-9 beats nearest-of-1 for free and that is
+    precisely the Group B pathology the null has to neutralise.
+    - **The candidate *set* carries the cut.** Nearest-candidate displacement **120.4 chars vs a
+      count-matched null of 246.7 (ratio 0.49)**, beating its own null on **47 of 57** cuts
+      (sign test p < 0.0001), median 40 chars, **p25 = 1 char, exact on 13/57**. Monotone one-to-one
+      assignment (so a multi-cut paragraph cannot score by snapping every cut to one candidate) agrees:
+      **0.45**, 39/47, p < 0.0001.
+    - **The channel's own ranking cannot find it, and this is the operative finding.** Picking the
+      highest-similarity candidate — what production would do, with no gold to choose by — lands
+      **351.7 vs 448.7 (ratio 0.78)**, median 209 chars off, exact on only 3/57. **Significance is
+      marginal, not established:** per cut that is 38/57, p = 0.0082, but the 73 cuts come from 33 days
+      (one day supplies 7, one paragraph hosts 3), and clustered by day it is **18/27 days, p = 0.061**,
+      with a day-level bootstrap ratio CI of **[0.61, 0.96]** — direction holds, the conventional line
+      does not. Quote the clustered figure. `nearest` is unaffected by clustering (21/27, p = 0.0030,
+      CI [0.32, 0.68]), as is `assignment` (22/27, p = 0.0008). The whole nearest↔ranked gap is
+      selection: the ranking picks its own closest-to-gold candidate just **33/57** times. **Locality
+      principle again, now measured on offsets:** Group C is a cut *resolver* inside an
+      already-narrowed window, never a cut *selector* on its own.
+    - **First-pass calibration read (SUPERSEDED, kept because the numbers stand):** the channel as
+      defined fails its usable facet outright (ranked ratio **1.01**, 39/69, p = 0.168 — indistinguishable
+      from a random position) because `build_combined_c_searcher` takes `s2_anchor_phrase_inventory`'s
+      top 20 unfiltered, so "is"/"synde"/"ontfangen"/"opt" are live members; a ≥3-word restriction makes
+      it pass (0.78) at a cost of availability 94.5% → 78.1% and median 4 → 2 candidates per cut. **But
+      ≥3 words is the wrong fix** — `de heeren van` is three words and sails through it. See below.
+    - **ROOT CAUSE (user-led diagnosis, 2026-10-05): the Group C inventory was never a formula
+      inventory, and it is fit to the wrong population.** It was built by n-gram frequency *over* known
+      openings (`s2` top-20 n-grams, `s4`'s 271 count-ranked candidates) with **no background frequency
+      ever consulted**, so it conflates three kinds of string: real formulas, truncated prefixes of real
+      formulas, and free prefixes that formulas and ordinary prose share. Frequency cannot separate them —
+      `in deliberatie geleyt synde,` (a genuine formula, gold-confirmed) has count 5 while `de heeren van`
+      (never an opening formula — user, categorical) has count 10. Opening-rate against the 12,811
+      `para_index == 0` openings flags the junk correctly (`de heeren van` 0.008, bottom of 229) but
+      **cannot be used as a threshold**: it scores `in deliberatie geleyt synde,` at 0.059, because that
+      formula mostly opens resolutions *mid-paragraph* and the `para_index == 0` corpus is built from the
+      same under-segmented stream Track P exists to fix. The denominator is contaminated by the target.
+    - **The decisive measurement — the inventory is fit to paragraph-initial openings, not to Track P's
+      population.** Re-reading `s4_opening_phrase_cut_evaluation_full` (360 gold cuts, built earlier in
+      this repo and never used this way): the fixed-phrase inventory covers **85.4% of
+      `paragraph_boundary` cuts but only 61.2% of `mid_paragraph` cuts**. The uncovered mid-paragraph
+      openings are overwhelmingly **one productive participial construction** — `Synde`/`Syn` + participle
+      (+ `ter Vergaderinge`) + object: *Synde gecommuniceert seeckere missive…*, *Synde gerapporteert byden
+      heer President…*, *Syn wederom ter Vergaderinge gecompareert…*, *Gelesen synde de requeste van…*,
+      *Nochmael geresumeert synde t'versouck…*. A frame head covers **35.8% of mid_paragraph cuts vs
+      16.6% of paragraph_boundary cuts**, and phrase-or-frame together reach 74.6% / 88.3%. This is why
+      the bare stem `synde` (count 740) is in the inventory at all: the frequency list captured the
+      *stem of a productive frame* instead of the frame. Openings HTR lumped into a paragraph are
+      **linguistically different** from paragraph-initial ones, and the inventory was derived from
+      tier-1 anchored resolutions, which are overwhelmingly paragraph-initial.
+    - **Checked against baseline-identified resolutions, with the user's own caveat confirmed
+      quantitatively (2026-10-05): the baseline under-scores exactly the formulas that matter, and the
+      inversion is the signal.** Per-frame share of the 13,374 production-placed openings vs the 67 gold
+      `mid_paragraph` openings: participial `Synde`/`Syn` + participle **12.5% → 28.4% (ratio 2.27)**,
+      inverted `<participle> synde` **4.7% → 13.4% (2.88)**, `ter vergaderinge gecompareert` **2.4% →
+      6.0% (2.46)**; against `ontfangen` (missive intake) **17.2% → 3.0% (0.17)**, `is/synde gelesen`
+      **12.2% → 4.5% (0.37)**, `opt/opde versouck|requeste` **10.6% → 3.0% (0.28)**, `is goetgevonden`
+      (decision) **4.4% → 1.5% (0.34)**. The three under-detected frames are **48% of gold mid-paragraph
+      openings but 19.6% of baseline**; the four well-covered ones are **44% of baseline but 12% of gold
+      mid-paragraph**. The pipeline finds precisely the formulas it holds phrases for. **Consequence for
+      method: baseline coverage is never evidence of a formula's weight** — it measures what is already
+      visible, so a formula scoring low there is a recovery target, not a weak candidate. Same selection
+      bias as the `para_index == 0` contamination above, one level further downstream. Caveat on the
+      frames themselves: **40.3% of gold mid-paragraph openings are still unclassified** by these 7
+      patterns, so the early-period inventory is described, not complete.
+    - **Division of labour between the two available sources (user, 2026-10-05).** REPUBLIC's
+      `republic/model/resolution_phrase_model.py` (`republicgit` @ `25924b93`, 2026-06-08) supplies what
+      ours lacks: a **structural typology** — `proposition_opening_phrases` (92 frames) vs
+      `decision_phrases` vs `proposition_closing_phrases` vs `resolution_link_phrases` — plus a curated
+      per-phrase `max_start_offset`, which *is* the "is this an opening" discriminator. The typology is
+      structural enough to transfer across periods even where the surface forms do not. What it lacks is
+      this period: **41 of the 92 are out-of-period** (printed era, 1637+) and the 51 nominally covering
+      1626–1630 are in printed orthography (`Opde Requeste van`, `Is ter Vergaderinge gerepresenteert`)
+      against our HTR's `opt versouck van` / `is gelesen de reqte.` / `ontfangen een missiue van`. It is
+      weak on the actual early-17th-century openings, and carries few samples of them. Our empirical
+      n-grams are the inverse: real surface forms, no notion of what is a formula. **So: REPUBLIC for
+      structure and class, our own material for early-period realisation.** Independent validation that
+      this works: `in deliberatie geleyt synde,` — the formula our statistics could not rescue — is
+      sanctioned by REPUBLIC as `Wederom in deliberatie geleijt zijnde`, a 1576–1630 frame.
+    - **Two structural rules stated by the user and confirmed corpus-wide:** intake-class formulas
+      precede decision-class ones — **97.0%** (3,529 of 3,637 paragraphs containing both) — and a
+      decision formula opens a resolution only when no intake formula is available — **96.7%** (1,097 of
+      1,134 decision-initial openings have no intake formula anywhere in the paragraph). Inventory splits
+      147 intake / 24 decision / 58 unclassified under a crude stem test; the 58 mixes genuine
+      non-formulas to purge (`de heeren van`, `de heer president`, bare `is`/`synde`/`opt`) with real
+      formulas the stems missed (`is ter vergaderinge gecompareert`, `opte requeste van`, `noch ontfangen
+      een missive`), so the partition needs the user's vocabulary, not a statistic.
+    - **The worked example resolves under typing + ordering with no tuning.** `1629-09-22` paragraph 4,
+      gold cut at offset 1639, four candidates: `2888 "de heeren van"` purged (attaches to no sanctioned
+      frame); `1200`/`1669 "is goetgevonden ende verstaen"` are decision-class and `1669` is suppressed
+      because an intake formula at `1640` precedes it; `1640 "in deliberatie geleyt synde,"` is intake and
+      wins — **1 character from gold**. The similarity ranking picked `2888` (sim 1.000, a short generic
+      phrase matching exactly) and was **1,249 chars wrong**: similarity rewards exact matches on
+      throwaway strings over approximate matches on real formulas. Separately measured and too weak to
+      use: gold cuts preceded by a clause terminator 72.6% vs 54.9% for decoy candidates.
+    - **Verdict:** P1's *measurement* stands and its verdict holds in direction — the candidate set
+      carries the cut, the channel's ranking cannot find it. But the gap is **not** a scoring problem to
+      be closed by calibration weights; it is a **vocabulary and typing** problem upstream of scoring.
+      Do not wire Group C offsets as a standalone cut placer, and do not adopt the ≥3-word filter.
+    - **Rebuild DONE (2026-10-05, user sign-off given) — PASS, and the goal it was built for is met.**
+      `scripts/s6c_group_c_typed_formula_channel.py`; REPUBLIC vocabulary copied with commit
+      provenance to `scripts/_republic_resolution_phrase_vocab.py` (`3b46b43b`, byte-identical at the
+      cited `25924b93`; `uv add` still blocked by REPUBLIC's `python <3.12` and `fuzzy-search ^2.6.0`
+      pins). `s6c_group_c_interior_offset_calibration.py` now takes `--channels` and nothing else about
+      it moved — same 73 interior cuts over 33 days, same coordinate check (30/30), same exact
+      count-matched nulls, same day-clustering. **The legacy arms reproduce the recorded numbers to the
+      digit** (`legacy` ranked 1.01; `legacy:3` nearest 0.49 / ranked 0.78 / assignment 0.45, selector
+      33/57, availability 94.5% → 78.1%), which is the built-in proof that the harness did not move.
+      - **`ranked` — the only facet that decides anything — goes from marginal to established:
+        day-clustered 18/27 days p=0.061 (CI [0.623, 0.958]) → **26/32 days p=0.0003, ratio 0.62,
+        CI [0.403, 0.822]**, median 209 → 71 chars, exact 3/57 → 16/70. And availability *rises*,
+        78.1% → 95.9%, instead of being traded for precision. `nearest` 0.49 → **0.40** (29/32 days,
+        p<0.0001, median **1 char**, exact 21/70), `assignment` 0.45 → **0.32**, selector agreement
+        33/57 → 46/70.
+      - **Ablations attribute it, and one is negative.** The typed candidate *set* under the **old**
+        similarity ranking already reaches ranked 0.70 (27/32, p=0.0001, CI [0.549, 0.826]); the typed
+        ranking adds 0.70 → 0.62 and selector 34/70 → 46/70. So both halves of the diagnosis were real:
+        vocabulary *and* selection. The participial pattern buys availability and precision but not
+        ratio (off: 83.6% availability, nearest median 16 chars, ranked unchanged at 0.63).
+        **The intake-before-decision ordering rule contributes nothing measurable on this population** —
+        ranked 0.62 and essentially the same CI with it switched off. It suppresses 65 of 71
+        decision-class candidates and it is what makes the worked example resolve, but it is typing
+        hygiene here, not a measured accuracy mechanism. Report it that way.
+      - **Two bugs found by validating against the worked example rather than by the aggregate**, both
+        now regression-documented in the module: an offset's class must be settled class-blind by
+        whichever match realises *most* of a sanctioned formula **before** the ordering rule runs (else
+        REPUBLIC's 2-token `Is goetgevonden`, labelled `proposition_opening` in its own list, types the
+        4-token decision formula at `1629-09-22`:1669 as intake and shields it from suppression); and a
+        participial match whose span crosses a clause terminator is not one construction
+        (`gedelibereert synde, is goetgevonden ende verstaen` matched forward as `synde … goetgevonden`).
+      - **Worked example resolves as predicted:** 16 raw matches → 7 offsets → 3 interior candidates;
+        `de heeren van` purged at admission as `prefix_phrases: de Heeren` — REPUBLIC's own
+        `person_name_prefix`, so the purge is categorical rather than thresholded, which is what the
+        user asserted about that string; 1200/1669 typed decision and suppressed; pick = offset 1640,
+        **1 char from gold**.
+      - Caveat on the figures: run at `--reps 300`. `nearest` and `ranked` are unaffected — their
+        nulls are closed-form — but the `assignment` null and every bootstrap CI are Monte Carlo at
+        300 draws. The authoritative run is the default `--reps 10000`; advise it, don't run it.
+      - Free parameters, three, none fitted to gold: `TOKEN_SIMILARITY` 0.72, `MAX_CANDIDATE_SKIP` 2,
+        `MAX_LEAD_SKIP` 1, each with its motivating case in the module docstring.
+      - **P3 is licensed on accuracy as well as availability.** Still *not* a standalone cut placer:
+        `nearest` 0.40 remains well below `ranked` 0.62, so Group C stays a resolver inside an
+        already-narrowed window, never a detector. P2's annotation target (offsets vs which formula
+        opens each resolution) is **not a decision to spend attention on** — user, 2026-10-05: "if the
+        results are equal I don't care". Annotate whichever field the existing UI makes cheapest.
 - **P2 — bounded annotation, only if P1 passes.** `lumped_paragraph_gold_scaffold` holds **80 sampled
   candidates, all `review_status: pending`, zero `gold_offsets`** (out of 463 lumped specs identified,
   445 materialised) — the track was built and never started, which is why `lumped_paragraph_boundary_gold`
   is absent from disk. UI (`build_lumped_paragraph_annotation_ui.py`) and merge script already exist.
   This is the smallest annotation ask in the project and, unlike the hard-period sample, has a
   guaranteed use: it is the only way to tell whether a candidate offset is the *right* cut.
+  - **Correction (2026-10-05): it *was* started — 13 of 80 on 2026-09-28 — and the tooling threw the
+    work away.** `review_status: pending` in the scaffold is stale; the annotations live in
+    `lumped_paragraph_gold_annotations.json`. Three defects, all now fixed, and together they explain
+    why the pass stopped at 13:
+    - **The UI hard-blocked the human's actual judgment.** `label.js` refused to save a `cuts` verdict
+      whose marker count differed from `expected_cuts`, and `expected_cuts` is the concordance's
+      `n_share` — *the very thing P3 is testing*. Annotating under that constraint would have made the
+      gold agree with the hypothesis by construction (same contamination shape as `para_index == 0`).
+      The human is the gold, the concordance is the prediction: any count now saves, disagreement is
+      recorded as `expected_cuts_disagrees` and reported, never enforced. One such row already exists
+      (`1627-09-20#p0`: concordance 2, human 1), and under the old rule the only way to save it was to
+      mislabel it `no_cut`.
+    - **The merge script was verdict-blind** (v1-era `skip`/`labelled`), so it raised on the first
+      `no_cut` row and wrote nothing — i.e. it could never have produced gold from this UI. It now
+      consumes the v2 vocabulary: `cuts`/`no_cut` → `record_type: gold`, `false_lump` → quarantine row
+      in the same file, `skip` → counted only; and it collects every violation instead of aborting on
+      the first.
+    - **`|||START|||`, hand-invented by the annotator**, was silently baked into the gold text as
+      literal characters, shifting every offset after it. It marked a real and distinct thing — the
+      paragraph opens with an attendance list, resolution text starts at 38 — so it is now a
+      first-class marker carried as `head_offset` (never a cut), with a UI button and a one-per-row
+      guard. Unknown `|||...|||` markers are rejected rather than absorbed.
+  - **Merge now runs: 12 gold, 1 skipped, of 80.** Both cuts land on sanctioned openings
+    (`Is geaccordeert dat`, `Is mede gelesen een missiue`), head offset lands just past the attendance
+    list. **One convention still unsettled:** `1629-11-09#p0`'s cut sits on the space *before* the
+    opening word, not on its first character. Left faithful to the annotator, but a systematic ±1 would
+    add noise to any exact-match figure against Group C — settle before the remaining 67.
+  - **The 13 are a clean prefix of the shuffled sample, so they estimate the population: 10 of 12
+    scored rows are `no_cut`** — 0.833, CP95 [0.516, 0.979]. Read it precisely: this is **precision of
+    the scaffold's `n_share>=2` selector, not evidence about mid-paragraph cuts**, which P1 found
+    plentiful (73 interior cuts over 33 days, coordinate-checked). The consequence is for the ask, not
+    the phenomenon: finishing all 80 projects to **~13 cut-bearing gold rows, CP95 [2, 39]** — thin for
+    scoring P3, and the other ~55 rows measure the concordance's over-counting instead. Decision for
+    the user before spending the remaining 67: finish as scoped and accept a thin cut-bearing yield, or
+    re-sample the scaffold from P1's typed-channel interior-cut population, where cuts are known dense.
+  - **User decision (2026-10-06): stop paying for more hand gold; prefer a gold set from proven pairs.**
+    Correct call — the 13-row prefix already shows the yield is thin relative to the labor.
+  - **Checked and withdrawn (2026-10-06): Group A anchor-collision rows are NOT proven interior cuts.**
+    First pass proposed treating `s6b_anchor_harvest`'s 1,098 `tier1_entity_nw` positions carrying 2+
+    distinct `enriched_index` values as 1,689 proven cut positions — wrong on inspection.
+    `tier1_points` (`scripts/s6b_known_point_ledger.py`) sets `char_position =
+    flat_id_char_starts[row.flat_id]`, the start of the **flat resolution's paragraph**, not a
+    per-mention offset. Two enriched indices sharing one `char_position` means two enriched
+    resolutions matched the *same flat paragraph* — i.e. it just re-states the already-known collision
+    count (the 1,597-colliding-paragraphs fact P1's own docstring already reports), with every
+    "colliding" row pinned to the identical offset. Zero positional information about where inside the
+    paragraph a true split falls. Do not build gold from this; the idea was right, the data source was
+    wrong.
+  - **What already exists and matches the ask: `synthetic_boundary_*` (docs/steps/
+    STEP_SYNTHETIC_BOUNDARY_ENCODER.md).** Pairs of consecutive, independently-`separated`-confirmed
+    resolutions on the same day, HTR-concatenated with no separator — the true boundary is the exact
+    character length of the first segment, known by construction, zero annotation cost. This *is* "a
+    gold set from proven pairs": each resolution's separateness is the concordance's own
+    label_separation() finding, not a human call, and the boundary follows deterministically.
+    `synthetic_boundary_folds` already holds **2,041 rows** (vs lumped's 80, ~13 cut-bearing) at zero
+    further labor. Caveat already recorded there, and it is the real cost of this route: transfer to
+    actual lumped paragraphs tops out at F1@50 = 0.259 (`GloBERTise`, docs/
+    SYNTHETIC_BOUNDARY_GOLD50_TRANSFER.md) — concatenation-of-separates is an easier, OOD distribution
+    relative to a genuinely lumped HTR paragraph (shared seam vocabulary, no hard break). Proven and
+    plentiful, but not a free proxy for the harder real phenomenon; P2's thin human sample is still the
+    only *in-distribution* check available, just not worth extending further by hand.
+  - **Next, not yet done:** redirect P3's offset-carrying test to score against `synthetic_boundary_*`
+    corpus-wide (2,041 rows, proven) as the primary gold, keeping the 12-row lumped `no_cut`/`cuts`
+    set as the in-distribution diagnostic check rather than the target to extend. P2 is closed at
+    12 gold / 80, not continued to 80.
 - **P3 — carry the offset through** `build_anchor_backbone`/`segment_gap` so one paragraph can host
   several resolution starts at distinct offsets. Scored on the rekeyed `separated` corpus-wide against
   the uniform null per the ruling; gold correctness as diagnostic only.

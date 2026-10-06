@@ -19,6 +19,7 @@ from flask import Flask, abort, jsonify, redirect, render_template, request, url
 
 from lumped_paragraph_labeller.store import (
     MARKER,
+    START_MARKER,
     VERDICTS,
     annotations_path,
     count_cuts,
@@ -79,7 +80,9 @@ def create_app() -> Flask:
         n_cuts = count_cuts(str(row.get("text") or ""))
         expected = int(row.get("expected_cuts") or 0)
         verdict = str(row.get("verdict") or "cuts")
-        cuts_ok = verdict != "cuts" or n_cuts == expected
+        # "ok" = annotatable as saved, not "agrees with the concordance": a cut count
+        # differing from expected_cuts is a legitimate verdict (see the merge script).
+        cuts_ok = verdict != "cuts" or n_cuts > 0
         return render_template(
             "label.html",
             row=row,
@@ -88,6 +91,7 @@ def create_app() -> Flask:
             next_id=next_id,
             stats=st,
             marker=MARKER,
+            start_marker=START_MARKER,
             n_cuts=n_cuts,
             expected_cuts=expected,
             cuts_ok=cuts_ok,
