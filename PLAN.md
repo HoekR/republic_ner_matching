@@ -145,12 +145,31 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   does not hold**: correlation of ratio(N) with ratio(N+1) is **+0.005**, where displacement into a
   neighbour would read negative, and pooling adjacent pairs narrows the spread about as much as
   averaging any two noisy measurements. The variance is real and unexplained; no mechanism is claimed.
-- **So `missing_htr` is not yet explained by anything, and four candidate explanations are now closed:**
-  our own manipulations (cleared), reassignment of unclaimed sessions (only 79 available for 344
-  sittings), orphan imaged pages (refuted — all belong to the left bracketing session), and
-  under-transcription in the frozen snapshot (refuted — totals agree). The remaining honest reading is
-  that for most of those 344 dates the text is not in the HTR corpus at all. Any further claim needs
-  evidence that has not been produced yet.
+- **A third hypothesis — that the unplaced mass is the secret series — was also raised and REFUTED,
+  and it names a trap worth remembering.** Grouping the 344 `no_session` dates by the concordance's
+  `inventory_id` returns 4861: 191 dates / 2,387 resolutions and 4562: 153 / 2,095, zero in
+  3185–3189. That field descends from `session_date_status_1626_1630`, which holds **3 candidate
+  inventories per date** (4,916 rows for 1,594 dates) — `s6b_known_point_ledger.inventory_of`
+  already declines to use it for exactly this reason. The candidates are structurally *the year's
+  main inventory plus 4562* (the main series is annual, 3185 = 1626 … 3189 = 1630, while 4562 spans
+  the whole period), and for a `missing_htr` date the pick was never confirmed against HTR because
+  there is no session to confirm it against. **It is a tautology: dates without HTR are attributed
+  to the inventories without HTR.** `DateState.inventory` is now None unless a resolved session
+  establishes it, and brackets carry `rests_on_candidate_inventory`.
+- **Decomposed soundly via the XML secret flags and the ES resolutions index.** Of the 323
+  XML-flagged secret dates, **264 are `labelled`** — placed, with HTR — so secrecy does not imply
+  missing text. Setting them aside leaves 298 dates / 3,848 resolutions; queried against ES
+  `full_resolutions` by `metadata.session_date`, 26 dates / 313 resolutions exist upstream and not
+  here, 272 dates / 3,535 exist nowhere.
+
+  | the 4,482 `missing_htr` resolutions | dates | resolutions | share |
+  |---|---|---|---|
+  | on XML-flagged secret dates | 46 | 634 | 14% |
+  | in ES but absent here — **recoverable** | 26 | 313 | 7% |
+  | absent from the HTR corpus altogether | 272 | 3,535 | 79% |
+
+  The recoverable slice is small but concrete, and carries an authoritative inventory from ES
+  (3186: 117 docs, 3185: 105, 3188: 86, 3189: 21, 3187: 15) rather than a candidate guess.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 

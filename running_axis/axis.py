@@ -24,7 +24,7 @@ leaves here without naming its population and its window.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Iterable, Iterator, Mapping
 
 from running_axis.stream import InventoryStream, build_streams
@@ -99,14 +99,36 @@ class SessionSpan:
 
 @dataclass(frozen=True)
 class DateState:
-    """One enriched date: what claims it has, and why it may have none."""
+    """One enriched date: what claims it has, and why it may have none.
+
+    `candidate_inventory` is NOT where the text is. It comes from the concordance's
+    `inventory_id`, which descends from `session_date_status_1626_1630` -- a table carrying
+    **3 candidate inventories per date** (4 for 134 dates; 4,916 rows for 1,594 dates), one
+    row per candidate. `s6b_known_point_ledger.inventory_of` warns about exactly this and
+    reads the inventory off the flat id instead, "because picking one of those rows is
+    arbitrary".
+
+    The trap is worst on precisely the dates one most wants to locate. A `missing_htr` date
+    has no resolved session by definition, so its candidate was never confirmed against any
+    HTR -- and the candidates always include the main series while the surviving pick tends
+    to be a secret inventory (1626-01-05: candidates 3185/4562/4861, pick 4861). Grouping
+    unplaced dates by this field therefore "discovers" that dates without HTR belong to the
+    inventories without HTR, which is a tautology. Use `inventory`, which is None unless a
+    resolved session makes it a fact.
+    """
 
     date: str
     k_e: int
     status: str
-    inventory: str | None
+    candidate_inventory: str | None
     resolved_session_id: str | None
     has_axis_label: bool
+    resolved_inventory: str | None = None
+
+    @property
+    def inventory(self) -> str | None:
+        """The inventory the text is actually in, or None when nothing establishes it."""
+        return self.resolved_inventory
 
     @property
     def is_nihil(self) -> bool:
@@ -121,7 +143,17 @@ class DateState:
         """Why this date is or is not locatable -- the closed taxonomy, one value per date.
 
         `dropped_by_label_grouping` is the ledger defect made visible: the date *is* pinned
-        to a session, and only the grouping rule loses it.
+        to a session, and only the grouping rule loses it -- 66 dates / 983 resolutions.
+
+        `no_session` is the genuinely unplaced class, and what it is *not* took two withdrawn
+        hypotheses to establish (docs/DECISIONS.md 2026-10-06). It is not displacement into
+        unsegmented imaged pages: the 86 scans that looked orphaned all belong to the left
+        bracketing session, because `metadata.page_ids` names only the page a resolution
+        starts on. It is not under-transcription in this corpus' snapshot: the ES/axis
+        character ratio is 0.99 median over 1,316 sessions. And it is not the secret series,
+        however much grouping by `candidate_inventory` suggests otherwise -- see that field.
+        Measured split of its 4,482 resolutions: 634 on XML-flagged secret dates, 313 present
+        in ES and absent here, 3,535 absent upstream as well.
         """
         if self.has_axis_label:
             return "labelled"
@@ -132,6 +164,8 @@ class DateState:
         return "no_session"
 
 
+# Closed, and the closure is the point: a date that fits none of these is a signal that the
+# taxonomy is incomplete, not that the date is unimportant.
 ADDRESSABILITY = ("labelled", "dropped_by_label_grouping", "nihil_actum", "no_session")
 
 for _name, _definition in {
@@ -141,7 +175,19 @@ for _name, _definition in {
         "different date label. Locatable, and discarded only by grouping on the label."
     ),
     "nihil_actum": "Enriched dates whose sitting consumes no HTR session; absence is correct.",
-    "no_session": "Enriched dates with neither an axis label nor a resolved session.",
+    "no_session": (
+        "Enriched dates with neither an axis label nor a resolved session: 344 dates / 4,482 "
+        "resolutions corpus-wide. Measured 2026-10-06, and NOT the secret series despite how "
+        "it looks when grouped by candidate_inventory: of the 323 XML-flagged secret dates "
+        "(enriched_resolution_secret_flags) 264 are labelled, i.e. placed with HTR, so secrecy "
+        "does not imply missing text. Setting the flagged dates aside leaves 298 dates / 3,848 "
+        "resolutions, which split against the ES full_resolutions index on "
+        "metadata.session_date into 26 dates / 313 resolutions ES holds and this corpus does "
+        "not (recoverable) and 272 dates / 3,535 resolutions absent upstream too. So 4,482 = "
+        "634 secret + 313 recoverable + 3,535 absent everywhere. None of these dates has an "
+        "authoritative inventory, by construction: an unplaced date has no session to read one "
+        "off."
+    ),
 }.items():
     POPULATIONS.register(
         f"dates_{_name}",
@@ -219,9 +265,14 @@ class RunningAxis:
                 date=date,
                 k_e=int(row.k_e),
                 status=str(row.status),
-                inventory=(None if row.inventory_id is None else str(row.inventory_id)),
+                candidate_inventory=(
+                    None if row.inventory_id is None else str(row.inventory_id)
+                ),
                 resolved_session_id=session_id,
                 has_axis_label=date in labelled_dates,
+                # Authoritative only via the session's flat id; filled in below once the
+                # session spans exist.
+                resolved_inventory=None,
             )
 
         sessions = {
@@ -237,6 +288,13 @@ class RunningAxis:
             )
             for session_id, (inventory, num, begin, end, count) in spans.items()
         }
+        # Now that session spans exist, the pinned dates can carry a real inventory.
+        for date, state in list(dates.items()):
+            if state.resolved_session_id and state.resolved_session_id in sessions:
+                dates[date] = replace(
+                    state,
+                    resolved_inventory=sessions[state.resolved_session_id].inventory,
+                )
         return cls(streams, sessions, dates)
 
     # --- coverage and views ------------------------------------------------------------
@@ -279,13 +337,10 @@ class RunningAxis:
             raise KeyError(f"unknown session {session_id!r}")
         self._check_monotone(date, session_id)
         state = self.dates[date]
-        self.dates[date] = DateState(
-            date=state.date,
-            k_e=state.k_e,
-            status=state.status,
-            inventory=self.sessions[session_id].inventory,
+        self.dates[date] = replace(
+            state,
             resolved_session_id=session_id,
-            has_axis_label=state.has_axis_label,
+            resolved_inventory=self.sessions[session_id].inventory,
         )
         session = self.sessions[session_id]
         self.sessions[session_id] = SessionSpan(
@@ -368,6 +423,7 @@ class RunningAxis:
                     "k_e": state.k_e,
                     "status": state.status,
                     "inventory": state.inventory,
+                    "candidate_inventory": state.candidate_inventory,
                     "resolved_session_id": state.resolved_session_id,
                     "has_axis_label": state.has_axis_label,
                     "addressability": state.addressability,

@@ -132,9 +132,9 @@ def bracket_axis():
         for n, resolved in {1: ("1628-10-01",), 2: (), 3: ("1628-10-05",)}.items()
     }
     dates = {
-        "1628-10-01": DateState("1628-10-01", 5, "resolved_auto", "3187", "session-3187-num-1", True),
-        "1628-10-03": DateState("1628-10-03", 7, "missing_htr", "3187", None, False),
-        "1628-10-05": DateState("1628-10-05", 4, "resolved_auto", "3187", "session-3187-num-3", True),
+        "1628-10-01": DateState("1628-10-01", 5, "resolved_auto", "3187", "session-3187-num-1", True, "3187"),
+        "1628-10-03": DateState("1628-10-03", 7, "missing_htr", "3187", None, False, None),
+        "1628-10-05": DateState("1628-10-05", 4, "resolved_auto", "3187", "session-3187-num-3", True, "3187"),
     }
     return RunningAxis({}, sessions, dates)
 
@@ -153,7 +153,7 @@ def test_a_bracket_with_equal_supply_and_demand_is_determined():
 def test_nihil_dates_are_dropped_before_ranking():
     """A nihil sitting consumes no HTR session, so counting it shifts every later position."""
     axis = bracket_axis()
-    axis.dates["1628-10-02"] = DateState("1628-10-02", 1, "nihil_actum", "3187", None, False)
+    axis.dates["1628-10-02"] = DateState("1628-10-02", 1, "nihil_actum", "3187", None, False, None)
     interior = [b for b in build_brackets(axis) if b.kind == "interior"]
     assert interior[0].unresolved_dates == ("1628-10-03",)
 

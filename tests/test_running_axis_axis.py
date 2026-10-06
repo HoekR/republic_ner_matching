@@ -37,9 +37,10 @@ def date_state(date, k_e=5, status="resolved_auto", resolved=None, labelled=Fals
         date=date,
         k_e=k_e,
         status=status,
-        inventory="3187",
+        candidate_inventory="3187",
         resolved_session_id=resolved,
         has_axis_label=labelled,
+        resolved_inventory="3187" if resolved else None,
     )
 
 

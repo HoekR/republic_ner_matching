@@ -194,6 +194,13 @@ class Bracket:
     unresolved_dates: tuple[str, ...]
     unclaimed_sessions: tuple[str, ...]
     unresolved_k_e: int
+    rests_on_candidate_inventory: bool = False
+    """True when any unresolved date in this bracket was grouped by its *candidate*
+    inventory rather than a confirmed one. An unresolved sitting has no resolved session, so
+    nothing establishes which inventory its text is in; the concordance's `inventory_id`
+    descends from a table holding 3-4 candidates per date. `session_offset_eval` groups this
+    way too, so the flag marks a shared limitation rather than a divergence -- but a bracket
+    carrying it cannot support a claim about *where* its unplaced resolutions are."""
 
     @property
     def n_e(self) -> int:
@@ -216,6 +223,7 @@ class Bracket:
             "unresolved_k_e": self.unresolved_k_e,
             "unresolved_dates": list(self.unresolved_dates),
             "unclaimed_sessions": list(self.unclaimed_sessions),
+            "rests_on_candidate_inventory": self.rests_on_candidate_inventory,
         }
 
 
@@ -244,12 +252,20 @@ def build_brackets(axis: Any, *, nihil_status: str = "nihil_actum") -> list[Brac
     counted: set[str] = set()
 
     by_inventory: dict[str, list[Any]] = {}
+    on_candidate: set[str] = set()
     for state in axis.dates.values():
         if state.status == nihil_status:
             continue
+        # A pinned date's inventory is a fact, read off its session's flat id. An unpinned
+        # one has only a candidate, and grouping by it is what makes "the unplaced mass is
+        # in the secret inventories" a tautology rather than a finding -- the candidates
+        # always include the main series, and the surviving pick tends to be a secret
+        # inventory precisely because those are the ones with little HTR.
         inventory = state.inventory
-        if state.resolved_session_id:
-            inventory = axis.sessions[state.resolved_session_id].inventory
+        if inventory is None:
+            inventory = state.candidate_inventory
+            if inventory is not None:
+                on_candidate.add(state.date)
         if inventory is None:
             continue
         by_inventory.setdefault(str(inventory), []).append(state)
@@ -321,6 +337,9 @@ def build_brackets(axis: Any, *, nihil_status: str = "nihil_actum") -> list[Brac
                     unresolved_dates=tuple(row.date for row in unresolved),
                     unclaimed_sessions=tuple(s.session_id for s in free),
                     unresolved_k_e=sum(row.k_e for row in unresolved),
+                    rests_on_candidate_inventory=any(
+                        row.date in on_candidate for row in unresolved
+                    ),
                 )
             )
     return brackets
