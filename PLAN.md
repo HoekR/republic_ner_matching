@@ -283,12 +283,34 @@ globally misaligned** — a greedy heuristic's signature, repaired by global ali
 explains why `session_offset_eval` found only **3** determined brackets: it anchored on resolved
 pins, sparse and themselves drifted, where nihil days and Sundays recur weekly.
 
-- **Next, not done:** no alignment implemented, and none of the 19 non-monotone, 110 Sunday or 9
-  feast-day datings corrected — all a day-status ledger change nobody has designed. The drift
-  measurement has no artifact yet. The 76.6% figure likewise has none
-  (`h_session_date_vs_heading.py` holds the circular version plus a year-override and
-  month-fallback bug that fabricate dates) — a rewrite is in flight. And the secret-flag
-  extraction has no committed script (`created_by_script: ""`), so it is not reproducible.
+#### NEXT STEP: is the alignment determined by counting alone?
+
+Before anyone writes an aligner, measure whether the constraints **force** the mapping. Re-run the
+bracket/determinacy analysis (`running_axis.chain.build_brackets` already implements the logic)
+with the anchor set swapped: **nihil days and Sundays instead of concordance-resolved pins.**
+Between consecutive anchors, count XML sitting days against HTR sessions; where the two agree the
+mapping in that span is forced by monotonicity alone.
+
+- **Reason:** `session_offset_eval` found only **3** determined brackets because it anchored on
+  resolved pins, which are sparse *and* themselves drifted. Nihil days (162) and Sundays (228)
+  recur weekly, so the anchors become an order of magnitude denser. If the spans between them come
+  out determined, the drift is correctable by counting and needs no model.
+- **Goal:** a count of determined spans and the **resolution mass inside them** — i.e. how much of
+  the 3,535 unplaced resolutions a pure counting alignment would recover. That number decides
+  whether the next step after it is an aligner or a different approach entirely.
+- **Scope guard:** diagnostic only, no placement change, so no `separated`-vs-uniform-null scoring
+  is needed yet. Note 1,433 sitting days against 1,316 sessions — a surplus of **117** — so the
+  alignment is not a bijection and must permit skips on both sides; a span that does not come out
+  determined is a finding, not a failure.
+- **Does not block on** the heading rewrite: nihil days and Sundays are free, and headings would
+  only add anchor density.
+
+- **Also outstanding, smaller:** finish `h_session_date_vs_heading.py` (commit `45b39f6` is WIP —
+  the year/month fabrication bug is still live, so no date figure is citable yet, and the manifest
+  description still describes the circular test); none of the 19 non-monotone, 110 Sunday or 9
+  feast-day datings is corrected, all being a day-status ledger change nobody has designed; and the
+  secret-flag extraction has no committed script (`created_by_script: ""`), so it is not
+  reproducible.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
