@@ -208,6 +208,13 @@ phase = "semi"
 description = "Complete 1626-1630 flat paragraph axis with resolved entity-annotation coverage"
 parent = "resolutions_flat"
 
+[datasets.enriched_resolutions_xml_source]
+tier = "hot"
+path = "republic_ner_matching/data.bak/resoluties_staten_generaal_1626-1630.zip"
+phase = "frozen"
+description = "The enriched edition's own XML source: 1,595 day files (one per calendar day of 1626-01-01..1630-05-14, so a complete calendar rather than a list of sittings) plus Stgen.dtd, authored 2001. Registered 2026-10-06 because it had no manifest entry at all although enriched_resolution_secret_flags was extracted from it -- that dataset's provenance records created_by_script as empty, so the path was unrecoverable from the repo. The DTD is the authority on day structure: `zittingsdag ((presentielijst|postprandium?), resolutie*, noot*)+` makes postprandium (the afternoon sitting) a first-class element alternating with the attendance list, and the trailing + lets the whole group repeat, so MULTIPLE SITTINGS PER DAY are explicitly modelled. 109 day files carry <postprandium>, every one of them with more than one sitting group. enriched_resolutions_1626_1630 keeps none of this -- its records are date/resolution_index/text/persons/places/secret/volgnr with no sitting field -- so the boundary is discarded in the flattening, against the standing rule not to drop archival metadata in transforms."
+parent = ""
+
 [datasets.enriched_resolutions_1626_1630]
 tier = "hot"
 path = "republic_ner_matching/data/derived/enriched_resolutions_1626_1630_complete.json"

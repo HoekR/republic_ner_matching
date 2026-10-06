@@ -204,9 +204,27 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   day forward (41 sessions carry it); and `session-3185-num-72` holds 13, 14 **and** 15 April 1626
   — a multi-day block, i.e. **sessions as anchors, not containers, read off the manuscript**. 146
   sessions show several distinct day headings.
-- **Next, not done:** applying any verdict is a day-status ledger change nobody has designed; and
-  no corpus rate for date disagreement is available, since every automated route so far has been
-  circular and the 7 readings are non-random.
+- **A non-circular rate does exist**, from the heading's *internal* coherence (weekday matching
+  its own numeral is a property of the page, not of ES's date field): of **685** sessions with a
+  readable, internally consistent heading, the recorded date **disagrees in 525 (76.6%)**, agrees
+  in 160. Offsets cluster small and negative (−1: 49, −2: 43, −5: 55, −6: 35), tail to −18. The
+  user's 7 image reads agreed in 1 of 7, same magnitude. **Gated question, unanswered: what was
+  the date correction based on?** If an external authority, 525 is a documented source conflict;
+  if nothing outside the HTR, three-quarters of sessions were moved off dates their own pages
+  state coherently. Everything downstream depends on which.
+- **`postprandium` is in the DTD and we discard it** (user, 2026-10-06; XML now registered as
+  `enriched_resolutions_xml_source`). `Stgen.dtd` declares
+  `zittingsdag ((presentielijst|postprandium?), resolutie*, noot*)+` — the afternoon sitting is a
+  first-class element and the group repeats, so **several sittings per day are explicitly
+  modelled**. **109 of 1,595 day files carry it**, and `enriched_resolutions_1626_1630` keeps no
+  sitting field at all, so those days were flattened. Of the 109: only 3 have >1 axis session, 67
+  have exactly 1, 39 have none (32 in `no_session`). Independent corroboration of Track S from the
+  normative source. Only 3 of the 73 multi-session dates are postprandium days, so afternoon
+  sittings are not that multiplicity's main source.
+- **Next, not done:** applying any date verdict is a day-status ledger change nobody has designed;
+  carrying the sitting boundary through the enriched flattening is a schema change to
+  `enriched_resolutions_1626_1630`; and the secret-flag extraction still has no committed script
+  (`created_by_script: ""`), so it is not reproducible.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
