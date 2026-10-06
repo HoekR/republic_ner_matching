@@ -740,6 +740,27 @@ phase = "semi"
 description = "Boundary-splitter model predictions on real fold_in_candidates() sessions (scripts/s4_day_status_resolution.py): for each session shared by 2+ dates via ?-status recovery, the predicted cut char offset(s) with surrounding context, to check whether the trained model lands on a real day-boundary within genuinely concatenated session text (unlike the earlier lumped-paragraph gold task, exactly one real cut is known to exist per date pair)."
 parent = "session_date_status_1626_1630"
 
+[datasets.manuscript_date_verdicts]
+tier = "hot"
+path = "republic_ner_matching/output/manuscript_date_verdicts.jsonl"
+phase = "semi"
+description = "Human readings of session date headings taken off the manuscript images (scripts/build_manuscript_date_verdicts.py, annotator rik, 2026-10-06). The only date evidence in this project independent of the HTR pipeline: the axis, resolutions_flat, ES session_date and the ES date-class regions all derive from one dump and from the headings themselves, so none can arbitrate against our corrected dates -- the corpus-wide heading check found 610 of 1,140 sessions disagreeing with their recorded date, and in every sampled case the heading equalled ES's own uncorrected session_date, because ES segmented the sessions using those headings. One row per reading with the heading as transcribed, the date it names, the session date it implies, the recorded and enriched dates, weekdays, offsets and the mechanism. All four error sources are represented: our correction (num-148, 15 days off), HTR in both directions (num-148 a stroke added and an L/D confusion, num-72 strokes dropped), a 10-day error in both directions (num-77 ten days early, num-98 ten days late; an Old Style reading of num-77 was proposed and withdrawn because this corpus' dates are always modern style, per the user, so both are plain errors that happen to be 10 days -- suggestive of a calendar conversion applied where it was not needed or with the sign reversed, recorded as a hypothesis only), the clerk (num-72 scan 0123 writes Tuesday the 13th where the 13th was a Monday), plus the `qui heri` back-reference (num-16) and a multi-day block (num-72 spanning 13-15 April 1626). CAVEAT: small n, and not a random sample -- these were selected because the automated channel could not settle them, so they over-represent hard cases and give no corpus rate."
+parent = "session_region_text_1626_1630"
+
+[datasets.h_session_date_vs_heading]
+tier = "hot"
+path = "republic_ner_matching/output/h_session_date_vs_heading.jsonl"
+phase = "semi"
+description = "Every session's recorded date checked against the date its own page states (scripts/h_session_date_vs_heading.py, verdict classes fixed before the run). Possible only since session_region_text_1626_1630 ingested the date-class regions this corpus had never imported. Four error sources with distinct signatures, three established by the user reading manuscript images 2026-10-06: our correction (heading internally consistent, disagrees with our label -- session-3185-num-98); HTR dropping a stroke (session-3185-num-72 read xijen for Monday the 13th and xiijen for Tuesday the 14th while reading both weekdays right, hence the rule that where numeral and weekday disagree the WEEKDAY wins); calendar style (heading == our label + the 10-day Julian-Gregorian offset AND the weekday agrees, so both name the same physical day -- session-3189-num-77, page sabbathi den 6 Aprilis 1630 against our 27 March, which is the same Saturday); and the clerk, who per the user occasionally errs too, visible only when a heading is internally inconsistent -- so consistency is reported as strong evidence and never proof, which matters most at one-day disagreements (session-3186-num-178). Multi-day blocks are detected rather than assumed: several distinct day headings in one session is the sessions-as-anchors pattern, as session-3185-num-72 holding 13, 14 and 15 April 1626 shows. Diagnostic only, no placement change."
+parent = "session_region_text_1626_1630"
+
+[datasets.session_region_text_1626_1630]
+tier = "hot"
+path = "republic_ner_matching/output/session_region_text_1626_1630.jsonl"
+phase = "semi"
+description = "Session text regions of the classes this corpus never ingested -- `date` and `attendance` by default -- pulled from the ES session_text_regions index for every session present on paragraph_axis_1626_1630 (scope taken from flat ids, not from any candidate-inventory column). One row per region with session_id, region_class, scan_id, page_id, reading_order, line count and text. Exists because the axis descends from resolutions_flat, which carries resolution-class text only, so a session's own date heading was absent here and the heading channel could not work however well written: running the weekday arbitration against the axis gave 23 of 24 no-signal, against these regions 16 H1 / 1 H0 / 0 H2 (docs/DECISIONS.md 2026-10-06). Rows are ordered by (scan_id, reading_order), i.e. reading order, so a session's FIRST date region is its opening heading -- a date further in is ordinary text, as session-3185-num-56 shows. Regions whose text holds no letters are kept with has_letters=false rather than dropped, so filtering OCR rubble is a consumer's visible choice. marginalia is not ingested by default though it is the largest class by count; pass --classes to change that."
+parent = "paragraph_axis_1626_1630"
+
 [datasets.h_weekday_date_attribution]
 tier = "hot"
 path = "republic_ner_matching/output/h_weekday_date_attribution.jsonl"

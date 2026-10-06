@@ -186,9 +186,27 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   a session's *first* heading dates it, and `Praeside et Praesentibus qui heri` names **yesterday**,
   so such headings shift one day forward — which is why `session-3185-num-16`, reading 20 January
   on the image, is correctly dated the 21st here.
-- **Next, not done:** applying the 16 H1 verdicts is a change to the day-status ledger and has not
-  been designed; ingesting `date`/`attendance` regions is the prerequisite for using this channel
-  anywhere else.
+- **Ingestion DONE 2026-10-06** (`session_region_text_1626_1630`): 3,763 `date`/`attendance`
+  regions, 262k characters, **date regions for 1,275 of 1,316 sessions (96.9%)**.
+- **But the corpus-wide check that ingestion enabled is CIRCULAR — do not cite its 610.**
+  The heading's date equals ES's own uncorrected `session_date` 6 of 6 sampled, because **ES
+  segmented the sessions using those headings**. Heading and ES are one witness. The same applies
+  to the 16-of-24 H1 result above: those dates were *selected* by "ES dates a session here", so a
+  readable heading had to agree. One witness counted sixteen times.
+- **The arbiter is a human reading the page** — `manuscript_date_verdicts`, 7 readings over 6
+  sessions. **The recorded date agrees with the page in 1 of 7; the enriched date in 3 of 6.**
+  Offsets: 0, +3, +4, +10, +15, +20, −10. Four error sources all observed: our correction, HTR in
+  both directions (a stroke added *and* dropped), the clerk (`martis den xiijen` where the 13th was
+  a Monday — so **weekday beats numeral**), and a calendar-style reading that the user **withdrew**
+  (this corpus' dates are always modern style, so the two 10-day cases are plain errors of opposite
+  sign — suggestive of a mis-applied conversion, hypothesis only).
+- **Two mechanisms confirmed on paper:** `qui heri` names *yesterday*, so such headings shift one
+  day forward (41 sessions carry it); and `session-3185-num-72` holds 13, 14 **and** 15 April 1626
+  — a multi-day block, i.e. **sessions as anchors, not containers, read off the manuscript**. 146
+  sessions show several distinct day headings.
+- **Next, not done:** applying any verdict is a day-status ledger change nobody has designed; and
+  no corpus rate for date disagreement is available, since every automated route so far has been
+  circular and the 7 readings are non-random.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
