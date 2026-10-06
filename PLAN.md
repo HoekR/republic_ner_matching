@@ -254,11 +254,41 @@ explanation, now closed. Also: **4861 is an `index`, not resolutions** (`resolut
 speciaal`, 1626–1661), so it never held resolutions to extract, and the 2,387 the candidate column
 attributed to it were attributed to a finding aid.
 
-- **Next, not done:** applying any date verdict is a day-status ledger change nobody has designed;
-  the 76.6% figure still has no reproducible artifact (`h_session_date_vs_heading.py` holds the
-  circular version plus a year-override and month-fallback bug that fabricate dates); and the
-  secret-flag extraction has no committed script (`created_by_script: ""`), so it is not
-  reproducible.
+### The dating problem is a sequence alignment (user, 2026-10-06)
+
+**The text is not missing; the dates drift.** Mean offset (page minus recorded) by quarter of each
+annual register, on 822 internally consistent headings: 3185 −1.4/−5.2/−15.3/**−16.6**; 3186
+−6.2/−13.5/−17.7/**−19.0**; 3187 −0.1/−0.1/−0.1/**−0.9**; 3188 +1.0/−0.4/−5.7/**−6.8**; 3189
+−0.9/−3.0/−5.2/**−7.8**. Recorded dates run *ahead*, the error **accumulates within a volume and
+resets at the volume boundary**, severe in 1626–27, near-absent in 1628. Verified on the page:
+3185 scans 0243/0245 read 2–3 July 1626 where sessions are recorded 16/19 July; 3188 scans
+0619–0621 read 2–6 December 1629 where sessions are recorded 11–20 December. **So 17 July 1626 and
+13 December 1629 sit under sessions labelled a fortnight later.**
+
+So: a **monotone alignment** of the XML sitting-day sequence (1,433 of 1,595 days, 162 nihil as
+fixed skips) against the HTR session sequence (1,316 in archive order) — not per-session dating.
+Constraints, cheapest first, with current violations:
+
+| constraint | violations | cost |
+|---|---|---|
+| dates run forward with session number | **19** of 1,310 pairs | free |
+| no Sunday sittings (prior, afternoon exceptions) | **110** of 1,316 | free |
+| `gisteren` forces adjacency | **57** of 495 at ≥3 days | free, own text |
+| nihil days consume no session | **9** beyond Sundays (feast days) | XML |
+| headings name the date | 1,314 of 1,316 have one | ingested |
+| sitting-day count between anchors | pigeonhole | XML |
+
+88.5% of `gisteren` references already sit at 1–2 days, so the sequence is **locally right and
+globally misaligned** — a greedy heuristic's signature, repaired by global alignment. It also
+explains why `session_offset_eval` found only **3** determined brackets: it anchored on resolved
+pins, sparse and themselves drifted, where nihil days and Sundays recur weekly.
+
+- **Next, not done:** no alignment implemented, and none of the 19 non-monotone, 110 Sunday or 9
+  feast-day datings corrected — all a day-status ledger change nobody has designed. The drift
+  measurement has no artifact yet. The 76.6% figure likewise has none
+  (`h_session_date_vs_heading.py` holds the circular version plus a year-override and
+  month-fallback bug that fabricate dates) — a rewrite is in flight. And the secret-flag
+  extraction has no committed script (`created_by_script: ""`), so it is not reproducible.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
