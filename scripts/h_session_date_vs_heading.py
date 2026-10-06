@@ -56,6 +56,23 @@ if it rests on some external authority independent of the heading, then a `disag
 conflict between that authority and the manuscript's own heading, not a finding that either side
 is wrong. Report it as a source conflict.
 
+**Which side is heuristic.** `paragraph_axis_1626_1630`'s recorded session date comes from this
+corpus's own REPUBLIC-derived date-correction heuristics, segmented and labelled HTR session by
+HTR session. The enriched edition's source XML, by contrast, is normative for the CALENDAR: it
+records every day in sequence, including non-session days as `nihil actum`, so it cannot itself
+drop or duplicate a day the way a per-session heuristic can. Put plainly: the XML day sequence is
+normative, the recorded HTR session date is heuristic, and where the two disagree the heuristic
+is the suspect party by construction -- not proven wrong, but the one without the calendar's own
+backing.
+
+**Conditional on legibility, not on outcome.** `unreadable` and `heading_inconsistent` sessions
+are excluded from the decidable pool below, and nothing here shows they behave like the sessions
+that DO parse. That is a real limitation (the rate is only measured where the heading happens to
+be legible), but it is a limitation on COVERAGE, not on validity: readability is checked before
+the recorded date is ever consulted, so excluding on it does not select for agreement or
+disagreement the way the old circular check did. That is what makes this rate usable where the
+old `our_date_wrong=610` was not.
+
 Verdict classes, fixed here before the run:
 
 * `agrees`               -- heading internally consistent AND names the recorded date
@@ -63,11 +80,12 @@ Verdict classes, fixed here before the run:
 * `heading_inconsistent` -- weekday and day numeral contradict each other even after the
                             weekday-wins numeral-slip search (HTR slip or clerk slip, source
                             unknown)
-* `back_reference`       -- heading matched by `qui heri` / `praesentibus qui`: the formula
-                            names YESTERDAY's sitting, so the session itself is the day after.
-                            Excluded from `agrees`/`disagrees` on principle, not folded in.
 * `unreadable`           -- weekday, day numeral, month or year could not be parsed from the
                             heading text at all
+
+`has_attendance_formula` (`qui heri` / `praesentibus qui`) is tracked as a boolean FLAG on each
+row, not a verdict -- see `has_attendance_formula()` below for why a +1-day dating rule was
+proposed, withdrawn, and finally left as an open question rather than resolved either way.
 
 Diagnostic only: reports verdicts, changes no placement.
 
@@ -117,46 +135,88 @@ LOCAL_WEEKDAYS = {"mercuri": 2, "mercurii": 2, "duna": 0, "jouis": 3, "sabbati":
 MONTH_BY_TOKEN = {
     token.lower(): month for month, tokens in MONTH_TOKENS.items() for token in tokens
 }
+ALL_WEEKDAY_TOKENS = {**WEEKDAY_LOOKUP, **LOCAL_WEEKDAYS}
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+# A region's text is not always a single heading: multi-day blocks and attendance lists put
+# several weekday/month/year tokens in one blob (e.g. a Sunday "Nihil Actum" notice followed
+# by the next day's own heading, or an attendee surname that happens to contain a month
+# token). Matching each field independently and taking "the first occurrence of each kind
+# anywhere in the text" lets fields from DIFFERENT date mentions get stitched together into a
+# date nobody wrote -- the structural cause of this script's wrong-year outliers (e.g. day/
+# weekday from one date, year from another, hundreds or thousands of days apart). This single
+# structured pattern instead requires weekday, "den", day, month and year to co-occur in that
+# order within one short span, so a match is always one coherent date statement; if the FIRST
+# date mention in the text does not fit the pattern (e.g. a mangled month spelling such as
+# "Juni" where the vocabulary only has "Junij"/"Juny"), the regex engine naturally advances to
+# the next weekday occurrence rather than fabricating a date from mismatched fields.
+_WEEKDAY_ALT = "|".join(re.escape(token) for token in ALL_WEEKDAY_TOKENS)
+_MONTH_ALT = "|".join(re.escape(token) for token in MONTH_BY_TOKEN)
+DATE_PHRASE = re.compile(
+    rf"\b(?P<weekday>{_WEEKDAY_ALT})\b[^a-zA-Z0-9]{{0,3}}den\b\s+"
+    rf"(?P<day>[a-zA-Z0-9]+)\.?\s*"
+    rf"\b(?P<month>{_MONTH_ALT})\b\.?[^\d]{{0,20}}"
+    rf"(?P<year>16[23]\d)\b",
+    re.IGNORECASE,
+)
 
 VERDICTS = (
     "agrees",                 # heading consistent, names the recorded date
     "disagrees",              # heading consistent, names a different date
     "heading_inconsistent",   # numeral and weekday contradict even after correction
-    "back_reference",         # "qui heri" names yesterday; excluded from agrees/disagrees
     "unreadable",             # weekday, day, month or year could not be parsed
 )
 
 
+def has_attendance_formula(text: str) -> bool:
+    """True if the heading carries the `qui heri` / `praesentibus qui` attendance formula.
+
+    **UNSETTLED, not a rule -- left open deliberately (2026-10-06).** Three passes on this
+    question landed in three different places: shift the stated date +1 day (named date =
+    yesterday's sitting); never shift (the formula is about attendance, not dating); and finally,
+    on the user's own caution, that a +1 reading "may still hold in places" even though it does
+    not hold everywhere. This function and its column therefore do NOT encode a dating rule --
+    they only flag which rows carry the formula, so they stay identifiable and revisitable.
+
+    The default elsewhere in this module is NO SHIFT: classify the session on the date its own
+    heading states, unchanged. That default is what the one worked example here supports --
+    inventory 3188, scans 0619-0621, four consecutive sessions:
+
+        num-283  "Dominica den 2 Decembris 1629. Nihil Actum" + "Luna den iijen"   -> Sun 2 / Mon 3
+        num-284  "Martis den iiijen. Decembris 1629"                               -> Tue 4
+        num-285  "Preside et Presentibus qui heri met Mercury den 6en. Decemb"     -> Wed 5 (HTR
+                 misread the numeral; the image reads "Mercurii den v")
+        num-286  "Preside et Presentibus qui heri met Linden Jovis den vjen"       -> Thu 6
+
+    December 1629: 2nd Sunday, 3rd Monday, 4th Tuesday, 5th Wednesday, 6th Thursday -- every
+    heading's own weekday matches its own numeral, and the run is consecutive (2/3, 4, 5, 6) only
+    under no-shift; a +1 shift gives 2/3, 4, 6, 7, which skips the 5th. But the user's own caution
+    is explicit: this one example does not settle every case, elsewhere the formula may still name
+    yesterday's sitting. **Do not generalize past this one test.** Anyone revisiting a disagreement
+    on a flagged row should run the same consecutive-sequence check against neighbouring sessions
+    before assuming either the no-shift default or a +1 shift; this module deliberately does not
+    make that call for them. All verdicts in this run rest on the no-shift default.
+    """
+    return bool(BACK_REFERENCE.search(text))
+
+
 def read_heading(text: str) -> dict[str, Any]:
-    """Day, month, year and weekday as the page states them, each parsed independently.
+    """Day, month, year and weekday as the page states them, read as ONE coherent date phrase.
 
     No field ever falls back to a substituted value here -- that is left to the caller, which
     must turn any unparseable field into `unreadable` rather than manufacture a date the page
     never states (the two bugs this script replaces: a month silently borrowed from the
-    recorded date, and a year forced to the recorded date's year whenever they disagreed).
+    recorded date, and a year forced to the recorded date's year whenever they disagreed). Nor
+    are the fields searched for independently: `DATE_PHRASE` requires weekday, day, month and
+    year to co-occur in the structural order this corpus always uses, so a match can never mix
+    fields pulled from two different date mentions in the same region text.
     """
-    lowered = " " + re.sub(r"[^a-z0-9 .]", " ", text.lower()) + " "
-    weekday = None
-    for name, index in {**WEEKDAY_LOOKUP, **LOCAL_WEEKDAYS}.items():
-        if f" {name}" in lowered:
-            weekday = index
-            break
-    month = next((m for token, m in MONTH_BY_TOKEN.items() if f" {token.lower()}" in lowered), None)
-    day = None
-    for token in re.split(r"\s+", text.strip()):
-        parsed = parse_day_token(token)
-        if parsed is not None:
-            day = parsed
-            break
-    year = None
-    match = re.search(r"\b(16[23]\d)\b", text)
-    if match:
-        year = int(match.group(1))
-    return {
-        "day": day, "month": month, "weekday": weekday, "year": year,
-        "back_reference": bool(BACK_REFERENCE.search(text)),
-    }
+    match = DATE_PHRASE.search(text)
+    weekday = ALL_WEEKDAY_TOKENS.get(match.group("weekday").lower()) if match else None
+    month = MONTH_BY_TOKEN.get(match.group("month").lower()) if match else None
+    day = parse_day_token(match.group("day")) if match else None
+    year = int(match.group("year")) if match else None
+    return {"day": day, "month": month, "weekday": weekday, "year": year}
 
 
 def classify_heading(text: str, ours: pd.Period, max_numeral_slip: int) -> dict[str, Any]:
@@ -168,11 +228,7 @@ def classify_heading(text: str, ours: pd.Period, max_numeral_slip: int) -> dict[
     """
     reading = read_heading(text)
     day, month, year, weekday = reading["day"], reading["month"], reading["year"], reading["weekday"]
-    back_reference = reading["back_reference"]
-    base = {
-        "stated": None, "weekday": weekday, "weekday_corrected_numeral": False,
-        "back_reference": back_reference,
-    }
+    base = {"stated": None, "weekday": weekday, "weekday_corrected_numeral": False}
 
     if day is None or month is None or year is None or weekday is None:
         return {**base, "verdict": "unreadable"}
@@ -200,15 +256,10 @@ def classify_heading(text: str, ours: pd.Period, max_numeral_slip: int) -> dict[
         else:
             return {**base, "stated": stated, "verdict": "heading_inconsistent"}
 
-    if back_reference:
-        # Names YESTERDAY's sitting; the session itself is the day after. Excluded from
-        # agrees/disagrees regardless of how well it would otherwise match.
-        stated = stated + 1
-        return {
-            **base, "stated": stated, "weekday_corrected_numeral": weekday_corrected,
-            "verdict": "back_reference",
-        }
-
+    # `qui heri` / `praesentibus qui` ("attendance formula") headings are classified the same as
+    # any other: no dating shift is applied by default (see `has_attendance_formula()` -- the
+    # question of whether such a heading ever names yesterday's sitting is left open, not decided
+    # here). The flag is carried on the output row, not folded into this verdict.
     verdict = "agrees" if stated == ours else "disagrees"
     return {
         **base, "stated": stated, "weekday_corrected_numeral": weekday_corrected,
@@ -268,7 +319,7 @@ def main() -> None:
             "recorded_weekday": WEEKDAYS[ours_period.dayofweek],
             "offset_days": None if stated is None else int((stated - ours_period).n),
             "weekday_corrected_numeral": result["weekday_corrected_numeral"],
-            "back_reference": result["back_reference"],
+            "has_attendance_formula": has_attendance_formula(opening["text"]),
             "verdict": result["verdict"],
         })
 
@@ -289,7 +340,9 @@ def main() -> None:
     print("  ", offset_counts)
     print(f"  weekday corrected a contradicted numeral in "
           f"{sum(1 for r in out if r['weekday_corrected_numeral']):,} sessions")
-    print(f"  back-reference (`qui heri`) headings: {sum(1 for r in out if r['back_reference']):,}")
+    attendance_formula_count = sum(1 for r in out if r["has_attendance_formula"])
+    print(f"  attendance-formula (`qui heri`) headings: {attendance_formula_count:,} -- "
+          f"flagged only, classified on the no-shift default (see has_attendance_formula())")
 
     meta = {
         "record_type": "meta",
@@ -299,8 +352,6 @@ def main() -> None:
             "disagrees": "heading internally consistent AND names a different date",
             "heading_inconsistent": "weekday and day numeral contradict each other even after "
                 "the weekday-wins numeral-slip search",
-            "back_reference": "heading matched by qui heri / praesentibus qui; names "
-                "YESTERDAY's sitting, excluded from agrees/disagrees",
             "unreadable": "weekday, day numeral, month or year could not be parsed",
         },
         "verdict_counts": dict(counts),
@@ -310,6 +361,34 @@ def main() -> None:
         "offset_distribution_disagrees": {str(k): v for k, v in offset_counts.items()},
         "max_numeral_slip": args.max_numeral_slip,
         "local_weekday_additions": sorted(LOCAL_WEEKDAYS),
+        "attendance_formula": {
+            "flagged_rows": attendance_formula_count,
+            "note": (
+                "`qui heri` / `praesentibus qui` headings are flagged via "
+                "has_attendance_formula, not given their own verdict. Whether this formula ever "
+                "shifts the named date by one day is UNSETTLED (proposed, then withdrawn, then "
+                "left open on the user's own caution -- see has_attendance_formula()'s "
+                "docstring). All verdicts above, including for these flagged rows, rest on the "
+                "NO-SHIFT default: the session is classified on the date its heading literally "
+                "states."
+            ),
+        },
+        "heuristic_vs_normative": (
+            "paragraph_axis_1626_1630's recorded session date is produced by this corpus's own "
+            "REPUBLIC-derived date-correction heuristics. The enriched edition's source XML is "
+            "normative for the calendar sequence (every day recorded, non-session days as "
+            "nihil actum). Where heading and recorded date disagree, the recorded date is the "
+            "heuristic side and the suspect party by construction -- not proven wrong here."
+        ),
+        "legibility_conditioning": (
+            f"{counts.get('unreadable', 0):,} unreadable and "
+            f"{counts.get('heading_inconsistent', 0):,} heading_inconsistent sessions are "
+            "excluded from the decidable pool, and nothing here shows they behave like the "
+            "sessions that do parse. Readability is checked before the recorded date is ever "
+            "consulted, so this exclusion is conditional on legibility, not on outcome -- unlike "
+            "the old our_date_wrong=610 figure, which is why this rate is usable and that one "
+            "was not."
+        ),
         "circularity_finding": (
             "The previous version of this check compared the heading's date directly against "
             "our recorded date and reported our_date_wrong=610/1140. That number is circular "
