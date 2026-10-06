@@ -104,7 +104,32 @@ def test_every_reported_figure_names_its_window():
 def test_report_values_are_tallies_not_integers():
     for tally in small_axis().view("1628-10-01", "1628-10-31").report().values():
         assert not isinstance(tally, int)
-        assert tally.population.unit in {"dates", "resolutions"}
+        assert tally.population.unit in {"dates", "resolutions", "sessions"}
+
+
+def test_session_count_is_window_scoped_not_the_corpus_total():
+    """The script printed a coverage-wide session count beside window tallies, which is the
+    exact ambiguity this package exists to prevent."""
+    axis = small_axis()
+    assert len(axis.sessions) == 2, "two sessions exist across the whole coverage"
+    empty = axis.view("1628-10-06", "1628-10-30").report()["axis_sessions"]
+    assert empty.value == 0, "a window claiming no session must not inherit the corpus total"
+    assert str(empty.window) == "1628-10-06..1628-10-30"
+    wide = axis.view("1628-10-01", "1628-10-31").report()["axis_sessions"]
+    assert wide.value == 2
+
+
+def test_a_session_enters_a_window_by_either_attribution():
+    """session-3187-num-2 is labelled 1628-10-01 but resolved to 10-03, so it belongs to a
+    window containing either date -- which is the whole point of carrying both."""
+    axis = small_axis()
+    by_label = axis.view("1628-10-01", "1628-10-02").report()["axis_sessions"]
+    assert by_label.value == 2
+    by_resolution = axis.view("1628-10-03", "1628-10-03").report()["axis_sessions"]
+    assert [s.session_id for s in axis.view("1628-10-03", "1628-10-03").sessions] == [
+        "session-3187-num-2"
+    ]
+    assert by_resolution.value == 1
 
 
 # --- views ---------------------------------------------------------------------------
@@ -218,11 +243,20 @@ def test_a_shared_session_is_not_an_inversion():
 # --- snapshot ------------------------------------------------------------------------
 
 
-def test_snapshot_carries_its_window_and_one_record_per_item():
+def test_snapshot_separates_coverage_totals_from_any_window():
+    """Coverage-wide figures live under a key that says so, never beside window counts."""
     records = small_axis().snapshot()
     meta = records[0]
     assert meta["record_type"] == "meta"
-    assert meta["window"] == {"start": "1628-10-01", "end": "1628-10-31"}
+    assert meta["coverage"] == {"start": "1628-10-01", "end": "1628-10-31"}
+    assert set(meta["coverage_totals"]) == {
+        "inventories",
+        "paragraphs",
+        "characters",
+        "sessions",
+        "enriched_dates",
+    }
+    assert "window" not in meta, "a bare 'window' key invited reading these as window-scoped"
     assert sum(1 for r in records if r["record_type"] == "session") == 2
     assert sum(1 for r in records if r["record_type"] == "date") == 4
     dates = [r for r in records if r["record_type"] == "date"]

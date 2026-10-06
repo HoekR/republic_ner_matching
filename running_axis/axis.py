@@ -32,6 +32,7 @@ from running_axis.tally import (
     AXIS_CHARACTERS,
     AXIS_DATE_LABELS,
     AXIS_PARAGRAPHS,
+    AXIS_SESSIONS,
     ENRICHED_DATES,
     ENRICHED_RESOLUTIONS,
     ENRICHED_WITH_AXIS_LABEL,
@@ -340,15 +341,19 @@ class RunningAxis:
     def snapshot(self) -> list[dict[str, Any]]:
         """State as records, so a run's numbers are answerable from the artifact."""
         window = self.coverage
+        # Every figure here spans the model's whole coverage, so it is nested under a key
+        # that says so. A window-scoped count belongs in the report, never beside these.
         meta = {
             "record_type": "meta",
             "model": "running_axis",
-            "window": {"start": window.start, "end": window.end},
-            "inventories": sorted(self.streams),
-            "paragraphs": sum(len(s) for s in self.streams.values()),
-            "characters": sum(s.char_length for s in self.streams.values()),
-            "sessions": len(self.sessions),
-            "enriched_dates": len(self.dates),
+            "coverage": {"start": window.start, "end": window.end},
+            "coverage_totals": {
+                "inventories": sorted(self.streams),
+                "paragraphs": sum(len(s) for s in self.streams.values()),
+                "characters": sum(s.char_length for s in self.streams.values()),
+                "sessions": len(self.sessions),
+                "enriched_dates": len(self.dates),
+            },
         }
         return [
             meta,
@@ -411,6 +416,9 @@ class RunningAxisView:
             "enriched_resolutions": self.tally(
                 "enriched_resolutions", sum(d.k_e for d in dates)
             ),
+            # Window-scoped, not the corpus total: a reader comparing this against a
+            # coverage-wide session count must see which is which.
+            "axis_sessions": self.tally("axis_sessions", len(self.sessions)),
         }
         for name, members in by_class.items():
             out[f"dates_{name}"] = self.tally(f"dates_{name}", len(members))

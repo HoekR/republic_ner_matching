@@ -227,6 +227,12 @@ ENRICHED_RESOLUTIONS = POPULATIONS.register(
     "resolutions",
     "Enriched resolutions (rows of resolution_concordance_1626_1630).",
 )
+AXIS_SESSIONS = POPULATIONS.register(
+    "axis_sessions",
+    "sessions",
+    "HTR sessions on the paragraph axis. Over a window, the sessions a date in that window "
+    "claims or whose own label falls in it -- not the corpus total.",
+)
 AXIS_PARAGRAPHS = POPULATIONS.register(
     "axis_paragraphs",
     "paragraphs",

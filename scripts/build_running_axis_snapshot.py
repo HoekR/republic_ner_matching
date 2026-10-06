@@ -59,11 +59,19 @@ def main() -> None:
 
     path = save_semi_structured(records, logical_name=OUTPUT_DATASET, script=__file__)
     print(f"Wrote running-axis snapshot to {path}")
-    print(f"  coverage {coverage} | reported window {start}..{end}")
-    print(f"  {len(axis.sessions):,} sessions | {len(axis.dates):,} enriched dates")
-    for name in ("enriched_dates", *(f"dates_{k}" for k in ADDRESSABILITY)):
-        print(f"    {report[name]}")
-    for name in ("enriched_resolutions", *(f"resolutions_{k}" for k in ADDRESSABILITY)):
+    print(f"  model coverage {coverage}:")
+    print(
+        f"    {len(axis.sessions):,} sessions | {len(axis.dates):,} enriched dates "
+        f"| {sum(len(s) for s in axis.streams.values()):,} paragraphs  (coverage-wide)"
+    )
+    print(f"  reported window {start}..{end}:")
+    for name in (
+        "axis_sessions",
+        "enriched_dates",
+        *(f"dates_{k}" for k in ADDRESSABILITY),
+        "enriched_resolutions",
+        *(f"resolutions_{k}" for k in ADDRESSABILITY),
+    ):
         print(f"    {report[name]}")
 
 
