@@ -208,10 +208,13 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   its own numeral is a property of the page, not of ES's date field): of **685** sessions with a
   readable, internally consistent heading, the recorded date **disagrees in 525 (76.6%)**, agrees
   in 160. Offsets cluster small and negative (−1: 49, −2: 43, −5: 55, −6: 35), tail to −18. The
-  user's 7 image reads agreed in 1 of 7, same magnitude. **Gated question, unanswered: what was
-  the date correction based on?** If an external authority, 525 is a documented source conflict;
-  if nothing outside the HTR, three-quarters of sessions were moved off dates their own pages
-  state coherently. Everything downstream depends on which.
+  user's 7 image reads agreed in 1 of 7, same magnitude. **Gated question ANSWERED (user,
+  2026-10-06): the date correction is REPUBLIC heuristics, not an external authority** — so the
+  disagreement is a heuristic against the manuscript, and the heuristic is the suspect party.
+  **And the calendar authority is the XML**: every day recorded, non-session days as `nihil
+  actum`, the XML baseline normative for it. So **the enriched date is normative and the recorded
+  HTR session date is heuristic** — which is the direction the 16-of-24 headings pointed, a result
+  still circular as a *rate* but now independently supported in direction.
 - **`postprandium` is in the DTD and we discard it** (user, 2026-10-06; XML now registered as
   `enriched_resolutions_xml_source`). `Stgen.dtd` declares
   `zittingsdag ((presentielijst|postprandium?), resolutie*, noot*)+` — the afternoon sitting is a
@@ -225,9 +228,33 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   afternoon sittings explain only 3 of the 73 multi-session dates, so it stays a *recording* —
   `postprandium_days`, a 109-date lookup to consult when a day looks structurally confused before
   reaching for a more elaborate explanation.
+### Track P has an unmeasurable ceiling (user, 2026-10-06)
+
+The edition follows resolution order **but sometimes lumps same-subject resolutions on one day,
+and there is no listing of which**. Track P asks where enriched resolution *i* begins in the HTR,
+which presumes the editorial and scribal units are the same kind of object. For an unlisted subset
+they are not: an editorially lumped resolution has no single scribal start point. So part of the
+4,516 resolutions sharing a start paragraph (in 1,597 paragraphs) may be editorial composites
+rather than placement failures — and the fraction **cannot be identified from the edition side**.
+Track P is not invalidated, but every future Track P result must be reported against that ceiling
+rather than against 100%.
+
+### No resolution register is missing (2026-10-06)
+
+REPUBLIC's `data/inventories/inventory_metadata.json`: exactly **8 inventories overlap
+1626–1630** — the five annual `ordinaris` registers 3185–3189, the `secreet` register 4562
+(1615-12-01..1634-12-31), and two `index` volumes. **All six resolution registers are in this
+corpus.** So the 3,535 unplaced resolutions with nothing in ES are absent because the text is not
+in the digitised registers, not because a register was overlooked — the last structural
+explanation, now closed. Also: **4861 is an `index`, not resolutions** (`resolution_type:
+speciaal`, 1626–1661), so it never held resolutions to extract, and the 2,387 the candidate column
+attributed to it were attributed to a finding aid.
+
 - **Next, not done:** applying any date verdict is a day-status ledger change nobody has designed;
-  and the secret-flag extraction still has no committed script (`created_by_script: ""`), so it is
-  not reproducible.
+  the 76.6% figure still has no reproducible artifact (`h_session_date_vs_heading.py` holds the
+  circular version plus a year-override and month-fallback bug that fabricate dates); and the
+  secret-flag extraction has no committed script (`created_by_script: ""`), so it is not
+  reproducible.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
