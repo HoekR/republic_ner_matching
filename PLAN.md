@@ -221,10 +221,13 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   have exactly 1, 39 have none (32 in `no_session`). Independent corroboration of Track S from the
   normative source. Only 3 of the 73 multi-session dates are postprandium days, so afternoon
   sittings are not that multiplicity's main source.
+  **Not to be chased** (user, 2026-10-06): retrieving the sitting boundaries is likely hard and
+  afternoon sittings explain only 3 of the 73 multi-session dates, so it stays a *recording* —
+  `postprandium_days`, a 109-date lookup to consult when a day looks structurally confused before
+  reaching for a more elaborate explanation.
 - **Next, not done:** applying any date verdict is a day-status ledger change nobody has designed;
-  carrying the sitting boundary through the enriched flattening is a schema change to
-  `enriched_resolutions_1626_1630`; and the secret-flag extraction still has no committed script
-  (`created_by_script: ""`), so it is not reproducible.
+  and the secret-flag extraction still has no committed script (`created_by_script: ""`), so it is
+  not reproducible.
 
 ## Main line (user, 2026-10-05): the two remaining problems are both anchor operations
 
