@@ -228,16 +228,20 @@ within ±14 days. So it means *no session in what upstream delivered*, *not* "no
   afternoon sittings explain only 3 of the 73 multi-session dates, so it stays a *recording* —
   `postprandium_days`, a 109-date lookup to consult when a day looks structurally confused before
   reaching for a more elaborate explanation.
-### Track P has an unmeasurable ceiling (user, 2026-10-06)
+### Track P's editorial ceiling is ~98%, not a reframing (user, 2026-10-06)
 
-The edition follows resolution order **but sometimes lumps same-subject resolutions on one day,
-and there is no listing of which**. Track P asks where enriched resolution *i* begins in the HTR,
-which presumes the editorial and scribal units are the same kind of object. For an unlisted subset
-they are not: an editorially lumped resolution has no single scribal start point. So part of the
-4,516 resolutions sharing a start paragraph (in 1,597 paragraphs) may be editorial composites
-rather than placement failures — and the fraction **cannot be identified from the edition side**.
-Track P is not invalidated, but every future Track P result must be reported against that ceiling
-rather than against 100%.
+The edition follows resolution order but, per its own `verantwoording`, **sometimes lumps
+same-subject resolutions on one day, with no listing of which**. Track P asks where enriched
+resolution *i* begins in the HTR, which presumes the editorial and scribal units are the same kind
+of object; for a lumped resolution they are not, since it has no single scribal start point.
+
+**Magnitude, from the editor: lumping was never observed in the resolutions he has read, so
+"pretty seldom" — a ceiling around 98%, not 100%.** That is an informed estimate from cases seen,
+not a measurement, and the lumping stays unidentifiable from the edition side. But at ~2% it is a
+footnote rather than a reframing, and the important consequence runs the other way: **the 4,516
+resolutions sharing a start paragraph are overwhelmingly placement failures, not editorial
+composites, so Track P's premise holds.** Report future Track P results against ~98% rather than
+100%, and do not treat the collision mass as substantially editorial.
 
 ### No resolution register is missing (2026-10-06)
 
