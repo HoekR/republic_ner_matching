@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-10-09 12:03",
+  "last_updated": "2026-10-09 14:16",
   "active_focus": "sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: plans/SEQUENCE_GRAPH_SPINE.md). Stages 0-3b DONE 2026-10-09, all gates PASS (872 tests, 84 new). Stage 4 (the solver, align.py) first pass DONE 2026-10-09, later the same day: four decisions answered by the user, align_bracket built and tested (11 tests), run once on the scoped clean bracket (1629-03-02): 3/5 gold exact agreement, 1/5 separated. Not gated, not fitted, not benchmarked against the three existing DP mechanisms -- cost fitting and the mechanism comparison are next session's short list. A separate gap raised 2026-10-09 is also still open and NOT locked into the Stage 4 design: nihil-as-SKIP, DATED_AS strict/bootstrap as solver-visible subtypes, Track P's CONTAINS refinement vs ALIGNED_TO identity, and whether to forbid HTR-side insertion in the move set. Stage 5 (retiring legacy scripts) not started. The separated metric itself has not moved -- nothing built so far changes a production placement.",
   "tasks": [
     {
@@ -1962,6 +1962,18 @@
         {
           "date": "2026-10-09",
           "value": "69/206/337"
+        }
+      ]
+    },
+    {
+      "scope": "sequence-graph",
+      "name": "position_prior_within_1_paragraph_clean",
+      "label": "Positional prior (local uniform expectation): share within 1 paragraph of gold true position, excluding 2 known severe-mismatch days (320/344 resolutions)",
+      "value": "0.609",
+      "history": [
+        {
+          "date": "2026-10-09",
+          "value": "0.609"
         }
       ]
     }

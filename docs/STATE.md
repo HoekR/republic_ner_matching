@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-10-09 12:03
+Last updated: 2026-10-09 14:16
 
 ```mermaid
 flowchart TD
@@ -250,6 +250,7 @@ sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: plans/SEQUENCE_GRAPH_
 - **sequence-graph — Stage 4 first pass, 1629-03-02 gold exact agreement (unfitted cost, standalone, not gated):** 0.6
 - **sequence-graph — Stage 4 first pass, 1629-03-02 separated/k_e (1/5, unfitted cost, standalone):** 0.2
 - **sequence-graph — Stage 4, 50 alignable gold days (456 k_e): separated unfitted/fitted/uniform-null -- fitted beats unfitted ~3x but loses to uniform null:** 69/206/337
+- **sequence-graph — Positional prior (local uniform expectation): share within 1 paragraph of gold true position, excluding 2 known severe-mismatch days (320/344 resolutions):** 0.609
 
 ## Blockers / Open Questions
 
