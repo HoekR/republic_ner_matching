@@ -14,8 +14,10 @@
 
 **STATUS (2026-10-09): Stages 0-3b DONE, all gates PASS. Stage 4 (the solver) is in progress —
 first pass built, all four initial move-set design questions resolved, `ALIGNED_TO` written back
-to the graph (gold + solver halves), and a resolution-level week/month report DONE (Step 4.6,
-works from the CLI and a notebook). Still NOT gated/fitted. Stage 5 NOT started.**
+to the graph (gold + solver halves), a resolution-level week/month report DONE (Step 4.6), and
+`match_cost`/`gap_cost` fitted (Step 4.7) — a real ~3x improvement in separated count over the
+unfitted placeholder (15.1% → 45.2%), but still well short of the uniform-null baseline (73.9%).
+**Stage 4's own separated-vs-uniform-null gate has not passed.** Stage 5 NOT started.**
 
 ## Context
 
@@ -493,10 +495,50 @@ unrelated); `data_io.check`/`scripts/svz.py doctor` clean. Carries forward Step 
 persisted `DELETION_GAP`/`SOFT_CLIP` facts yet — this report reads `align_bracket`'s live output
 for that detail instead, which is itself the honest workaround, not a fix).
 
-**Next (Step 4.6 is done):** (a) cost fitting via log-probabilities (`match_cost` →
-`-log P(match|overlap)` etc.), calibrated on `gold_aligned_pairs` — `TRACK_S_ANCHOR_SHIFTING.md`'s
-open question; (b) the three-mechanism benchmark comparison (decision 4, deferred); (c) the
-corpus-wide extension past `boundary_gold_sample` days; (d) Stage 5, only after those.
+#### Step 4.7 DONE (2026-10-09) — `match_cost`/`gap_cost` fitted; still loses to the uniform null
+`sequence_graph/fit_cost.py`: `build_calibration_pairs` (344 gold-matched positives from
+`boundary_gold_sample`, 344 within-day-derangement negatives via
+`scripts.d1c_idf_band_order_eval.deranged_indices`/`control_offsets` — the exact technique
+already used for the 0.9555 TF-IDF AUC check, not a new method), `fit_match_logit` (sklearn
+`LogisticRegression`, one feature, unregularized), `fit_deletion_rate` (empirical, an
+upper-bound proxy — "gold does not locate it" conflates true deletion with "not annotated",
+same caveat `add_aligned_to_gold` already carries). `CostModel.match_cost` changed to the real
+log-probability form (`-log(sigmoid(intercept + coef*overlap))`, i.e. `softplus(-z)`) when
+`match_logit` is set — a genuinely different *shape*, not the old linear form with fitted numbers
+— gated behind `match_logit=None` by default so no existing test or run changes.
+**`insertion_cost`/`split_discount`/`soft_clip_cost` deliberately NOT fit** (no split-vs-margin-
+content calibration population exists yet — stated in `CostModel`'s own docstring, not silently
+dropped).
+
+**Result, reported against the standing guard (never absolute):** fitted parameters —
+`match_logit = (-0.40, 0.45)`, `deletion_rate = 0.421` → `gap_cost = 0.866` (unfitted default
+`1.0`). Across all 50 alignable gold days (456 `k_e` total): **unfitted separated 69 (15.1%) →
+fitted separated 206 (45.2%)** — a real, ~3x measured improvement over the Decision-2 placeholder.
+**But the uniform-null spread still scores 337 (73.9%) on the same population** — the fitted
+model is a large step forward from the unfitted one and still well short of the trivial baseline
+`docs/ITERATION_POLICY.md` requires every `separated` claim to clear. **This is not yet a result
+that beats the null, and is not reported as one.** `exact_agreement` could not be scored across
+this population at all: `run_bracket`'s current convention nulls a whole day's agreement if even
+one resolution is gold-unlocated, and the 42% deletion rate just measured means that is true of
+nearly every multi-resolution gold day — a real limitation of the evaluation tool itself, found
+while running this, not of the cost model, and not yet fixed.
+
+**Gate: PASS (mechanical).** 9 tests in `tests/test_sequence_graph_fit_cost.py` (balanced
+calibration pairs, non-circularity verified by source inspection — `align_bracket`/
+`add_aligned_to_solver` never appear in `fit_cost.py` — positive overlap exceeds negative on
+average, fitted slope is positive, deletion rate is a genuine proportion, scope discipline on
+which fields move, the fitted formula is a real log-probability checked against a hand-computed
+value, the unfitted default is unaffected). Full suite: **903 passed**, 10 skipped;
+`data_io.check`/`scripts/svz.py doctor` clean. **No gate on `separated`-vs-uniform-null itself
+has passed** — that is Stage 4's real go/no-go gate (per the original plan), and today's result
+does not clear it.
+
+**Next:** (a) fix `run_bracket`'s all-or-nothing `exact_agreement` so partial gold coverage can
+still score a day, instead of nulling it — needed before correctness (not just `separated`) can
+be compared at all; (b) the three-mechanism benchmark comparison (decision 4, still deferred);
+(c) the corpus-wide extension past `boundary_gold_sample` days (Step 4.5's named scope limit);
+(d) design the split/margin-content annotation population `insertion_cost`/`soft_clip_cost` need;
+(e) Stage 5, only after those.
 
 ### Stage 5 — scripts become drivers. NOT STARTED
 `reconcile_sequences.py`, `bracket_gap_census.py` (rebuilt per decision 2),

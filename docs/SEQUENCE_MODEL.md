@@ -103,9 +103,17 @@ closed, `check_partition`-verified taxonomy over every `EnrichedResolution`
 (dates by ISO week, each session's HTR resolutions drilled into individually — clean
 correspondences stated directly, unresolved stretches showing the solver's own proposed cut,
 "not yet attempted" where it hasn't run), callable from the CLI or a notebook.
-**Still not gated, not fitted, not benchmarked against the three existing DP mechanisms, and not
-yet run past `boundary_gold_sample` days** — see `plans/SEQUENCE_GRAPH_SPINE.md`'s Stage 4 for the
-full step-by-step record and what's next. **Stage 5** (retiring the legacy scripts) is still not
+
+`match_cost`/`gap_cost` are now **fitted** (`sequence_graph.fit_cost`, on `gold_aligned_pairs` vs.
+within-day derangement negatives) — `match_cost`'s formula changed to a real log-probability
+(`-log(sigmoid(...))`), not just new constants on the old linear form. Measured across all 50
+alignable gold days: `separated` 15.1% (unfitted) → 45.2% (fitted) — a real ~3x improvement —
+**against a uniform-null baseline of 73.9% on the same population.** Stage 4's own
+separated-vs-uniform-null gate has **not** passed. `insertion_cost`/`split_discount`/
+`soft_clip_cost` remain unfitted (no split-vs-margin-content calibration population exists).
+**Still not benchmarked against the three existing DP mechanisms, and not yet run past
+`boundary_gold_sample` days** — see `plans/SEQUENCE_GRAPH_SPINE.md`'s Stage 4 for the full
+step-by-step record and what's next. **Stage 5** (retiring the legacy scripts) is still not
 started.
 
 See `plans/SEQUENCE_GRAPH_SPINE.md` for full stage descriptions, every gate's

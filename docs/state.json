@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-10-09 11:39",
+  "last_updated": "2026-10-09 12:03",
   "active_focus": "sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: plans/SEQUENCE_GRAPH_SPINE.md). Stages 0-3b DONE 2026-10-09, all gates PASS (872 tests, 84 new). Stage 4 (the solver, align.py) first pass DONE 2026-10-09, later the same day: four decisions answered by the user, align_bracket built and tested (11 tests), run once on the scoped clean bracket (1629-03-02): 3/5 gold exact agreement, 1/5 separated. Not gated, not fitted, not benchmarked against the three existing DP mechanisms -- cost fitting and the mechanism comparison are next session's short list. A separate gap raised 2026-10-09 is also still open and NOT locked into the Stage 4 design: nihil-as-SKIP, DATED_AS strict/bootstrap as solver-visible subtypes, Track P's CONTAINS refinement vs ALIGNED_TO identity, and whether to forbid HTR-side insertion in the move set. Stage 5 (retiring legacy scripts) not started. The separated metric itself has not moved -- nothing built so far changes a production placement.",
   "tasks": [
     {
@@ -322,8 +322,8 @@
       "id": "sequence-graph",
       "title": "sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass)",
       "status": "inprogress",
-      "notes": "Stages 0-3b DONE, gate-verified. Stage 4 (align.py) first pass + all 4 move-set design questions resolved + ALIGNED_TO write-back (gold+solver, non-circular gold_aligned_pairs, aligned_to_status coverage taxonomy: 345 gold_verified/2 solver_derived_only/18775 unaligned) -- all prior entries. NEW: Step 4.6 DONE -- sequence_graph.query.query_range: week/month report, per-date PINNED_TO/ALIGNED_TO status, per-session per-HTR-resolution drill-down (clean correspondence stated directly, unresolved stretches show the solver's live proposed cut, 'not yet attempted' where solver hasn't run). Works from CLI and notebook. Plan lives in plans/SEQUENCE_GRAPH_SPINE.md (migrated from ~/.claude/plans/ per user instruction, all cross-refs updated). 894 tests pass.",
-      "next_action": "Cost fitting via log-probabilities on gold_aligned_pairs (match_cost -> -log P(match|overlap) etc., replacing CostModel's hand-set constants) -- needs its own calibration population first. Then: the three-mechanism benchmark comparison, the corpus-wide extension past boundary_gold_sample days, Stage 5.",
+      "notes": "Stages 0-3b DONE. Stage 4: first pass + 4 move-set decisions + ALIGNED_TO write-back + Step 4.6 week/month report -- all prior entries. NEW: Step 4.7 -- match_cost/gap_cost fitted on gold (sequence_graph.fit_cost): match_cost's formula changed to a real log-probability (softplus of a fitted logit), gap_cost to the empirical deletion rate. Measured across all 50 alignable gold days: separated 15.1% (unfitted) -> 45.2% (fitted), a real ~3x improvement -- but the uniform-null baseline scores 73.9% on the same population. Stage 4's own separated-vs-uniform-null gate has NOT passed. insertion_cost/split_discount/soft_clip_cost remain unfitted (no calibration population exists for split-vs-margin-content). Found along the way: run_bracket's exact_agreement nulls a whole day if even one resolution is gold-unlocated, which the 42% deletion rate makes true of nearly every multi-resolution day -- blocks correctness comparison, not fixed yet. 903 tests pass.",
+      "next_action": "Fix run_bracket's all-or-nothing exact_agreement so partial gold coverage still scores a day (needed before correctness, not just separated, can be compared). Then: the three-mechanism benchmark comparison, the corpus-wide extension past boundary_gold_sample days, designing the split/margin-content annotation population, Stage 5.",
       "goal": "A single derived ALIGNED_TO edge with a calibrated, gated cost that tfidf-embeddings-wiring's and staged-anchor-consolidation's open cost-channel questions collapse into, per docs/SEQUENCE_MODEL.md's track table.",
       "cost": "multi-session"
     }
@@ -1950,6 +1950,18 @@
         {
           "date": "2026-10-09",
           "title": "Prioritize sequence-graph Stage 4 over the cheaper archival-provenance next step"
+        }
+      ]
+    },
+    {
+      "scope": "sequence-graph",
+      "name": "stage4_separated_unfitted_vs_fitted_vs_uniform",
+      "label": "Stage 4, 50 alignable gold days (456 k_e): separated unfitted/fitted/uniform-null -- fitted beats unfitted ~3x but loses to uniform null",
+      "value": "69/206/337",
+      "history": [
+        {
+          "date": "2026-10-09",
+          "value": "69/206/337"
         }
       ]
     }

@@ -57,6 +57,7 @@ Usage (the one scoped run, decision 3 above):
 from __future__ import annotations
 
 import argparse
+import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
@@ -73,12 +74,22 @@ SOFT_CLIP = "SOFT_CLIP"
 
 @dataclass(frozen=True)
 class CostModel:
-    """**Not fitted.** Decision 2 (2026-10-09): deferred, kept open rather than hand-set-and-
-    forgotten. These are structural placeholders chosen only to preserve the right *ordering*
-    (more shared evidence costs less; a routine deletion is cheap; a contaminated read item is
-    flat-rate) -- not calibrated values, and must not be read as a measured result. Fitting them
-    (on gold, held out by day, per `TRACK_S_ANCHOR_SHIFTING.md`'s own open question) is the next
-    session's work, not this one's.
+    """**Partially fitted, as of 2026-10-09 -- read the two halves separately, not as one verdict.**
+
+    `match_cost`/`gap_cost` can now be calibrated (`sequence_graph.fit_cost.fit_cost_model`):
+    `match_logit` holds `(intercept, coef)` of a logistic `P(match | overlap)` fit on
+    `gold_aligned_pairs` positives vs. within-day-derangement negatives; `gap_cost` becomes the
+    empirical deletion rate's `-log(P(deletion))` instead of a guessed `1.0`. `match_logit=None`
+    (the default) keeps the original unfitted linear form in `match_cost` -- every test and every
+    run before this pass used that form, so changing the default would silently change every
+    existing number.
+
+    `insertion_cost`/`split_discount` and `soft_clip_cost` are **still** the original Decision-2
+    structural placeholders, chosen only to preserve the right *ordering* (a split should be
+    cheaper than a fresh match; a contaminated read item is flat-rate) -- not calibrated, and
+    still must not be read as a measured result. Gold labels final correspondences, not the
+    split-vs-margin-content distinction the DP's move types need, so this half has no calibration
+    population yet -- a real, separate open item, not an oversight.
     """
 
     base_match: float = 2.0
@@ -88,8 +99,19 @@ class CostModel:
     split_discount: float = 0.3
     epsilon: float = 0.05
     abstain_threshold: float | None = None
+    match_logit: tuple[float, float] | None = None
 
     def match_cost(self, overlap: float) -> float:
+        """The real log-probability form, `-log(sigmoid(intercept + coef*overlap))`
+        (`math.log1p(math.exp(-z))`, the numerically stable `softplus(-z)`), when `match_logit`
+        is set; otherwise the original unfitted `base - lambda*overlap`, floored at `epsilon`
+        either way. These are genuinely different *shapes*, not the same formula with different
+        numbers -- a straight line can't be a calibrated probability's cost, which is why fitting
+        this needed a formula change, not just new constants (user, 2026-10-09)."""
+        if self.match_logit is not None:
+            intercept, coef = self.match_logit
+            z = intercept + coef * overlap
+            return max(self.epsilon, math.log1p(math.exp(-z)))
         return max(self.epsilon, self.base_match - self.match_lambda * overlap)
 
     def insertion_cost(self, overlap: float) -> float:
