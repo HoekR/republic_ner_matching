@@ -1,6 +1,6 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-10-09 10:22",
+  "last_updated": "2026-10-09 10:42",
   "active_focus": "sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: /Users/rikhoekstra/.claude/plans/the-two-deep-hits-melodic-avalanche.md). Stages 0-3b DONE 2026-10-09, all gates PASS (872 tests, 84 new). Stage 4 (the solver, align.py) first pass DONE 2026-10-09, later the same day: four decisions answered by the user, align_bracket built and tested (11 tests), run once on the scoped clean bracket (1629-03-02): 3/5 gold exact agreement, 1/5 separated. Not gated, not fitted, not benchmarked against the three existing DP mechanisms -- cost fitting and the mechanism comparison are next session's short list. A separate gap raised 2026-10-09 is also still open and NOT locked into the Stage 4 design: nihil-as-SKIP, DATED_AS strict/bootstrap as solver-visible subtypes, Track P's CONTAINS refinement vs ALIGNED_TO identity, and whether to forbid HTR-side insertion in the move set. Stage 5 (retiring legacy scripts) not started. The separated metric itself has not moved -- nothing built so far changes a production placement.",
   "tasks": [
     {
@@ -317,6 +317,15 @@
       "next_action": "Give secret-inventory matches their own status track in s4_day_status_resolution.py, outside the normal comparison.",
       "goal": "Secret-inventory matches on their own status track so they never win resolved_session_id by default.",
       "cost": "cheap"
+    },
+    {
+      "id": "sequence-graph",
+      "title": "sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass)",
+      "status": "inprogress",
+      "notes": "Stages 0-3b DONE 2026-10-09, gate-verified (872 tests), reproducing reconcile_sequences.py's own verdicts exactly. Stage 4 (align.py, the DP aligner) has a first pass: 4 decisions answered by the user, defects fixed, run once on 1629-03-02 (3/5 gold exact agreement, 1/5 separated) -- not gated, not fitted. A second design gap was raised 2026-10-09 and worked live with the user: nihil-actum days are NOT a SKIP move -- the notebook check found every nihil date has k_e=1 (the formulaic entry itself) and currently none resolve to a session, refining rather than confirming the 'milestone' framing; DATED_AS channel (strict/bootstrap) stays upstream-only, not folded into solver cost; Track P's sub-paragraph CONTAINS refinement should unify with ALIGNED_TO at paragraph granularity rather than staying a second pass; 'forbid HTR insertion in the move set' intent is still unclarified with the user. See docs/DECISIONS.md and notebooks/sequence_graph_exploration.ipynb.",
+      "next_action": "Finish clarifying 'forbid HTR insertion' with the user and lock all four move-set decisions into the plan file's Stage 4 section; then scope cost-fitting via log-probabilities (-log P(match)/-log P(split)/-log P(deletion)/-log P(contamination), replacing CostModel's unfitted constants) -- TRACK_S_ANCHOR_SHIFTING.md's open question, needs its own calibration population before any constant changes.",
+      "goal": "A single derived ALIGNED_TO edge with a calibrated, gated cost that tfidf-embeddings-wiring's and staged-anchor-consolidation's open cost-channel questions collapse into, per docs/SEQUENCE_MODEL.md's track table.",
+      "cost": "multi-session"
     }
   ],
   "dependencies": [
@@ -1905,6 +1914,42 @@
         {
           "date": "2026-10-08",
           "value": "364"
+        }
+      ]
+    },
+    {
+      "scope": "sequence-graph",
+      "name": "stage4_gold_exact_agreement",
+      "label": "Stage 4 first pass, 1629-03-02 gold exact agreement (unfitted cost, standalone, not gated)",
+      "value": "0.6",
+      "history": [
+        {
+          "date": "2026-10-09",
+          "value": "0.6"
+        }
+      ],
+      "decisions": [
+        {
+          "date": "2026-10-09",
+          "title": "Prioritize sequence-graph Stage 4 over the cheaper archival-provenance next step"
+        }
+      ]
+    },
+    {
+      "scope": "sequence-graph",
+      "name": "stage4_separated_share",
+      "label": "Stage 4 first pass, 1629-03-02 separated/k_e (1/5, unfitted cost, standalone)",
+      "value": "0.2",
+      "history": [
+        {
+          "date": "2026-10-09",
+          "value": "0.2"
+        }
+      ],
+      "decisions": [
+        {
+          "date": "2026-10-09",
+          "title": "Prioritize sequence-graph Stage 4 over the cheaper archival-provenance next step"
         }
       ]
     }

@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-10-09 10:22
+Last updated: 2026-10-09 10:42
 
 ```mermaid
 flowchart TD
@@ -48,6 +48,7 @@ flowchart TD
     track_p_subparagraph_division["track-p-subparagraph-division: Track P: sub-paragraph division (place anchors before shifting them)"]:::inprogress
     track_s_anchor_shifting["track-s-anchor-shifting: Track S: anchor shifting (session reassignment)"]:::done
     archival_provenance["archival-provenance: Archival provenance: per-resolution secret flags and page/scan provenance"]:::inprogress
+    sequence_graph["sequence-graph: sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass)"]:::inprogress
     S0 --> S5
     S1 --> S4
     S2 --> S4
@@ -103,6 +104,7 @@ flowchart TD
 - [/] track-p-subparagraph-division: Track P: sub-paragraph division (place anchors before shifting them) — P1 PASS: typed formula channel beats the null, ranked 0.62, day-clustered p=0.0003. P2 closed at 12 gold/80 (thin yield), redirected to synthetic_boundary_* 2,041 proven-pair rows. P3 NOT YET IMPLEMENTED and is the only open item in the project with a direct line to the separated metric.
 - [x] track-s-anchor-shifting: Track S: anchor shifting (session reassignment) — SUPERSEDED 2026-10-09: S2's many-to-many date<->session schema IS PINNED_TO as an unconstrained edge set in sequence_graph -- building it separately would duplicate the spine. S1's +186/-186 sizing stands as a Stage-2 regression check. The calibrated-anchor-scoring question migrates to Stage 4 (the solver).
 - [/] archival-provenance: Archival provenance: per-resolution secret flags and page/scan provenance — Per-resolution secret flags recovered from source XML; resolution_archival_provenance built (71.7% resolved, 100% of those carry pages) and it is the join that made bracket_business_ledger possible. Secret-session hijack mechanism (34 days / 398 resolutions) measured and UNBLOCKED at <=0.07% of separated cost, not yet built.
+- [/] sequence-graph: sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass) — Stages 0-3b DONE 2026-10-09, gate-verified (872 tests), reproducing reconcile_sequences.py's own verdicts exactly. Stage 4 (align.py, the DP aligner) has a first pass: 4 decisions answered by the user, defects fixed, run once on 1629-03-02 (3/5 gold exact agreement, 1/5 separated) -- not gated, not fitted. A second design gap was raised 2026-10-09 and worked live with the user: nihil-actum days ar… (full text in docs/state.json)
 
 _1 further task(s) archived — see docs/state_archive.json or `svz.py archived`._
 
@@ -245,6 +247,8 @@ sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: /Users/rikhoekstra/.c
 - **scan-sequence — 2.6% of 19,278; the 22% headline did not survive its own measurement and the frame was never asked for:** 493
 - **sequence-alignment — 742 decidable sessions in scope; MISATTRIBUTION not drift (14 page reads) -- must not be cited as a drift rate:** 0.778
 - **scan-sequence — of 593 scan brackets (61%), flat across bracket width 59-67% so not a width artefact:** 364
+- **sequence-graph — Stage 4 first pass, 1629-03-02 gold exact agreement (unfitted cost, standalone, not gated):** 0.6
+- **sequence-graph — Stage 4 first pass, 1629-03-02 separated/k_e (1/5, unfitted cost, standalone):** 0.2
 
 ## Blockers / Open Questions
 
