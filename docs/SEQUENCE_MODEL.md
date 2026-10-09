@@ -99,6 +99,10 @@ sanctioned read path for any future calibration, filtering to `observed=True` on
 code cannot accidentally train on the solver's own derived output. `aligned_to_status` is a
 closed, `check_partition`-verified taxonomy over every `EnrichedResolution`
 (`gold_verified`/`solver_derived_only`/`unaligned`) answering "what's still missing" as a number.
+`sequence_graph.query.query_range` reads all of this into a human-readable week/month report
+(dates by ISO week, each session's HTR resolutions drilled into individually — clean
+correspondences stated directly, unresolved stretches showing the solver's own proposed cut,
+"not yet attempted" where it hasn't run), callable from the CLI or a notebook.
 **Still not gated, not fitted, not benchmarked against the three existing DP mechanisms, and not
 yet run past `boundary_gold_sample` days** — see `plans/SEQUENCE_GRAPH_SPINE.md`'s Stage 4 for the
 full step-by-step record and what's next. **Stage 5** (retiring the legacy scripts) is still not

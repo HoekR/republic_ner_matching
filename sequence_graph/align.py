@@ -424,6 +424,7 @@ def run_bracket(date: str, cost: CostModel = CostModel()) -> dict:
         "abstained": result.abstained,
         "total_cost": result.total_cost,
         "moves": [(p.kind, p.ref_index, p.read_index) for p in result.pairs],
+        "flat_ids": flat_ids,  # read_index -> flat_id, for callers that need the real HTR id
         "separated_count": int(scored["separated"].sum()) if not scored.empty else 0,
         "uniform_null_positions": null_positions,
         "exact_agreement": exact_agreement,

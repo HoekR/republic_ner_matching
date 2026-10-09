@@ -13,9 +13,9 @@
 > updated to point here.
 
 **STATUS (2026-10-09): Stages 0-3b DONE, all gates PASS. Stage 4 (the solver) is in progress —
-first pass built, all four initial move-set design questions resolved, `ALIGNED_TO` now written
-back to the graph (gold + solver halves), a resolution-level report in progress. NOT gated/fitted.
-Stage 5 NOT started.**
+first pass built, all four initial move-set design questions resolved, `ALIGNED_TO` written back
+to the graph (gold + solver halves), and a resolution-level week/month report DONE (Step 4.6,
+works from the CLI and a notebook). Still NOT gated/fitted. Stage 5 NOT started.**
 
 ## Context
 
@@ -468,21 +468,32 @@ them means either a new edge type with no target node (for `DELETION_GAP`) or a 
 attribute (for `SOFT_CLIP`) — a real schema question, not decided here. Step 4.6 reads them live
 from `align_bracket`'s output instead of persisting them, as a stated stopgap.
 
-#### Step 4.6 IN PROGRESS (2026-10-09) — a human-readable week/month report, resolution-level drill-down
-Per the user's request: `sequence_graph.query` gains a range report — group in-scope dates by week
-within a month; each date shows its `PINNED_TO`/`LABELLED_AS` verdict (observed vs. inferred,
-reusing `classify.py` directly) and its `ALIGNED_TO` coverage. Drilling into a session lists each
-HTR resolution's own correspondence: where it cleanly matches one baseline (enriched) resolution,
-state that directly (gold or solver, tagged); where a stretch doesn't resolve cleanly, show the
-correspondence state and any proposed cuts the solver's own move trace implies (`SOFT_CLIP`/
-`INSERTION_SPLIT` boundaries), not a guess — and "not yet attempted" wherever the solver hasn't
-run at all, never silence and never a blank filled in by assumption. Should also work from a
-notebook, not only the CLI (per the user's ask), reusing the same functions `query.py` calls.
-Carries forward Step 4.5's scope limit (solver output only exists for `boundary_gold_sample` days
-today) and its deferred item (no persisted `DELETION_GAP`/`SOFT_CLIP` facts yet — this report reads
-`align_bracket`'s live output for that detail instead).
+#### Step 4.6 DONE (2026-10-09) — a human-readable week/month report, resolution-level drill-down
+Per the user's request: `sequence_graph.query.query_range(start, end, solver_dates=...)` — group
+in-scope dates by ISO week; each date shows its `PINNED_TO`/`LABELLED_AS` verdict (observed vs.
+inferred, reusing `classify.py` directly) and its `ALIGNED_TO` coverage (via
+`consolidate.node_aligned_bucket`, the same classifier `aligned_to_status` partitions with, so a
+date's own number and the corpus-wide number are never read two different ways). Drilling into a
+session lists each HTR resolution's own correspondence: where it cleanly matches one baseline
+(enriched) resolution, states that directly (gold or solver, tagged); where a stretch doesn't
+resolve cleanly, shows the correspondence state and the proposed cut the solver's own move trace
+implies (`SOFT_CLIP` → "dropped as margin content", `INSERTION_SPLIT` → "proposed cut"), read live
+from `align_bracket`'s output (`run_bracket` extended to return `flat_ids`, so a read index maps
+back to a real HTR id) rather than invented — and "not yet attempted" wherever the solver hasn't
+run at all, never silence and never a blank filled in by assumption. Works from a notebook too
+(`notebooks/sequence_graph_exploration.ipynb` §8), calling the exact same function the CLI's
+`--range`/`--solver-dates` flags call. One real bug found and fixed while testing: a date carrying
+both `PINNED_TO` and `LABELLED_AS` to the same session (the Stage-2 `MultiDiGraph` case) was
+drilled into twice; deduped by session id, same pattern `query_date` already used for its own
+"OBSERVED path" loop. **Gate: PASS.** 5 new tests in `tests/test_sequence_graph_query.py`
+(ISO-Monday week-start arithmetic, gold-only coverage, solver-run proposed cuts and dropped
+content, empty range, multi-week grouping); full suite 894 passed, 10 skipped (pre-existing,
+unrelated); `data_io.check`/`scripts/svz.py doctor` clean. Carries forward Step 4.5's scope limit
+(solver output only exists for `boundary_gold_sample` days today) and its deferred item (no
+persisted `DELETION_GAP`/`SOFT_CLIP` facts yet — this report reads `align_bracket`'s live output
+for that detail instead, which is itself the honest workaround, not a fix).
 
-**Next, once Step 4.6 lands:** (a) cost fitting via log-probabilities (`match_cost` →
+**Next (Step 4.6 is done):** (a) cost fitting via log-probabilities (`match_cost` →
 `-log P(match|overlap)` etc.), calibrated on `gold_aligned_pairs` — `TRACK_S_ANCHOR_SHIFTING.md`'s
 open question; (b) the three-mechanism benchmark comparison (decision 4, deferred); (c) the
 corpus-wide extension past `boundary_gold_sample` days; (d) Stage 5, only after those.

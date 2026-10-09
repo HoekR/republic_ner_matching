@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-10-09 11:30
+Last updated: 2026-10-09 11:39
 
 ```mermaid
 flowchart TD
@@ -104,7 +104,7 @@ flowchart TD
 - [/] track-p-subparagraph-division: Track P: sub-paragraph division (place anchors before shifting them) — P1 PASS: typed formula channel beats the null, ranked 0.62, day-clustered p=0.0003. P2 closed at 12 gold/80 (thin yield), redirected to synthetic_boundary_* 2,041 proven-pair rows. P3 NOT YET IMPLEMENTED and is the only open item in the project with a direct line to the separated metric.
 - [x] track-s-anchor-shifting: Track S: anchor shifting (session reassignment) — SUPERSEDED 2026-10-09: S2's many-to-many date<->session schema IS PINNED_TO as an unconstrained edge set in sequence_graph -- building it separately would duplicate the spine. S1's +186/-186 sizing stands as a Stage-2 regression check. The calibrated-anchor-scoring question migrates to Stage 4 (the solver).
 - [/] archival-provenance: Archival provenance: per-resolution secret flags and page/scan provenance — Per-resolution secret flags recovered from source XML; resolution_archival_provenance built (71.7% resolved, 100% of those carry pages) and it is the join that made bracket_business_ledger possible. Secret-session hijack mechanism (34 days / 398 resolutions) measured and UNBLOCKED at <=0.07% of separated cost, not yet built.
-- [/] sequence-graph: sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass) — Stages 0-3b DONE, gate-verified. Stage 4 (align.py) first pass + all 4 move-set design questions resolved (prior entry). NEW: ALIGNED_TO written back to the graph -- add_aligned_to_gold (observed=True, boundary_gold_sample) + add_aligned_to_solver (observed=False, DP output, explicitly unfitted), gold_aligned_pairs as the one sanctioned non-circular calibration read path, aligned_to_status as a ch… (full text in docs/state.json)
+- [/] sequence-graph: sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass) — Stages 0-3b DONE, gate-verified. Stage 4 (align.py) first pass + all 4 move-set design questions resolved + ALIGNED_TO write-back (gold+solver, non-circular gold_aligned_pairs, aligned_to_status coverage taxonomy: 345 gold_verified/2 solver_derived_only/18775 unaligned) -- all prior entries. NEW: Step 4.6 DONE -- sequence_graph.query.query_range: week/month report, per-date PINNED_TO/ALIGNED_TO st… (full text in docs/state.json)
 
 _1 further task(s) archived — see docs/state_archive.json or `svz.py archived`._
 
