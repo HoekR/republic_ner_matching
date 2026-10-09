@@ -79,12 +79,19 @@ and abstention, non-collapsing cost) is built and tested (`tests/test_sequence_g
 Run once on the scoped clean bracket (`1629-03-02`, k_e=k_f=5): 3/5 gold exact agreement, 1/5
 `separated`. **Not gated, not fitted, not benchmarked against the three existing DP mechanisms** —
 see `plans/the-two-deep-hits-melodic-avalanche.md`'s "Next session's short list" for what is still
-open (cost fitting, the three-mechanism comparison), and a separate open gap raised 2026-10-09
-(not yet resolved): whether nihil-actum days need their own SKIP move, whether `DATED_AS`'s
-`strict`/`bootstrap` channels should be distinct edge subtypes for the solver, how Track P's
-sub-paragraph `CONTAINS` refinement interacts with `ALIGNED_TO` identity, and whether the move set
-should forbid HTR-side insertion outright — none of these four are locked into the Stage 4 design
-yet. **Stage 5** (retiring the legacy scripts) is still not started.
+open (cost fitting, the three-mechanism comparison).
+
+A second design gap, raised and resolved the same day (`docs/DECISIONS.md` 2026-10-09 "all four
+Stage 4 move-set design questions resolved"): nihil-actum days are a checkable milestone invariant,
+not a `SKIP` move (live data refines this further — every nihil-actum date has `k_e == 1`, not 0,
+and none currently resolve to a session); `DATED_AS`'s `strict`/`bootstrap` channels stay
+upstream-only, not folded into solver cost; Track P's sub-paragraph `CONTAINS` refinement should
+unify with `ALIGNED_TO` at paragraph granularity (not yet implemented); and "forbid HTR insertion"
+turned out to mean no move may ever reorder a read item — already structurally true of this DP
+(only forward transitions exist) and now pinned down by a regression test
+(`test_read_items_are_never_reordered_only_matched_split_or_dropped`), carrying the caveat that the
+"fixed order" trusted here is itself an interpretation of HTR region detection, not a fact about
+the page. **Stage 5** (retiring the legacy scripts) is still not started.
 
 See `plans/the-two-deep-hits-melodic-avalanche.md` for full stage descriptions, every gate's
 actual figures, and the bugs each stage's gate caught.

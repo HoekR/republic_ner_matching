@@ -145,6 +145,23 @@ def align_bracket(
     between `ref[i]` and `read[j]`; it is the only data dependency, so this function is directly
     testable on synthetic sequences with no corpus access.
 
+    **No move ever reorders a read item (user clarification, 2026-10-09).** Unlike a Levenshtein-
+    style edit distance, an HTR resolution can never be relocated out of its position in the flat
+    stream -- there is no "insert move" that moves content around. Only three transitions exist,
+    `(i+1,j+1)`/`(i+1,j)`/`(i,j+1)`, so the read index `j` never decreases and is consumed at most
+    once each; a read item is MATCHed, attached to the ref item just placed (`INSERTION_SPLIT`), or
+    dropped as margin content such as an attendance list or a date heading (`SOFT_CLIP`) -- never
+    moved. Reordering isn't a move that got left out; it cannot be expressed in this DP at all
+    (regression: `test_read_items_are_never_reordered_only_matched_split_or_dropped`).
+
+    **Caveat, stated rather than assumed away:** the flat stream this trusts as fixed-order is
+    itself an interpretation of HTR region detection, which can mis-order or mis-classify a region
+    (heading, page number, attendance list, marginalia vs. body text) -- there is no single
+    canonical reading order inherent to a page. For all practical purposes this project treats that
+    stream's order as fixed. If region detection is actually wrong for some bracket, that is a
+    separate upstream defect to flag and fix at the source (never something this move set should
+    try to route around by reordering).
+
     `dp[i][j]` = min cost aligning `ref[0:i]` with `read[0:j]`. Three predecessors only -- defect 1.
 
     **Free end gaps are evidence-gated, not unconditional (2026-10-09, same session, found by

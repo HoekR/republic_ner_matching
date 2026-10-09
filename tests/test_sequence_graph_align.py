@@ -169,3 +169,33 @@ def test_deletion_gap_is_routine_and_cheap_not_an_edge_case():
     model = CostModel(base_match=2.0, match_lambda=1.0, gap_cost=0.3, soft_clip_cost=5.0)
     result = align_bracket(1, 1, zero_overlap, model)
     assert [p.kind for p in result.pairs] == [DELETION_GAP]
+
+
+def test_read_items_are_never_reordered_only_matched_split_or_dropped():
+    """User clarification (2026-10-09): unlike Levenshtein-style edit distance, an HTR item can
+    never be moved out of its position in the flat stream -- there is no 'insert move' that
+    relocates content. `align_bracket` only has (i+1,j+1)/(i+1,j)/(i,j+1) transitions, so `j` (the
+    read index) never decreases and is consumed at most once each: reordering isn't a move that
+    was left out, it cannot be expressed in this DP at all. A read item is matched (MATCH),
+    attached to the resolution just placed (INSERTION_SPLIT), or dropped as margin content such as
+    an attendance list or a date heading (SOFT_CLIP) / never consumed (DELETION_GAP has no read
+    index) -- never relocated. This test pins that down explicitly rather than leaving it true
+    only "by construction" with nothing checking it.
+
+    Caveat carried in `align_bracket`'s own docstring, not re-litigated here: the flat stream this
+    assumes is fixed is itself an interpretation of HTR region detection, which can mis-order or
+    mis-classify a region (heading, page number, attendance list, marginalia vs. body text). This
+    DP trusts that stream's order; if region detection is actually wrong for some bracket, that is
+    a separate upstream defect to flag and fix at the source, never something this move set should
+    try to route around by reordering.
+    """
+    def overlap(i: int, j: int) -> float:
+        return 3.0 if (i, j) in {(0, 1), (1, 3)} else 0.0
+
+    result = align_bracket(2, 5, overlap, CostModel())
+    read_indices = [p.read_index for p in result.pairs if p.read_index is not None]
+    assert read_indices == sorted(read_indices)
+    assert len(read_indices) == len(set(read_indices))  # each read item consumed at most once
+    ref_indices = [p.ref_index for p in result.pairs if p.ref_index is not None]
+    assert ref_indices == sorted(ref_indices)
+    assert len(ref_indices) == len(set(ref_indices))
