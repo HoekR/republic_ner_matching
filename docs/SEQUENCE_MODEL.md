@@ -26,7 +26,7 @@ Its tone follows the scope bar precedent: `scripts/corpus_scope.py` implements o
 | **OBSERVED_ON** | Session / HtrResolution → Scan | **yes** | recorded archival addressing | `resolution_archival_provenance.scan_ids` |
 | **DATED_AS** | Scan → SittingDay | **yes** | date heading on the page | the date region's own heading on that scan; channel ∈ {strict, bootstrap}, bootstrap carrying its measured 1.3% parse error |
 | **PINNED_TO** | SittingDay → Session | **no — inferred** | no independent evidence | concordance `resolved_session_id`; this is the broken link |
-| **ALIGNED_TO** | EnrichedResolution → HtrResolution | derived | solved via DP | Stage 4, first pass built 2026-10-09 (`align.py`, one scoped bracket, unfitted cost) |
+| **ALIGNED_TO** | EnrichedResolution → HtrResolution | **both** | gold (`boundary_gold_sample`, observed=True) + solver (`align.py`, observed=False) | Written back to the graph 2026-10-09, two parallel-edge halves — `sequence_graph.correspondence.add_aligned_to_gold`/`add_aligned_to_solver` |
 
 The fifth edge, **MENTIONS** (EnrichedResolution / HtrResolution → Entity), is observed but used only for scoring, not for placement.
 
@@ -72,14 +72,12 @@ As of 2026-10-09 (overnight session after Stage 0): **Stages 0–3b are DONE, al
 - **Stage 3b** — `sequence_graph/render.py` (three-lane SVG, `TrackNode`/`TrackEdge`), with the
   extraction (`consolidate.track_records`) kept structurally outside it.
 
-**Stage 4** (the solver, `align.py`) has a first pass, later the same day: the four decisions the
-overnight stop-note left open were answered by the user, and `align_bracket` (O(NM), typed
+**Stage 4** (the solver, `align.py`) is in progress. First pass: the four decisions the overnight
+stop-note left open were answered by the user, and `align_bracket` (O(NM), typed
 MATCH/DELETION_GAP/INSERTION_SPLIT/SOFT_CLIP moves, semi-global with evidence-gated free end gaps
 and abstention, non-collapsing cost) is built and tested (`tests/test_sequence_graph_align.py`).
 Run once on the scoped clean bracket (`1629-03-02`, k_e=k_f=5): 3/5 gold exact agreement, 1/5
-`separated`. **Not gated, not fitted, not benchmarked against the three existing DP mechanisms** —
-see `plans/the-two-deep-hits-melodic-avalanche.md`'s "Next session's short list" for what is still
-open (cost fitting, the three-mechanism comparison).
+`separated`.
 
 A second design gap, raised and resolved the same day (`docs/DECISIONS.md` 2026-10-09 "all four
 Stage 4 move-set design questions resolved"): nihil-actum days are a checkable milestone invariant,
@@ -91,9 +89,22 @@ turned out to mean no move may ever reorder a read item — already structurally
 (only forward transitions exist) and now pinned down by a regression test
 (`test_read_items_are_never_reordered_only_matched_split_or_dropped`), carrying the caveat that the
 "fixed order" trusted here is itself an interpretation of HTR region detection, not a fact about
-the page. **Stage 5** (retiring the legacy scripts) is still not started.
+the page.
 
-See `plans/the-two-deep-hits-melodic-avalanche.md` for full stage descriptions, every gate's
+`ALIGNED_TO` is then **written back to the graph**, not left as a transient in-memory result
+(user: "ONLY if results are discarded explicitly they should not be written back") — two parallel
+edge halves, `add_aligned_to_gold` (observed=True, hand-verified) and `add_aligned_to_solver`
+(observed=False, the DP's own output, explicitly unfitted). `gold_aligned_pairs` is the one
+sanctioned read path for any future calibration, filtering to `observed=True` only, so fitting
+code cannot accidentally train on the solver's own derived output. `aligned_to_status` is a
+closed, `check_partition`-verified taxonomy over every `EnrichedResolution`
+(`gold_verified`/`solver_derived_only`/`unaligned`) answering "what's still missing" as a number.
+**Still not gated, not fitted, not benchmarked against the three existing DP mechanisms, and not
+yet run past `boundary_gold_sample` days** — see `plans/SEQUENCE_GRAPH_SPINE.md`'s Stage 4 for the
+full step-by-step record and what's next. **Stage 5** (retiring the legacy scripts) is still not
+started.
+
+See `plans/SEQUENCE_GRAPH_SPINE.md` for full stage descriptions, every gate's
 actual figures, and the bugs each stage's gate caught.
 
 ## How to use this document

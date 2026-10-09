@@ -40,6 +40,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+import networkx as nx
 import pandas as pd
 
 from running_axis.tally import POPULATIONS, Tally, Window, check_partition
@@ -47,10 +48,13 @@ from running_axis.tally import POPULATIONS, Tally, Window, check_partition
 from sequence_graph.build import build
 from sequence_graph.classify import SessionVerdict, classify
 from sequence_graph.correspondence import (
+    ALIGNED_TO,
     DATED_AS,
     LABELLED_AS,
     OBSERVED_ON,
     PINNED_TO,
+    add_aligned_to_gold,
+    add_aligned_to_solver,
     add_dated_as,
     add_observed_on,
     add_pinned_and_labelled,
@@ -60,6 +64,7 @@ from sequence_graph.render import TrackEdge, TrackNode
 NARROW_WINDOW_DAYS = 2  # the canonical home; see module docstring
 
 CORRESPONDENCE_CLASSES = ("hard_anchor", "bounded_gap", "wide_window", "unconstrained_gap")
+ALIGNED_TO_STATUS = ("gold_verified", "solver_derived_only", "unaligned")
 PROBLEM_TYPES = (
     "T0_anchor", "T1_offset_1_2_days", "T2_offset_3_7_days", "T3_offset_over_7_days",
     "T4_anchor_bracket_suspect", "T5_window_too_wide_to_judge", "T6_no_scan_observed",
@@ -118,6 +123,31 @@ for _name in PROBLEM_TYPES:
     POPULATIONS.register(
         f"sequence_graph_problem_type_{_name}", "sessions", _PROBLEM_TYPE_DEFINITIONS[_name],
         subset_of="sequence_graph_main_series_sessions",
+    )
+
+ENRICHED_RESOLUTIONS = POPULATIONS.register(
+    "sequence_graph_enriched_resolutions", "resolutions",
+    "In-scope EnrichedResolution nodes -- the Stage-1 graph's own population (19,120).",
+)
+_ALIGNED_TO_STATUS_DEFINITIONS = {
+    "gold_verified": (
+        "Has an observed=True ALIGNED_TO edge (boundary_gold_sample) -- a hard, human-confirmed "
+        "correspondence, not a calculation. Positive and fixed."
+    ),
+    "solver_derived_only": (
+        "Has an ALIGNED_TO edge from align.py's DP but no gold edge -- derived from an explicitly "
+        "unfitted CostModel (its own docstring says so); a placement, not yet a measured result."
+    ),
+    "unaligned": (
+        "No ALIGNED_TO edge of either kind yet. Genuinely open: not yet attempted by the solver, "
+        "or attempted and abstained. The honest majority today -- Stage 4 has run on a handful of "
+        "brackets, not the corpus."
+    ),
+}
+for _name in ALIGNED_TO_STATUS:
+    POPULATIONS.register(
+        f"sequence_graph_aligned_to_{_name}", "resolutions", _ALIGNED_TO_STATUS_DEFINITIONS[_name],
+        subset_of="sequence_graph_enriched_resolutions",
     )
 
 WINDOW = Window.of("1626-01-01", "1630-05-14")  # the main series' in-scope span
@@ -231,10 +261,58 @@ def build_consolidation(*, with_bootstrap: bool = True) -> Consolidation:
     return Consolidation(classify(graph, with_bootstrap=with_bootstrap))
 
 
+def node_aligned_bucket(graph: nx.DiGraph, node_id: str) -> str:
+    """One `EnrichedResolution` node's own status -- the per-node classifier `aligned_to_status`
+    partitions over and `query.py`'s per-resolution drill-down reuses directly, so "how is THIS
+    one resolution doing" and "how is the whole corpus doing" never read the edges two different
+    ways."""
+    has_gold = has_solver = False
+    for _u, _v, edge_data in graph.out_edges(node_id, data=True):
+        if edge_data.get("kind") != ALIGNED_TO:
+            continue
+        if edge_data["evidence"].observed:
+            has_gold = True
+        else:
+            has_solver = True
+    if has_gold:
+        return "gold_verified"
+    if has_solver:
+        return "solver_derived_only"
+    return "unaligned"
+
+
+def aligned_to_status(graph: nx.DiGraph) -> dict[str, Tally]:
+    """Closed three-way partition over every `EnrichedResolution` node: `gold_verified` /
+    `solver_derived_only` / `unaligned` (user, 2026-10-09: "it should be positive clear what is
+    fixed, what is still open, what is missing"). `check_partition` guarantees this always sums
+    to the whole in-scope population, so "how much is actually nailed down" is a checked number,
+    never an impression -- the graph can be left here as "finished enough for now, with named
+    open problems" rather than silently looking complete.
+    """
+    counts = {name: 0 for name in ALIGNED_TO_STATUS}
+    total = 0
+    for node_id, data in graph.nodes(data=True):
+        if data.get("kind") != "EnrichedResolution":
+            continue
+        total += 1
+        counts[node_aligned_bucket(graph, node_id)] += 1
+
+    tallies = {
+        name: Tally(POPULATIONS.get(f"sequence_graph_aligned_to_{name}"), WINDOW, n)
+        for name, n in counts.items()
+    }
+    check_partition(Tally(ENRICHED_RESOLUTIONS, WINDOW, total), tallies.values())
+    return tallies
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--save", type=Path, default=None, help="write records as jsonl")
+    parser.add_argument(
+        "--solver-dates", nargs="*", default=(),
+        help="also run and write back the Stage 4 DP for these gold dates (unfitted cost)",
+    )
     args = parser.parse_args()
 
     consolidation = build_consolidation()
@@ -246,6 +324,15 @@ def main() -> None:
     for name, tally in sorted(consolidation.problem_type_tallies().items()):
         print(f"  {name:<28}{tally.value:>6}")
     print("\ncheck_partition: PASS (both partitions sum to the whole)")
+
+    graph = build()
+    add_aligned_to_gold(graph)
+    if args.solver_dates:
+        add_aligned_to_solver(graph, args.solver_dates)
+    print("\nALIGNED_TO coverage (gold_verified / solver_derived_only / unaligned):")
+    for name, tally in sorted(aligned_to_status(graph).items()):
+        print(f"  {name:<20}{tally.value:>6}")
+    print("check_partition: PASS (sums to all in-scope EnrichedResolution nodes)")
 
     if args.save:
         args.save.write_text(

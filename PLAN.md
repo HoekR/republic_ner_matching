@@ -37,7 +37,7 @@
 
 **Active tracks (use `svz.py review` for decisions):**
 1. **`inventory-stream-collision-avoidance`** ([plans/COLLISION_AVOIDANCE_TRACK.md](plans/COLLISION_AVOIDANCE_TRACK.md))
-   - **SUPERSEDED 2026-10-09**: all gates below are PASS/NEGATIVE/closed already; its one open coupling (`PINNED_TO` monotonicity) is replaced by `sequence_graph`'s `monotone_map`. See `docs/SEQUENCE_MODEL.md`, `/Users/rikhoekstra/.claude/plans/the-two-deep-hits-melodic-avalanche.md`. History kept below, no new steps here.
+   - **SUPERSEDED 2026-10-09**: all gates below are PASS/NEGATIVE/closed already; its one open coupling (`PINNED_TO` monotonicity) is replaced by `sequence_graph`'s `monotone_map`. See `docs/SEQUENCE_MODEL.md`, `plans/SEQUENCE_GRAPH_SPINE.md`. History kept below, no new steps here.
    - Step 1 PASS: Session landmarks 86% localizable, order-preserving
    - Step 2 NEGATIVE: Length prior doesn't help
    - Step 3 NEGATIVE: Entity-mention order aligner underperforms interpolation

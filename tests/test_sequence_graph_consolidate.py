@@ -1,6 +1,6 @@
 """Stage 3's gate: a genuine partition, enforced, round-trippable; `query` answers all three.
 
-`plans/the-two-deep-hits-melodic-avalanche.md` Stage 3: "dropping one class makes check_partition
+`plans/SEQUENCE_GRAPH_SPINE.md` Stage 3: "dropping one class makes check_partition
 raise; a consolidation rebuilt from persisted records equals the live one; query answers for a
 session, a date and a scan."
 """
@@ -9,13 +9,18 @@ from __future__ import annotations
 
 import pytest
 
+import networkx as nx
+
 from running_axis.tally import PopulationMismatch, Tally, check_partition
 from sequence_graph.consolidate import (
+    ALIGNED_TO_STATUS,
     CORRESPONDENCE_CLASSES,
     PROBLEM_TYPES,
     Consolidation,
+    aligned_to_status,
     build_consolidation,
 )
+from sequence_graph.correspondence import ALIGNED_TO, Evidence
 
 
 @pytest.fixture(scope="module")
@@ -65,3 +70,50 @@ def test_t7_stays_in_the_taxonomy_at_zero_rather_than_being_removed(consolidatio
     """The taxonomy is closed by what it classifies, not by what today's data produces."""
     assert consolidation.problem_type_tallies()["T7_nothing_inferred"].value == 0
     assert "T7_nothing_inferred" in PROBLEM_TYPES
+
+
+def test_aligned_to_status_is_a_genuine_partition_gold_beats_solver():
+    """User, 2026-10-09: 'positive clear what is fixed, what is still open, what is missing.'
+    A synthetic graph with one of each case -- gold, solver-only, and genuinely unaligned --
+    must land in exactly the right bucket, and the three buckets must sum to the whole."""
+    graph = nx.MultiDiGraph()
+    for index in range(3):
+        graph.add_node(f"enriched:x:{index}", kind="EnrichedResolution", obj=None)
+    graph.add_node("htr_res:a", kind="HtrResolution", obj=None)
+    graph.add_node("htr_res:b", kind="HtrResolution", obj=None)
+
+    graph.add_edge(  # resolution 0: gold-verified
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
+        evidence=Evidence(channel="gold_annotation", source="boundary_gold_sample", observed=True),
+    )
+    graph.add_edge(  # resolution 1: solver-derived only, no gold
+        "enriched:x:1", "htr_res:b", key=f"{ALIGNED_TO}:solver", kind=ALIGNED_TO,
+        evidence=Evidence(channel="dp_solver", source="sequence_graph.align", observed=False),
+    )
+    # resolution 2: no ALIGNED_TO edge at all -- genuinely unaligned
+
+    status = aligned_to_status(graph)
+    assert {name: tally.value for name, tally in status.items()} == {
+        "gold_verified": 1, "solver_derived_only": 1, "unaligned": 1,
+    }
+    assert sum(t.value for t in status.values()) == 3
+    assert set(status) == set(ALIGNED_TO_STATUS)
+
+
+def test_aligned_to_status_gold_wins_when_a_resolution_has_both():
+    """A resolution with BOTH a gold and a solver edge counts once, as gold_verified -- a hard
+    fact is never downgraded just because a derived one also exists on the same node."""
+    graph = nx.MultiDiGraph()
+    graph.add_node("enriched:x:0", kind="EnrichedResolution", obj=None)
+    graph.add_node("htr_res:a", kind="HtrResolution", obj=None)
+    graph.add_edge(
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
+        evidence=Evidence(channel="gold_annotation", source="boundary_gold_sample", observed=True),
+    )
+    graph.add_edge(
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:solver", kind=ALIGNED_TO,
+        evidence=Evidence(channel="dp_solver", source="sequence_graph.align", observed=False),
+    )
+    status = aligned_to_status(graph)
+    assert status["gold_verified"].value == 1
+    assert status["solver_derived_only"].value == 0

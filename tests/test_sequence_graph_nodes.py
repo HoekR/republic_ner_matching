@@ -1,6 +1,6 @@
 """Node identity: ids are derived from the archival identifier, never a counter.
 
-Stage 1 of `plans/the-two-deep-hits-melodic-avalanche.md`. See `sequence_graph/nodes.py`.
+Stage 1 of `plans/SEQUENCE_GRAPH_SPINE.md`. See `sequence_graph/nodes.py`.
 """
 
 from __future__ import annotations

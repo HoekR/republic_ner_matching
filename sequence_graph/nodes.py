@@ -1,4 +1,4 @@
-"""Node types for the three sequences. Stage 1 of `plans/the-two-deep-hits-melodic-avalanche.md`.
+"""Node types for the three sequences. Stage 1 of `plans/SEQUENCE_GRAPH_SPINE.md`.
 
 **Three identity families, six ordered chains.** The spine's "three sequences" (physical / HTR /
 editorial) are identity families, not flat orders -- each decomposes into its own nested chain by

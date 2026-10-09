@@ -1,7 +1,7 @@
 """Stage 3b's gate: `render.py` imports nothing from `build`/`correspondence`/`consolidate`,
 and renders correctly from a hand-written record list -- never from a live graph.
 
-`plans/the-two-deep-hits-melodic-avalanche.md` Stage 3b: "render.py imports nothing from
+`plans/SEQUENCE_GRAPH_SPINE.md` Stage 3b: "render.py imports nothing from
 build.py; tested by rendering from a hand-written record list." Follows the same discipline as
 `running_axis/serialize.py`, whose own module docstring states the reason: a picture can never
 show something the serialised state does not contain.

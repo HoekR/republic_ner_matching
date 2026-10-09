@@ -1,4 +1,4 @@
-"""The DAG aligner. Stage 4 of `plans/the-two-deep-hits-melodic-avalanche.md` (`~/.claude/plans/`).
+"""The DAG aligner. Stage 4 of `plans/SEQUENCE_GRAPH_SPINE.md`.
 
 **Scope decided with the user, 2026-10-09, before any of this was written** (the plan's own "four
 decisions" list):
@@ -325,7 +325,7 @@ def build_entity_overlap_scorer() -> Callable[[str, str], float]:
     return scorer
 
 
-def _day_paragraph_stream(date: str) -> list[str]:
+def day_paragraph_stream(date: str) -> list[str]:
     """This date's paragraph axis rows, in stream order -- the same order `segment_day` assigns
     `paragraph_start_index` over. Ordered by each row's own HTR position (resolution_num, then
     para_index), not by dict/file order."""
@@ -367,7 +367,7 @@ def run_bracket(date: str, cost: CostModel = CostModel()) -> dict:
 
     result = align_bracket(n_ref, n_read, overlap, cost)
 
-    paragraph_stream = _day_paragraph_stream(date)
+    paragraph_stream = day_paragraph_stream(date)
     flat_first_paragraph: dict[int, int] = {}
     for position, flat_id in enumerate(paragraph_stream):
         read_idx = flat_ids.index(flat_id) if flat_id in flat_ids else None

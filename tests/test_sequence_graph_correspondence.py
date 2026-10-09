@@ -1,6 +1,6 @@
 """Stage 2's primitives: correspondence edges, `monotone_map`, `traversal_is_inferred`.
 
-`plans/the-two-deep-hits-melodic-avalanche.md` Stage 2. Functional tests against a live build
+`plans/SEQUENCE_GRAPH_SPINE.md` Stage 2. Functional tests against a live build
 (nothing persisted until Stage 3), following the same convention as `test_sequence_graph_build.py`.
 """
 
@@ -11,14 +11,19 @@ import pytest
 
 from sequence_graph.build import CONTAINS, NEXT, build
 from sequence_graph.correspondence import (
+    ALIGNED_TO,
     DATED_AS,
     LABELLED_AS,
     OBSERVED_ON,
     PINNED_TO,
+    Evidence,
     MonotonicityReport,
+    add_aligned_to_gold,
+    add_aligned_to_solver,
     add_dated_as,
     add_observed_on,
     add_pinned_and_labelled,
+    gold_aligned_pairs,
     monotone_map,
     traversal_is_inferred,
 )
@@ -90,3 +95,57 @@ def test_observed_on_only_targets_sessions_that_are_stage_1_nodes():
             assert graph.nodes[u]["kind"] == "Session"
             assert graph.nodes[v]["kind"] == "Scan"
     assert n > 0
+
+
+def test_aligned_to_gold_is_observed_true_with_no_confidence():
+    """Gold edges are a hard, positive fact -- observed=True, no fabricated confidence number
+    (hand annotation has no separately measured error rate to carry)."""
+    graph = build()
+    n = add_aligned_to_gold(graph)
+    assert n > 0
+    aligned_edges = [
+        (u, v, d) for u, v, d in graph.edges(data=True) if d.get("kind") == ALIGNED_TO
+    ]
+    assert len(aligned_edges) == n
+    for u, v, data in aligned_edges:
+        assert graph.nodes[u]["kind"] == "EnrichedResolution"
+        assert graph.nodes[v]["kind"] == "HtrResolution"
+        assert data["evidence"].observed is True
+        assert data["evidence"].confidence is None
+
+
+def test_gold_aligned_pairs_filters_by_evidence_not_by_pair():
+    """The one sanctioned calibration read path: observed=True only, by the edge's OWN evidence
+    flag -- never by assuming solver and gold disagree. Two parallel edges on the SAME (u, v) pair
+    (one gold, one solver, agreeing) must still count once, correctly, as a gold pair; a
+    solver-only edge on a DIFFERENT pair must never appear."""
+    graph = nx.MultiDiGraph()
+    graph.add_edge(
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
+        evidence=Evidence(channel="gold_annotation", source="boundary_gold_sample", observed=True),
+    )
+    graph.add_edge(  # same pair, solver agrees -- must not create a second, wrong entry
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:solver", kind=ALIGNED_TO,
+        evidence=Evidence(channel="dp_solver", source="sequence_graph.align", observed=False),
+    )
+    graph.add_edge(  # solver-only, different pair -- must never leak into the gold read path
+        "enriched:x:1", "htr_res:b", key=f"{ALIGNED_TO}:solver", kind=ALIGNED_TO,
+        evidence=Evidence(channel="dp_solver", source="sequence_graph.align", observed=False),
+    )
+    pairs = gold_aligned_pairs(graph)
+    assert pairs == [("enriched:x:0", "htr_res:a")]
+
+
+def test_solver_edges_never_overwrite_a_gold_edge_on_the_same_pair():
+    """Regression for the bug found live (2026-10-09): both halves first keyed on the literal
+    string `ALIGNED_TO`, so a solver edge on a pair gold already covered silently replaced the
+    hard fact with the derived one in the MultiDiGraph. Gold must survive regardless of what the
+    solver writes afterward, on the one gold day (1629-03-02) scored elsewhere in this suite."""
+    graph = build()
+    n_gold = add_aligned_to_gold(graph)
+    add_aligned_to_solver(graph, ["1629-03-02"])
+    gold_after = [
+        (u, v, d) for u, v, d in graph.edges(data=True)
+        if d.get("kind") == ALIGNED_TO and d["evidence"].observed is True
+    ]
+    assert len(gold_after) == n_gold  # not one gold edge lost to a same-key overwrite

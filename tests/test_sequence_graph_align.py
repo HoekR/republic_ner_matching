@@ -1,6 +1,6 @@
 """The DAG aligner's four fixed defects, on synthetic sequences -- no corpus access needed.
 
-Stage 4 of `plans/the-two-deep-hits-melodic-avalanche.md` (`~/.claude/plans/`). See
+Stage 4 of `plans/SEQUENCE_GRAPH_SPINE.md`. See
 `sequence_graph/align.py`'s module docstring for what each defect was and how it's fixed.
 """
 

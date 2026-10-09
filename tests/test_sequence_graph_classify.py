@@ -1,6 +1,6 @@
 """Stage 2's go/no-go gate: the graph reproduces `reconcile_sequences.py`'s own verdicts exactly.
 
-`plans/the-two-deep-hits-melodic-avalanche.md` Stage 2: "the observed-vs-inferred comparison over
+`plans/SEQUENCE_GRAPH_SPINE.md` Stage 2: "the observed-vs-inferred comparison over
 the main series must reproduce [the target] exactly. If it does not reproduce, the graph is wrong
 -- do not adjust the target." This target was itself corrected 2026-10-09: the plan's original
 figure (then 276, then 261) carried 180 post-bar-only sessions that `reconcile_sequences.py` never

@@ -1,6 +1,6 @@
 """Stage 1 gate: three sequences, `NEXT`/`CONTAINS` only, no correspondence.
 
-`plans/the-two-deep-hits-melodic-avalanche.md` Stage 1: "each sequence is one totally-ordered
+`plans/SEQUENCE_GRAPH_SPINE.md` Stage 1: "each sequence is one totally-ordered
 chain per inventory/day with no forks; counts match the datasets exactly... zero sidelined or
 post-bar nodes." These are functional tests against a live build (nothing is persisted until
 Stage 3), not synthetic unit tests, because the gate is a property of the real corpus counts, and

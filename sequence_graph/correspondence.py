@@ -1,4 +1,4 @@
-"""Cross-sequence edges, with evidence. Stage 2 of `plans/the-two-deep-hits-melodic-avalanche.md`.
+"""Cross-sequence edges, with evidence. Stage 2 of `plans/SEQUENCE_GRAPH_SPINE.md`.
 
 **The edge types**, one observed-vs-inferred split and the reason the spine exists:
 
@@ -15,8 +15,51 @@ own `date` field (`axis.py`'s `ref.date_label`, read from `ParagraphRef`), a sec
 resolved one. Flagged here rather than silently folded into `PINNED_TO`, because the two sources
 disagree on exactly the dates this whole track exists to find — collapsing them would hide that.
 
-**`ALIGNED_TO` and `MENTIONS` are not built here.** `ALIGNED_TO` is the Stage 4 solver's own
-output; `MENTIONS` is a scoring input Stage 4 will read, not a correspondence fact to assert now.
+**`ALIGNED_TO` IS built here, in two observed-vs-derived halves (user, 2026-10-09: "ONLY if
+results are discarded explicitly they should not be written back" -- Stage 4's output does not
+stay in-memory and get thrown away just because it hasn't been fitted yet):
+
+    ALIGNED_TO (gold)    EnrichedResolution -> HtrResolution   observed=True   boundary_gold_sample
+    ALIGNED_TO (solver)  EnrichedResolution -> HtrResolution   observed=False  sequence_graph.align
+
+`add_aligned_to_gold` is a positive, hard fact per edge: a human read the page and confirmed the
+correspondence (`scripts.separated_accuracy_eval.gold_start_paragraphs`, reused rather than
+re-derived -- it already handles the general non-1:1 case `align.py`'s own bespoke gold parsing in
+`run_bracket` explicitly declined to generalize). No confidence value, by the same convention as
+every other `observed=True` edge in this module: hand annotation has no separately *measured*
+error rate to carry, so none is invented.
+
+`add_aligned_to_solver` is the DP's own derived output, `observed=False`, and **carries no
+confidence either, but for the opposite reason** -- `align.CostModel` is explicitly unfitted
+(its own docstring), so a numeric confidence would be a fabricated precision, not a missing one.
+`detail` carries the move kind and the path's `total_cost` instead, so a reader can see exactly
+what calculation the edge rests on rather than a bare, un-gradeable "derived."
+
+**Found while testing this the same day: a `MultiDiGraph` silently overwrites a parallel edge
+that reuses the same `(u, v, key)` triple** -- the exact `DiGraph`-edge-collision class Stage 2
+already hit once (see `PINNED_TO`/`LABELLED_AS`). A first cut gave both halves the literal key
+`ALIGNED_TO`, so writing a solver edge for a day that already had a gold edge on the same pair
+silently replaced the hard fact with the derived one -- the single worst version of "discarding a
+result" this module exists to prevent. Fixed: gold and solver halves key on
+`f"{ALIGNED_TO}:gold"` / `f"{ALIGNED_TO}:solver"` respectively, so both can coexist as parallel
+edges on the same `(u, v)` pair and `aligned_to_status`'s gold-takes-priority read is actually
+reading two real edges, not one edge that happened to survive.
+
+**The non-circularity rule (user, 2026-10-09): evidence must be cumulative, never a loop.**
+`add_aligned_to_solver`'s edges must never be read back in as if they were ground truth for fitting
+`CostModel` itself -- that is the same trap `tier1_anchor`-as-positives already sits in elsewhere
+(diagnostic only, explicitly not used to fit anything). `gold_aligned_pairs` below is the one
+sanctioned read path for calibration: it filters to `observed=True` and nothing else, so "which
+edges are safe to fit on" is a property of the code, not a convention someone has to remember.
+
+**Coverage, not just edges: `sequence_graph.consolidate.aligned_to_status` answers "what's still
+missing"** (user, 2026-10-09) -- a closed three-way partition over every in-scope
+`EnrichedResolution` (gold-verified / solver-derived-only / unaligned), `check_partition`-verified
+like every other taxonomy in this package, so "how much of this is actually nailed down" is a
+reportable number, never an impression.
+
+**`MENTIONS` is not built here** -- it is a scoring input Stage 4 reads (the overlap tables), not
+a correspondence fact this module asserts.
 
 **One primitive, not three.** `monotone_map` replaces `axis._check_monotone` (date vs
 `session_num`), `reconcile_sequences.monotone_anchors` (date vs scan) and the scan track's own
@@ -57,6 +100,7 @@ OBSERVED_ON = "OBSERVED_ON"
 DATED_AS = "DATED_AS"
 PINNED_TO = "PINNED_TO"
 LABELLED_AS = "LABELLED_AS"
+ALIGNED_TO = "ALIGNED_TO"
 
 
 @dataclass(frozen=True)
@@ -269,13 +313,155 @@ def add_pinned_and_labelled(graph: nx.DiGraph) -> tuple[int, int, MonotonicityRe
     return pinned, labelled, pinned_report, labelled_report
 
 
-def build_correspondence(graph: nx.DiGraph | None = None, *, with_bootstrap: bool = True) -> nx.DiGraph:
-    """The Stage-1 graph plus all cross-sequence edges. Mutates and returns `graph`."""
+def add_aligned_to_gold(graph: nx.DiGraph) -> int:
+    """`EnrichedResolution -> HtrResolution`, `observed=True`, from `boundary_gold_sample` --
+    the only ground truth that exists. See the module docstring for why this reuses
+    `gold_start_paragraphs` instead of a bespoke mapping, and carries no confidence value.
+
+    Only resolutions gold actually locates get an edge. An unresolved slot stays unresolved --
+    never coded as "absent" (a much stronger, separately-verified claim a few individual days
+    carry in `docs/DECISIONS.md` prose but that has no structured dataset yet; not built here,
+    flagged as a known gap) and never guessed at a default position.
+    """
+    from scripts.separated_accuracy_eval import gold_start_paragraphs
+
+    from sequence_graph.align import day_paragraph_stream
+    from sequence_graph.nodes import EnrichedResolution, HtrResolution
+
+    added = 0
+    for day in load("boundary_gold_sample")["days"]:
+        date = day["date"]
+        if not in_scope(date):
+            continue
+        stream = day_paragraph_stream(date)
+        if not stream:
+            continue
+        starts = gold_start_paragraphs(day, day["k_e"])
+        for index, position in enumerate(starts):
+            if position is None or position >= len(stream):
+                continue
+            enriched_node = EnrichedResolution(date=date, index=index).node_id
+            if enriched_node not in graph:
+                continue
+            flat_id = stream[position]
+            htr_node = HtrResolution.from_flat_id(flat_id).node_id
+            if htr_node not in graph:
+                continue
+            graph.add_edge(
+                enriched_node, htr_node, key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
+                evidence=Evidence(
+                    channel="gold_annotation", source="boundary_gold_sample", observed=True,
+                    detail={"paragraph_stream_index": position},
+                ),
+            )
+            added += 1
+    return added
+
+
+def add_aligned_to_solver(
+    graph: nx.DiGraph, dates: Sequence[str], *, cost: Any = None,
+) -> int:
+    """`EnrichedResolution -> HtrResolution`, `observed=False`, the DP's own derived output for
+    each date in `dates` -- written back rather than discarded, per the module docstring's
+    non-circularity rule: these edges exist to be read, never to be read back in as if they were
+    ground truth for fitting the same `CostModel` that produced them (`gold_aligned_pairs` is the
+    one sanctioned input for that).
+
+    Only `MATCH` and `INSERTION_SPLIT` moves produce an edge -- both assert "this read item
+    belongs to this ref item", just at different confidence a future fitted cost would price
+    differently. `DELETION_GAP` (no HTR counterpart) and `SOFT_CLIP` (dropped margin content)
+    correctly produce no edge: there is nothing to assert a correspondence to.
+
+    **Scope limit, stated rather than implied away: `dates` is currently restricted to
+    `boundary_gold_sample` days.** `n_ref`/`flat_ids` come from the gold day record, same as
+    `align.run_bracket`, so this cannot yet run on the 19,000+ enriched resolutions with no gold
+    entry at all -- which is most of the corpus and the actual point of Stage 4 eventually
+    running past a handful of brackets. Pulling `flat_ids`/`n_ref` from production data
+    (paragraph_axis / resolution_concordance) directly, independent of gold, is the real
+    corpus-wide extension and is not done here.
+    """
+    from sequence_graph.align import (
+        INSERTION_SPLIT,
+        MATCH,
+        CostModel,
+        align_bracket,
+        build_entity_overlap_scorer,
+    )
+    from sequence_graph.nodes import EnrichedResolution, HtrResolution
+
+    cost = cost or CostModel()
+    gold = load("boundary_gold_sample")
+    gold_by_date = {day["date"]: day for day in gold["days"]}
+    scorer = build_entity_overlap_scorer()
+
+    added = 0
+    for date in dates:
+        day = gold_by_date.get(date)
+        if day is None or not in_scope(date):
+            continue
+        flat_ids = sorted(day["flat_ids"], key=lambda fid: HtrResolution.from_flat_id(fid).resolution_num)
+        n_ref, n_read = len(day["enriched_ids"]), len(flat_ids)
+        if n_ref == 0 or n_read == 0:
+            continue
+        volgnrs = [f"{date}_{index}" for index in range(n_ref)]
+        overlap_cache: dict[tuple[int, int], float] = {}
+
+        def overlap(i: int, j: int, volgnrs=volgnrs, flat_ids=flat_ids) -> float:
+            key = (i, j)
+            if key not in overlap_cache:
+                overlap_cache[key] = scorer(volgnrs[i], flat_ids[j])
+            return overlap_cache[key]
+
+        result = align_bracket(n_ref, n_read, overlap, cost)
+        if result.abstained:
+            continue
+        for pair in result.pairs:
+            if pair.kind not in (MATCH, INSERTION_SPLIT) or pair.ref_index is None or pair.read_index is None:
+                continue
+            enriched_node = EnrichedResolution(date=date, index=pair.ref_index).node_id
+            htr_node = HtrResolution.from_flat_id(flat_ids[pair.read_index]).node_id
+            if enriched_node not in graph or htr_node not in graph:
+                continue
+            graph.add_edge(
+                enriched_node, htr_node, key=f"{ALIGNED_TO}:solver", kind=ALIGNED_TO,
+                evidence=Evidence(
+                    channel="dp_solver", source="sequence_graph.align", observed=False,
+                    confidence=None,
+                    detail={"move_kind": pair.kind, "step_cost": pair.cost,
+                            "cost_model_fitted": False, "total_path_cost": result.total_cost},
+                ),
+            )
+            added += 1
+    return added
+
+
+def gold_aligned_pairs(graph: nx.DiGraph) -> list[tuple[str, str]]:
+    """The one sanctioned read path for anything that fits/calibrates against `ALIGNED_TO`:
+    `(enriched_node_id, htr_node_id)` pairs with `observed=True` evidence only. Never includes a
+    solver-derived edge, by construction -- see the module docstring's non-circularity rule."""
+    return [
+        (u, v) for u, v, data in graph.edges(data=True)
+        if data.get("kind") == ALIGNED_TO and data["evidence"].observed
+    ]
+
+
+def build_correspondence(
+    graph: nx.DiGraph | None = None, *, with_bootstrap: bool = True, solver_dates: Sequence[str] = (),
+) -> nx.DiGraph:
+    """The Stage-1 graph plus all cross-sequence edges. Mutates and returns `graph`.
+
+    `solver_dates` is empty by default: running the unfitted DP corpus-wide is not something this
+    builder does silently. Pass specific dates to also write back `ALIGNED_TO` (solver) edges for
+    them (e.g. the days already tested in `notebooks/sequence_graph_exploration.ipynb`).
+    """
     if graph is None:
         graph = build()
     add_observed_on(graph)
     add_dated_as(graph, with_bootstrap=with_bootstrap)
     add_pinned_and_labelled(graph)
+    add_aligned_to_gold(graph)
+    if solver_dates:
+        add_aligned_to_solver(graph, solver_dates)
     return graph
 
 
