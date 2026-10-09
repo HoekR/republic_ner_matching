@@ -54,6 +54,7 @@ from sequence_graph.correspondence import (
     OBSERVED_ON,
     PINNED_TO,
     add_aligned_to_gold,
+    add_aligned_to_legacy_concordance,
     add_aligned_to_solver,
     add_dated_as,
     add_observed_on,
@@ -64,7 +65,7 @@ from sequence_graph.render import TrackEdge, TrackNode
 NARROW_WINDOW_DAYS = 2  # the canonical home; see module docstring
 
 CORRESPONDENCE_CLASSES = ("hard_anchor", "bounded_gap", "wide_window", "unconstrained_gap")
-ALIGNED_TO_STATUS = ("gold_verified", "solver_derived_only", "unaligned")
+ALIGNED_TO_STATUS = ("gold_verified", "legacy_concordance_only", "solver_derived_only", "unaligned")
 PROBLEM_TYPES = (
     "T0_anchor", "T1_offset_1_2_days", "T2_offset_3_7_days", "T3_offset_over_7_days",
     "T4_anchor_bracket_suspect", "T5_window_too_wide_to_judge", "T6_no_scan_observed",
@@ -131,17 +132,23 @@ ENRICHED_RESOLUTIONS = POPULATIONS.register(
 )
 _ALIGNED_TO_STATUS_DEFINITIONS = {
     "gold_verified": (
-        "Has an observed=True ALIGNED_TO edge (boundary_gold_sample) -- a hard, human-confirmed "
-        "correspondence, not a calculation. Positive and fixed."
+        "Has an observed=True ALIGNED_TO edge (boundary_gold_sample + boundary_gold_hard_period_"
+        "sample) -- a hard, human-confirmed correspondence, not a calculation. Positive and fixed."
+    ),
+    "legacy_concordance_only": (
+        "No gold edge, but has one from resolution_concordance_1626_1630 -- the EXISTING "
+        "production pipeline's own placement (align_session/segment_day/entity-NW tiers), "
+        "predating sequence_graph. Derived, not hard, but already-computed and already-tested at "
+        "corpus scale (unlike the Stage 4 solver). Found missing 2026-10-09; see docs/DECISIONS.md."
     ),
     "solver_derived_only": (
-        "Has an ALIGNED_TO edge from align.py's DP but no gold edge -- derived from an explicitly "
-        "unfitted CostModel (its own docstring says so); a placement, not yet a measured result."
+        "No gold or legacy-concordance edge, but has one from align.py's new DP -- derived from an "
+        "explicitly unfitted CostModel (its own docstring says so); a placement, not yet a "
+        "measured result, and only exists for the handful of brackets Stage 4 has been run on."
     ),
     "unaligned": (
-        "No ALIGNED_TO edge of either kind yet. Genuinely open: not yet attempted by the solver, "
-        "or attempted and abstained. The honest majority today -- Stage 4 has run on a handful of "
-        "brackets, not the corpus."
+        "No ALIGNED_TO edge of any kind. Genuinely open -- no gold, no existing production "
+        "placement, no solver attempt."
     ),
 }
 for _name in ALIGNED_TO_STATUS:
@@ -265,29 +272,41 @@ def node_aligned_bucket(graph: nx.DiGraph, node_id: str) -> str:
     """One `EnrichedResolution` node's own status -- the per-node classifier `aligned_to_status`
     partitions over and `query.py`'s per-resolution drill-down reuses directly, so "how is THIS
     one resolution doing" and "how is the whole corpus doing" never read the edges two different
-    ways."""
-    has_gold = has_solver = False
+    ways.
+
+    Priority, when a node carries more than one: `gold_verified` > `legacy_concordance_only` >
+    `solver_derived_only`. Gold is hard evidence, so it always wins. Between the two derived
+    sources, legacy concordance is the existing, already-corpus-tested production pipeline;
+    Stage 4's solver is today's new, unfitted, barely-tested mechanism -- ranking the untested one
+    above the tested one would misstate which placement is actually more trustworthy.
+    """
+    has_gold = has_legacy = has_solver = False
     for _u, _v, edge_data in graph.out_edges(node_id, data=True):
         if edge_data.get("kind") != ALIGNED_TO:
             continue
-        if edge_data["evidence"].observed:
+        evidence = edge_data["evidence"]
+        if evidence.observed:
             has_gold = True
+        elif evidence.channel == "legacy_concordance":
+            has_legacy = True
         else:
             has_solver = True
     if has_gold:
         return "gold_verified"
+    if has_legacy:
+        return "legacy_concordance_only"
     if has_solver:
         return "solver_derived_only"
     return "unaligned"
 
 
 def aligned_to_status(graph: nx.DiGraph) -> dict[str, Tally]:
-    """Closed three-way partition over every `EnrichedResolution` node: `gold_verified` /
-    `solver_derived_only` / `unaligned` (user, 2026-10-09: "it should be positive clear what is
-    fixed, what is still open, what is missing"). `check_partition` guarantees this always sums
-    to the whole in-scope population, so "how much is actually nailed down" is a checked number,
-    never an impression -- the graph can be left here as "finished enough for now, with named
-    open problems" rather than silently looking complete.
+    """Closed four-way partition over every `EnrichedResolution` node: `gold_verified` /
+    `legacy_concordance_only` / `solver_derived_only` / `unaligned` (user, 2026-10-09: "it should
+    be positive clear what is fixed, what is still open, what is missing"). `check_partition`
+    guarantees this always sums to the whole in-scope population, so "how much is actually nailed
+    down" is a checked number, never an impression -- the graph can be left here as "finished
+    enough for now, with named open problems" rather than silently looking complete.
     """
     counts = {name: 0 for name in ALIGNED_TO_STATUS}
     total = 0
@@ -327,9 +346,10 @@ def main() -> None:
 
     graph = build()
     add_aligned_to_gold(graph)
+    add_aligned_to_legacy_concordance(graph)
     if args.solver_dates:
         add_aligned_to_solver(graph, args.solver_dates)
-    print("\nALIGNED_TO coverage (gold_verified / solver_derived_only / unaligned):")
+    print("\nALIGNED_TO coverage (gold_verified / legacy_concordance_only / solver_derived_only / unaligned):")
     for name, tally in sorted(aligned_to_status(graph).items()):
         print(f"  {name:<20}{tally.value:>6}")
     print("check_partition: PASS (sums to all in-scope EnrichedResolution nodes)")

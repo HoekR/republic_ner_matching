@@ -12,10 +12,18 @@ exactly what this measurement exists to prevent.
 
 **Not yet the multi-session, anchor-bounded "local" expectation from the worked example** -- that
 needs `align_bracket` to run per-gap between `running_axis.chain`'s hard anchors first (the
-scoping step this measurement feeds into). For now, "local" means "within one
-`boundary_gold_sample` bracket" (today's only population), i.e. the single-day uniform spread
-already used elsewhere in this project as the null baseline (`uniform_start_paragraphs`) --
-repurposed here as the *expectation* a prior would center on, not as a baseline to beat.
+scoping step this measurement feeds into). For now, "local" means "within one gold-covered sitting
+day" (today's only population), i.e. the single-day uniform spread already used elsewhere in this
+project as the null baseline (`uniform_start_paragraphs`) -- repurposed here as the *expectation*
+a prior would center on, not as a baseline to beat.
+
+**Reads the graph, not `boundary_gold_sample` directly (fixed 2026-10-09, user: "this does not
+look scalable").** `true_position` now comes from `gold_aligned_pairs_detailed(load_graph())`
+(the one place gold is interpreted); `k_e` is counted directly from the graph's own
+`SittingDay -> EnrichedResolution` `CONTAINS` edges, not re-read from a gold record's `k_e` field
+-- both eliminate a second, independent copy of logic `sequence_graph.correspondence` already has.
+`room` still comes from `day_paragraph_stream` (paragraph-axis derivation, not gold-interpretation,
+so there was nothing to deduplicate there).
 
 Usage:
     uv run python -m sequence_graph.position_prior
@@ -24,38 +32,44 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict
 
 import pandas as pd
 
-from data_io import load
-from scripts.corpus_scope import in_scope
-from scripts.separated_accuracy_eval import gold_start_paragraphs, uniform_start_paragraphs
+from scripts.separated_accuracy_eval import uniform_start_paragraphs
 
 from sequence_graph.align import day_paragraph_stream
-
-GOLD_DATASET = "boundary_gold_sample"
+from sequence_graph.build import CONTAINS
+from sequence_graph.correspondence import gold_aligned_pairs_detailed
+from sequence_graph.nodes import SittingDay
+from sequence_graph.persist import load_graph
 
 
 def measure_displacement() -> pd.DataFrame:
     """One row per gold-located resolution: its true position, the local uniform-spread
     expectation for that same bracket, and their displacement. Non-circular by construction --
-    reads only `boundary_gold_sample`, never a solver-derived edge."""
+    reads only the graph's `observed=True` `ALIGNED_TO` edges, never a derived one."""
+    graph = load_graph()
+    by_date: dict[str, list[dict]] = defaultdict(list)
+    for record in gold_aligned_pairs_detailed(graph):
+        if record["paragraph_stream_index"] is not None:
+            by_date[record["date"]].append(record)
+
     rows: list[dict] = []
-    for day in load(GOLD_DATASET)["days"]:
-        date = day["date"]
-        if not in_scope(date):
-            continue
-        k_e = day["k_e"]
+    for date, records in by_date.items():
+        day_node = SittingDay(date=date).node_id
+        k_e = sum(1 for _u, _v, d in graph.out_edges(day_node, data=True) if d.get("kind") == CONTAINS)
         if k_e < 2:
             continue  # a spread needs >= 2 resolutions to say anything about position
         stream = day_paragraph_stream(date)
         if not stream:
             continue
-        starts = gold_start_paragraphs(day, k_e)
         expected = uniform_start_paragraphs(len(stream), k_e)
-        for ref_index, (true_position, expected_position) in enumerate(zip(starts, expected)):
-            if true_position is None:
+        for record in records:
+            ref_index, true_position = record["ref_index"], record["paragraph_stream_index"]
+            if ref_index >= k_e:
                 continue
+            expected_position = expected[ref_index]
             rows.append({
                 "date": date, "ref_index": ref_index, "k_e": k_e, "room": len(stream),
                 "true_position": true_position, "expected_position": expected_position,

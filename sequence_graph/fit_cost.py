@@ -6,13 +6,22 @@ gold labels final correspondences, not the split-vs-margin-content distinction t
 so there is no calibration population for them yet. See `CostModel`'s own docstring for the same
 caveat, stated where it is most likely to be read before being misused as fully calibrated.
 
-**Non-circular by construction.** The positive population is exactly `gold_aligned_pairs`'
-source data (`boundary_gold_sample`'s hand-verified correspondences), never a solver-derived
-`ALIGNED_TO` edge -- the same rule `sequence_graph.correspondence`'s module docstring states for
-anything that fits `CostModel`. Negatives are a within-day derangement of that same day's HTR
+**Non-circular by construction.** The positive population is exactly `gold_aligned_pairs_detailed`'s
+data (every `boundary_gold_sample`/`boundary_gold_hard_period_sample` hand-verified
+correspondence already on the graph), never a solver-derived or legacy-concordance `ALIGNED_TO`
+edge -- the same rule `sequence_graph.correspondence`'s module docstring states for anything that
+fits `CostModel`. Negatives are a within-day derangement of that same day's gold-matched HTR
 resolutions, reusing `scripts.d1c_idf_band_order_eval.deranged_indices`/`control_offsets` --
 the exact technique already used for the 0.9555 TF-IDF AUC discrimination check -- rather than a
 new ad hoc negative-sampling method.
+
+**Reads the graph, not `boundary_gold_sample` directly (fixed 2026-10-09, user: "this does not
+look scalable").** This module used to re-derive gold correspondences itself
+(`gold_start_paragraphs` + iterating both gold datasets by hand) -- a second copy of exactly what
+`sequence_graph.correspondence.add_aligned_to_gold` already does, and the two silently diverged
+within the same session (this module's old copy never picked up
+`boundary_gold_hard_period_sample`, 344 positives vs. the graph's 391). Now reads
+`gold_aligned_pairs_detailed(load_graph())`: one source of gold interpretation, not two.
 
 **The fit changes `match_cost`'s formula, not just its constants.** A straight line
 (`base - lambda*overlap`) cannot be a calibrated probability's cost; the real form is
@@ -28,60 +37,56 @@ from __future__ import annotations
 
 import argparse
 import math
+from collections import defaultdict
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from data_io import load
-from running_axis.stream import parse_flat_id
 from scripts.corpus_scope import in_scope
 from scripts.d1c_idf_band_order_eval import control_offsets, deranged_indices
 from scripts.separated_accuracy_eval import gold_start_paragraphs, label_separation, uniform_start_paragraphs
 
 from sequence_graph.align import CostModel, build_entity_overlap_scorer, day_paragraph_stream, run_bracket
+from sequence_graph.correspondence import gold_aligned_pairs_detailed
+from sequence_graph.persist import load_graph
 
-GOLD_DATASET = "boundary_gold_sample"
+GOLD_DATASET = "boundary_gold_sample"  # still used by _gold_day_spread/_alignable_gold_dates below
 
 
 def build_calibration_pairs() -> pd.DataFrame:
     """One positive + one negative row per gold-located resolution: the real gold match, scored
     by the production entity-overlap function, and a within-day derangement control (same day,
-    wrong HTR target) -- never a cross-day pairing, which would trivially score near zero and
-    teach nothing near the actual decision boundary.
+    wrong HTR target among that day's OTHER gold-matched resolutions) -- never a cross-day
+    pairing, which would trivially score near zero and teach nothing near the actual decision
+    boundary.
     """
     scorer = build_entity_overlap_scorer()
+    by_date: dict[str, list[dict]] = defaultdict(list)
+    for record in gold_aligned_pairs_detailed(load_graph()):
+        by_date[record["date"]].append(record)
+
     rows: list[dict] = []
-    for day in load(GOLD_DATASET)["days"]:
-        date = day["date"]
-        if not in_scope(date):
-            continue
-        flat_ids = sorted(day["flat_ids"], key=lambda fid: parse_flat_id(fid)[2])
+    for date, records in by_date.items():
+        flat_ids = sorted({r["flat_id"] for r in records})
         n_read = len(flat_ids)
         if n_read < 2:
             continue  # a derangement needs >= 2 items to guarantee every pairing is wrong
-        stream = day_paragraph_stream(date)
-        if not stream:
-            continue
-        starts = gold_start_paragraphs(day, day["k_e"])
-        volgnrs = [f"{date}_{index}" for index in range(day["k_e"])]
         offsets = control_offsets(n_read, 1)
         shift = deranged_indices(n_read, offsets[0])
 
-        for ref_index, position in enumerate(starts):
-            if position is None or position >= len(stream):
-                continue
-            flat_id = stream[position]
-            if flat_id not in flat_ids:
-                continue
+        for record in records:
+            ref_index, flat_id = record["ref_index"], record["flat_id"]
+            volgnr = f"{date}_{ref_index}"
             read_index = flat_ids.index(flat_id)
             rows.append({
                 "date": date, "ref_index": ref_index, "label": 1,
-                "overlap": scorer(volgnrs[ref_index], flat_id),
+                "overlap": scorer(volgnr, flat_id),
             })
             neg_flat_id = flat_ids[shift[read_index]]
             rows.append({
                 "date": date, "ref_index": ref_index, "label": 0,
-                "overlap": scorer(volgnrs[ref_index], neg_flat_id),
+                "overlap": scorer(volgnr, neg_flat_id),
             })
     return pd.DataFrame(rows)
 
@@ -98,19 +103,26 @@ def fit_match_logit(pairs: pd.DataFrame) -> tuple[float, float]:
 
 
 def fit_deletion_rate() -> float:
-    """Empirical `P(deletion)`: share of gold resolutions `gold_start_paragraphs` cannot locate.
+    """Empirical `P(deletion)`: share of gold resolutions `gold_start_paragraphs` cannot locate,
+    across BOTH gold datasets (`boundary_gold_sample` + `boundary_gold_hard_period_sample`) --
+    this still reads the raw datasets directly, unlike `build_calibration_pairs` above, because it
+    needs the population `add_aligned_to_gold` does NOT record: days/resolutions gold attempted
+    and located NOTHING for leave no trace in the graph's `ALIGNED_TO` edges at all, so the
+    denominator can't be read off the graph alone. This is the one place in this module that still
+    parses gold directly, and it does so for a stated reason, not by oversight.
 
     **An upper-bound proxy, not an exact deletion rate** -- "gold does not locate it" conflates a
     genuine missing HTR match with "gold was not annotated this far", the same ambiguity
     `add_aligned_to_gold` already lives with and states for the identical reason.
     """
     total = located = 0
-    for day in load(GOLD_DATASET)["days"]:
-        if not in_scope(day["date"]):
-            continue
-        starts = gold_start_paragraphs(day, day["k_e"])
-        total += len(starts)
-        located += sum(1 for position in starts if position is not None)
+    for dataset_name in ("boundary_gold_sample", "boundary_gold_hard_period_sample"):
+        for day in load(dataset_name)["days"]:
+            if not in_scope(day["date"]):
+                continue
+            starts = gold_start_paragraphs(day, day["k_e"])
+            total += len(starts)
+            located += sum(1 for position in starts if position is not None)
     return (total - located) / total if total else 0.0
 
 
@@ -140,7 +152,12 @@ def fit_cost_model(base: CostModel | None = None) -> tuple[CostModel, dict]:
 def _gold_day_spread() -> list[str]:
     """The same clean-to-severe spread used in `notebooks/sequence_graph_exploration.ipynb` §6,
     reused rather than re-picked, so the before/after comparison is on the exact days already
-    shown to scale plausibly with the unfitted model."""
+    shown to scale plausibly with the unfitted model.
+
+    `boundary_gold_sample` only, not the hard-period sample, by necessity rather than oversight:
+    `run_bracket` -- the thing this spread is run through, which wraps the DP itself -- only reads
+    `boundary_gold_sample`. Extending the solver's own scope to the hard-period sample is a
+    separate, not-yet-done piece of work (noted, not silently left unexamined)."""
     candidates = sorted(
         (day["date"], len(day["enriched_ids"]), len(day["flat_ids"]))
         for day in load(GOLD_DATASET)["days"]
@@ -186,7 +203,13 @@ def main() -> None:
           f"(unfitted default: {CostModel().gap_cost})")
 
     unfitted = CostModel()
-    print(f"\n{'date':<12}{'k_e':>4}{'k_f':>4}  {'unfitted exact':>14}  {'fitted exact':>12}  "
+
+    def _fmt_agreement(report: dict) -> str:
+        if report["exact_agreement"] is None:
+            return "n/a"
+        return f"{report['exact_agreement']:.2f} (n={report['exact_agreement_n']}/{report['k_e']})"
+
+    print(f"\n{'date':<12}{'k_e':>4}{'k_f':>4}  {'unfitted exact':>20}  {'fitted exact':>20}  "
           f"{'unfitted sep':>12}  {'fitted sep':>10}  {'uniform-null sep':>16}")
     totals = {"unfitted_sep": 0, "fitted_sep": 0, "k_e": 0, "uniform_sep": 0}
     for date in _gold_day_spread():
@@ -194,7 +217,7 @@ def main() -> None:
         after = run_bracket(date, fitted)
         uniform_sep = _uniform_separated_count(date, before["k_e"])
         print(f"{date:<12}{before['k_e']:>4}{before['k_f']:>4}  "
-              f"{str(before['exact_agreement']):>14}  {str(after['exact_agreement']):>12}  "
+              f"{_fmt_agreement(before):>20}  {_fmt_agreement(after):>20}  "
               f"{before['separated_count']:>12}  {after['separated_count']:>10}  {uniform_sep:>16}")
 
     print("\naggregate over all alignable gold days "

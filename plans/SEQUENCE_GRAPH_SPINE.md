@@ -14,10 +14,14 @@
 
 **STATUS (2026-10-09): Stages 0-3b DONE, all gates PASS. Stage 4 (the solver) is in progress —
 first pass built, all four initial move-set design questions resolved, `ALIGNED_TO` written back
-to the graph (gold + solver halves), a resolution-level week/month report DONE (Step 4.6), and
-`match_cost`/`gap_cost` fitted (Step 4.7) — a real ~3x improvement in separated count over the
-unfitted placeholder (15.1% → 45.2%), but still well short of the uniform-null baseline (73.9%).
-**Stage 4's own separated-vs-uniform-null gate has not passed.** Stage 5 NOT started.**
+to the graph (gold + legacy-concordance + solver, three sources), a resolution-level week/month
+report DONE (Step 4.6), `match_cost`/`gap_cost` fitted (Step 4.7) — a real ~3x improvement in
+separated count over the unfitted placeholder (15.1% → 45.2%), but still well short of the
+uniform-null baseline (73.9%) — and the graph is now PERSISTED to disk (Step 4.8), with two
+scalability bugs (one real coverage gap, one code-duplication divergence) found by direct user
+audit and fixed; two "solver ran" status bugs and a resolved (but not yet wired-in) duplicate-
+session-claim proposal set added in the same day's later work (Step 4.9). **Stage 4's own
+separated-vs-uniform-null gate has not passed.** Stage 5 NOT started.**
 
 ## Context
 
@@ -533,12 +537,126 @@ value, the unfitted default is unaffected). Full suite: **903 passed**, 10 skipp
 has passed** — that is Stage 4's real go/no-go gate (per the original plan), and today's result
 does not clear it.
 
-**Next:** (a) fix `run_bracket`'s all-or-nothing `exact_agreement` so partial gold coverage can
-still score a day, instead of nulling it — needed before correctness (not just `separated`) can
-be compared at all; (b) the three-mechanism benchmark comparison (decision 4, still deferred);
-(c) the corpus-wide extension past `boundary_gold_sample` days (Step 4.5's named scope limit);
-(d) design the split/margin-content annotation population `insertion_cost`/`soft_clip_cost` need;
-(e) Stage 5, only after those.
+**Next:** (a) the three-mechanism benchmark comparison (decision 4, still deferred); (b) the
+corpus-wide extension past `boundary_gold_sample` days (Step 4.5's named scope limit); (c) design
+the split/margin-content annotation population `insertion_cost`/`soft_clip_cost` need; (d) Stage 5,
+only after those.
+
+#### Step 4.7b DONE (2026-10-09) — `run_bracket`'s all-or-nothing `exact_agreement` fixed
+User: *"strictly justified, but too rigid... make it a probability... a probability of 1 is
+perfect anyway."* The old form nulled a whole day's score the instant even one resolution was
+gold-unlocated — with the 42% deletion rate Step 4.7 just measured, that was true of nearly every
+multi-resolution gold day, so correctness could not be compared at all. Extracted into
+`score_exact_agreement(predicted, gold) -> (agreement, n)`, a pure, synthetic-testable function:
+scores over whichever positions gold actually locates, names the denominator (`exact_agreement_n`)
+so a score is never read without it, and is a strict generalization — a fully-known day gets
+exactly the old number. **Gate: PASS.** 5 new tests in `tests/test_sequence_graph_align.py`.
+Immediately useful: re-running `fit_cost.py`'s spread with real scores (not `None` everywhere)
+showed `1626-11-16`'s fitted cost *increasing* `separated` (4→14) while its exact agreement
+*dropped* (0.30→0.00, n=10/14) — a coverage-vs-correctness trade-off this fix made visible for the
+first time, not yet investigated further.
+
+#### Step 4.8 DONE (2026-10-09) — the graph persisted; two scalability gaps found and fixed by direct user audit
+Triggered by a false alarm (a one-off diagnostic ran `list(load(...))` on a frozen parquet dataset
+and got column names instead of row counts, mistaken for catastrophic data loss; both production
+datasets confirmed intact and untouched) that prompted the user to ask directly: *"did any other
+old results not make into the graph? And if not, why not?"* and *"is the graph saved to disk?"*
+
+**Gap 1: 70% of the corpus was missing from `ALIGNED_TO`.** `resolution_concordance_1626_1630` —
+the EXISTING production pipeline's own placement (`align_session`/`segment_day`/entity-NW tiers,
+predating `sequence_graph` entirely) — has a `paragraph_start_index` for 13,374 of 19,120
+resolutions (70%), none of it on the graph. Honest reason: `ALIGNED_TO` was built as a binary
+gold-vs-new-solver split; the pre-existing production placement was never considered a third
+category — an oversight, not a reasoned exclusion. Also found in the same audit:
+`boundary_gold_hard_period_sample` (25 more annotated days, same schema) had never been read into
+`add_aligned_to_gold` either. **Fixed:** `add_aligned_to_legacy_concordance` (`observed=False`,
+channel `legacy_concordance`, key suffix `:legacy`) and `add_aligned_to_gold` now reads both gold
+samples. `aligned_to_status`/`node_aligned_bucket` extended to a genuine four-way partition —
+`gold_verified` > `legacy_concordance_only` > `solver_derived_only` > `unaligned`, priority stated
+explicitly (gold is hard; between the two derived sources, the already-corpus-tested production
+pipeline outranks today's new, unfitted, barely-tested solver). **Coverage: unaligned 18,775 →
+6,068** — two-thirds of the "open" population turned out to already have existing evidence nobody
+had counted.
+
+**Gap 2: the graph was never saved to disk.** Every script rebuilt it from source datasets on
+every run; nothing persisted when the process exited. **Fixed: `sequence_graph/persist.py`** —
+`save_graph()`/`load_graph()`, two registered datasets (`sequence_graph_nodes`/
+`sequence_graph_edges`), round-trip discipline matching Stage 3's `Consolidation` exactly (node
+fields, distinct `ALIGNED_TO` keys on one pair, `Evidence` incl. `None` for `NEXT`/`CONTAINS`,
+and idempotence under a second round trip — all tested). User: *"for a risky operation you can
+make a new copy... measure improvement... save the results to a log"* then *"eventually it should
+be plowed back into the graph"* — `save_graph()` logs `aligned_to_status` before vs. after to
+`sequence_graph_aligned_to_coverage_log`, then the new build becomes the one canonical saved
+graph, not a permanent fork. `query.py` now loads the saved graph (`_load()` is a direct read, no
+`build()`/`add_*` calls left); `_load_for_range` adds solver edges transiently in memory for
+requested dates the save doesn't have yet, printing that it's not persisted rather than silently
+writing back on a read.
+
+**Gap 3, found immediately after, by the user, from the shape of gap 2's fix alone:** *"this does
+not look scalable, unless i do not understand"* — `fit_cost.py` and `position_prior.py` each had
+their own independent copy of the gold-interpretation logic (`gold_start_paragraphs` + iterating
+both gold datasets), and they had ALREADY diverged within this session: `fit_cost.py`'s copy never
+picked up the hard-period-sample fix (344 positives vs. the graph's 391). **Fixed:**
+`gold_aligned_pairs_detailed(graph)` — `gold_aligned_pairs` unpacked into
+`{date, ref_index, flat_id, paragraph_stream_index}` from the graph's own node ids and stored
+`detail`. Both scripts now call `load_graph()` + this function; `position_prior.py`'s `k_e` now
+comes from counting the graph's own `CONTAINS` edges, not a gold record's field. What still reads
+gold directly, stated so it isn't mistaken for the same bug: `fit_deletion_rate` (needs the
+"attempted but located nothing" population `ALIGNED_TO` edges can't represent) and
+`_gold_day_spread`/`_alignable_gold_dates` (scoped to `boundary_gold_sample` because `run_bracket`
+itself only reads that one dataset — extending the solver's own scope to the hard-period sample is
+separate, not-yet-done work).
+
+**What deliberately still rebuilds fresh, not from the saved graph:** `correspondence.py --report`,
+`classify.py`, `consolidate.py`'s own `main()`, and the entire test suite. These are the
+construction logic's own regression gates — reading a cached graph there would test whether
+yesterday's save matches itself, not whether today's construction code is still correct.
+
+**Gate: PASS.** 9+ new/updated tests across `tests/test_sequence_graph_{correspondence,
+consolidate,query,persist,fit_cost,position_prior}.py`; full suite 918 passed, 10 skipped;
+`data_io.check`/`scripts/svz.py doctor` clean.
+
+**Still not audited, named rather than silently skipped:** `alignment_1626_1630`'s own per-pair
+`confidence_tier`/`overlap_score` (graded, not binary — its own design question), the XML secret
+flags, hand-verified "confirmed absent" cases, `s6b_known_point_ledger`'s anchor chain, and
+`entity_surface_matches_1626_1630`.
+
+#### Step 4.9 DONE (2026-10-09) — two "solver ran" status bugs fixed; duplicate-session claims resolved as a reviewable proposal, not wired in
+Two more bugs found live by the user exercising `query_range` on a real 20-day range: `run_bracket`
+raises `ValueError` for any date outside `boundary_gold_sample` (almost every date corpus-wide),
+and both the per-resolution (`_session_resolution_lines`) and per-date (`query_range`) status
+lines silently swallowed that and reported "solver run" anyway. Fixed with an explicit
+`not_a_gold_day` state at the resolution level and a `_gold_days()` check at the date level — "not
+a gold day, solver has no bracket to run on" is now a distinct, honest status from "ran, found
+nothing here" and "not yet attempted."
+
+From the same exploration: `session-3186-num-46` is `PINNED_TO` both `1627-03-11` and
+`1627-03-13` — one of the 67 duplicate-session-claim cases already measured elsewhere (25/67
+decided "shared" via date headings). User: *"i think it should resolve this."* Found that
+`scripts/s6_duplicate_session_date_headings.py` already has the real mechanism (fuzzy heading
+search + exact day-numeral parse + weekday cross-check, locating the actual split paragraph) but
+states "Diagnostic only: no dataset write" — the 25/67 verdicts were never persisted. Built
+`sequence_graph/duplicate_sessions.py` (reusing that script's functions, not forking them):
+`resolve_duplicate_session_claims()`/`save_duplicate_session_date_splits()` persist all 67
+verdicts plus a precomputed `proposed_ranges` for the 25 "shared" ones. **User, after approving
+building the real resolution, scoped it down: "Continue — but only the map half... pause before
+rewriting graph edges or production pins."** So this is a persisted, reviewable proposal set
+(`duplicate_session_date_splits`) — it does not touch `PINNED_TO`, the graph, or any production
+placement. Directly responsive to an external review comment (relayed by the user) that the spine
+had become infrastructure without a hand-drawable worklist of where to cut: this is exactly that
+worklist, each row located by an already-verified heading, not another classification layer.
+
+**Gate: PASS.** 6 new tests in `tests/test_sequence_graph_duplicate_sessions.py` (known 67-session
+count, the `session-3186-num-46` case against the live run, undecided sessions get no proposal,
+2-date splits partition exactly, the 3-date `undivided_among` case, the helper's `None` handling).
+New dataset `duplicate_session_date_splits` registered. Full suite, `data_io.check`,
+`scripts/svz.py doctor` clean.
+
+**Next (none of this is wired in yet):** review the 25-row proposal set; if approved, a separate
+step enriches the affected `PINNED_TO` edges' `Evidence.detail` with the located range (code was
+drafted and then deliberately removed from this pass, per the user's scoping). Also still open
+from Step 4.8: the three-mechanism benchmark comparison, the corpus-wide extension past
+`boundary_gold_sample`, the split/margin-content annotation population, Stage 5.
 
 ### Stage 5 — scripts become drivers. NOT STARTED
 `reconcile_sequences.py`, `bracket_gap_census.py` (rebuilt per decision 2),

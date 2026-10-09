@@ -26,7 +26,7 @@ Its tone follows the scope bar precedent: `scripts/corpus_scope.py` implements o
 | **OBSERVED_ON** | Session / HtrResolution → Scan | **yes** | recorded archival addressing | `resolution_archival_provenance.scan_ids` |
 | **DATED_AS** | Scan → SittingDay | **yes** | date heading on the page | the date region's own heading on that scan; channel ∈ {strict, bootstrap}, bootstrap carrying its measured 1.3% parse error |
 | **PINNED_TO** | SittingDay → Session | **no — inferred** | no independent evidence | concordance `resolved_session_id`; this is the broken link |
-| **ALIGNED_TO** | EnrichedResolution → HtrResolution | **both** | gold (`boundary_gold_sample`, observed=True) + solver (`align.py`, observed=False) | Written back to the graph 2026-10-09, two parallel-edge halves — `sequence_graph.correspondence.add_aligned_to_gold`/`add_aligned_to_solver` |
+| **ALIGNED_TO** | EnrichedResolution → HtrResolution | **mixed** | gold (both gold samples, observed=True) + legacy concordance (`resolution_concordance_1626_1630`, observed=False) + solver (`align.py`, observed=False) | Three parallel-edge sources — `add_aligned_to_gold`/`add_aligned_to_legacy_concordance`/`add_aligned_to_solver`. Persisted (`sequence_graph.persist`), not rebuilt per run. |
 
 The fifth edge, **MENTIONS** (EnrichedResolution / HtrResolution → Entity), is observed but used only for scoring, not for placement.
 
@@ -92,20 +92,33 @@ turned out to mean no move may ever reorder a read item — already structurally
 the page.
 
 `ALIGNED_TO` is then **written back to the graph**, not left as a transient in-memory result
-(user: "ONLY if results are discarded explicitly they should not be written back") — two parallel
-edge halves, `add_aligned_to_gold` (observed=True, hand-verified) and `add_aligned_to_solver`
-(observed=False, the DP's own output, explicitly unfitted). `gold_aligned_pairs` is the one
-sanctioned read path for any future calibration, filtering to `observed=True` only, so fitting
-code cannot accidentally train on the solver's own derived output. `aligned_to_status` is a
-closed, `check_partition`-verified taxonomy over every `EnrichedResolution`
-(`gold_verified`/`solver_derived_only`/`unaligned`) answering "what's still missing" as a number.
+(user: "ONLY if results are discarded explicitly they should not be written back") — three
+parallel edge sources: `add_aligned_to_gold` (observed=True, hand-verified, both gold samples),
+`add_aligned_to_legacy_concordance` (observed=False, the EXISTING production pipeline's own
+placement — `resolution_concordance_1626_1630`, 70% corpus coverage, predating `sequence_graph`
+entirely — found missing by direct user audit 2026-10-09), and `add_aligned_to_solver`
+(observed=False, the DP's own output, explicitly unfitted). `gold_aligned_pairs`/
+`gold_aligned_pairs_detailed` are the sanctioned read paths for any calibration, filtering to
+`observed=True` only, so fitting code cannot accidentally train on a derived edge.
+`aligned_to_status` is a closed, `check_partition`-verified four-way taxonomy over every
+`EnrichedResolution` (`gold_verified` > `legacy_concordance_only` > `solver_derived_only` >
+`unaligned`) answering "what's still missing" as a number — unaligned dropped from 18,775 to
+**6,068** once the existing production placement was actually counted.
 `sequence_graph.query.query_range` reads all of this into a human-readable week/month report
 (dates by ISO week, each session's HTR resolutions drilled into individually — clean
 correspondences stated directly, unresolved stretches showing the solver's own proposed cut,
 "not yet attempted" where it hasn't run), callable from the CLI or a notebook.
 
-`match_cost`/`gap_cost` are now **fitted** (`sequence_graph.fit_cost`, on `gold_aligned_pairs` vs.
-within-day derangement negatives) — `match_cost`'s formula changed to a real log-probability
+**The graph is persisted** (`sequence_graph/persist.py`: `save_graph`/`load_graph`, two registered
+datasets) — found missing by direct user audit the same day ("is the graph saved to disk?"), since
+every script previously rebuilt it from source on every run. `query.py` now loads the saved graph
+rather than rebuilding. A related scalability gap, found immediately after by the user ("this does
+not look scalable"): `fit_cost.py`/`position_prior.py` each had their own independent copy of the
+gold-interpretation logic and had already silently diverged within the same session — fixed via
+`gold_aligned_pairs_detailed`, one shared read path instead of two.
+
+`match_cost`/`gap_cost` are now **fitted** (`sequence_graph.fit_cost`, on gold vs. within-day
+derangement negatives) — `match_cost`'s formula changed to a real log-probability
 (`-log(sigmoid(...))`), not just new constants on the old linear form. Measured across all 50
 alignable gold days: `separated` 15.1% (unfitted) → 45.2% (fitted) — a real ~3x improvement —
 **against a uniform-null baseline of 73.9% on the same population.** Stage 4's own

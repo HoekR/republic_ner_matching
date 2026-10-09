@@ -921,3 +921,31 @@ path = "republic_ner_matching/output/gap_topology_diagnostic.jsonl"
 phase = "semi"
 description = "Character-axis topology of the unresolved gaps between consolidated Group-A anchors: per gap, the unplaced resolution count K, the room in paragraphs, the characters actually available, and elasticity eps = L_char/(K*mu_len), tension tau = ln(eps)^2 and surprise z = (L_char - K*mu_len)/(sqrt(K)*sd_len). mu_len and sd_len are MEASURED at runtime and recorded in the run header row, never assumed -- the pooled estimate (total axis chars / total enriched resolutions) is the one consistent with a partition; the separated-placement mean runs higher because that subset is length-biased. z is the ranking statistic, not eps or tau: dispersion is CV_1 ~ 0.95, so a modest deviation is only trustworthy from K >= 11 (7.8% of gaps on the gold scope) while an extreme ratio stays informative at any K. A SCREEN, NOT A DIAGNOSIS: compression (many resolutions, few characters) and dilatation (far more text than the count implies) both have several possible causes, which the entity channel has to separate. Char offsets measure lengths only and are never used to score boundary precision, keeping the tolerance-metric family excluded. Diagnostic only: no placement, status or anchor-acceptance change."
 parent = "resolution_concordance_1626_1630"
+
+[datasets.sequence_graph_nodes]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_nodes.jsonl"
+phase = "semi"
+description = "sequence_graph's full node set, persisted (2026-10-09, user: 'is the graph saved to disk? ... WORK FROM AND ON THE SAVED GRAPH FROM NOW ON'). One row per node: node_id, kind (Scan/Session/HtrResolution/Paragraph/SittingDay/EnrichedResolution/Entity), and that node's own dataclass fields (sequence_graph.nodes). Written by sequence_graph.persist.save_graph; sequence_graph.persist.load_graph reconstructs the exact live graph from this plus sequence_graph_edges."
+parent = "paragraph_axis_1626_1630"
+
+[datasets.sequence_graph_edges]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_edges.jsonl"
+phase = "semi"
+description = "sequence_graph's full edge set, persisted alongside sequence_graph_nodes. One row per edge: source, target, key, kind (NEXT/CONTAINS/OBSERVED_ON/DATED_AS/PINNED_TO/LABELLED_AS/ALIGNED_TO), and evidence (channel/source/observed/confidence/detail) where the edge carries one -- NEXT/CONTAINS do not. ALIGNED_TO rows carry all three evidence channels as of 2026-10-09: gold_annotation (observed=True), legacy_concordance (observed=False, the existing production pipeline), dp_solver (observed=False, Stage 4's new DP, scoped to whichever dates it has been run on)."
+parent = "sequence_graph_nodes"
+
+[datasets.sequence_graph_aligned_to_coverage_log]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_aligned_to_coverage_log.jsonl"
+phase = "semi"
+description = "Before/after ALIGNED_TO coverage (sequence_graph.consolidate.aligned_to_status) across each sequence_graph.persist.save_graph run -- one row per run per bucket (gold_verified/legacy_concordance_only/solver_derived_only/unaligned), so a graph rebuild's actual effect is a logged number, never an unverified claim (user, 2026-10-09: 'measure improvement... save the results to a log')."
+parent = "sequence_graph_edges"
+
+[datasets.duplicate_session_date_splits]
+tier = "hot"
+path = "republic_ner_matching/output/duplicate_session_date_splits.jsonl"
+phase = "semi"
+description = "A reviewable PROPOSAL set, not applied anywhere: one row per session claimed by >1 enriched date (67 total, from resolution_concordance_1626_1630's resolved_session_id), with scripts.s6_duplicate_session_date_headings's own heading-based verdict (run for real here, persisted for the first time -- that script states 'diagnostic only, no dataset write'). 25 of 67 get a `verdict` starting 'shared' and a located split_at_paragraph/split_axis_id, plus a precomputed `proposed_ranges` (per-claimant-date paragraph range; for 3+-date sessions the earlier dates share one undivided range, named explicitly, never guessed). Does not touch sequence_graph's PINNED_TO edges or any production placement -- user, 2026-10-09: 'persist the 25 located splits as a reviewable proposal set; pause before rewriting graph edges or production pins.'"
+parent = "resolution_concordance_1626_1630"

@@ -70,15 +70,19 @@ def test_query_range_shows_gold_coverage_without_a_solver_run(capsys):
     assert "enriched:1629-03-02:0 [gold]" in out
 
 
-def test_query_range_with_solver_dates_shows_proposed_cuts_and_dropped_content(capsys):
+def test_query_range_with_solver_dates_shows_proposed_cuts(capsys):
     """1626-11-16 (k_e=14, k_f=47, severe over-segmentation) must show at least one proposed cut
-    (INSERTION_SPLIT) and the margin-content case (SOFT_CLIP) when the solver is actually run --
-    the resolution-level drill-down the user asked for, not just a session-level summary."""
+    (INSERTION_SPLIT) when the solver is actually run -- the resolution-level drill-down the user
+    asked for, not just a session-level summary. The SOFT_CLIP ("dropped as margin content") case
+    is no longer reachable on THIS day once legacy_concordance is in the graph: its one resolution
+    with no gold coverage now has an existing production placement, which correctly outranks a
+    fresh, unfitted solver guess -- see test_sequence_graph_consolidate.py's priority test for
+    that ordering directly, rather than relying on a real day to exhibit the SOFT_CLIP path."""
     query_range("1626-11-16", "1626-11-16", solver_dates=["1626-11-16"])
     out = capsys.readouterr().out
     assert "solver run" in out
     assert "proposed cut [solver, INSERTION_SPLIT" in out
-    assert "dropped as margin content" in out
+    assert "enriched:1626-11-16:0 [legacy concordance]" in out
 
 
 def test_query_range_handles_an_empty_range(capsys):

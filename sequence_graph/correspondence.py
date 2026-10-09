@@ -87,6 +87,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 import networkx as nx
+import pandas as pd
 
 from data_io import load
 from running_axis.axis import RunningAxis
@@ -322,6 +323,12 @@ def add_aligned_to_gold(graph: nx.DiGraph) -> int:
     never coded as "absent" (a much stronger, separately-verified claim a few individual days
     carry in `docs/DECISIONS.md` prose but that has no structured dataset yet; not built here,
     flagged as a known gap) and never guessed at a default position.
+
+    Reads both `boundary_gold_sample` (the original 50 days) and `boundary_gold_hard_period_sample`
+    (25 more, same record shape) -- found missing 2026-10-09 (user: "did any other old results or
+    anchor sets not make into the graph?"): the hard-period sample was annotated and used
+    elsewhere in this project (`s6c_group_c_boundary_existence_check.py`) but nothing had ever
+    read it into `sequence_graph`.
     """
     from scripts.separated_accuracy_eval import gold_start_paragraphs
 
@@ -329,32 +336,99 @@ def add_aligned_to_gold(graph: nx.DiGraph) -> int:
     from sequence_graph.nodes import EnrichedResolution, HtrResolution
 
     added = 0
-    for day in load("boundary_gold_sample")["days"]:
-        date = day["date"]
+    for dataset_name in ("boundary_gold_sample", "boundary_gold_hard_period_sample"):
+        for day in load(dataset_name)["days"]:
+            date = day["date"]
+            if not in_scope(date):
+                continue
+            stream = day_paragraph_stream(date)
+            if not stream:
+                continue
+            starts = gold_start_paragraphs(day, day["k_e"])
+            for index, position in enumerate(starts):
+                if position is None or position >= len(stream):
+                    continue
+                enriched_node = EnrichedResolution(date=date, index=index).node_id
+                if enriched_node not in graph:
+                    continue
+                flat_id = stream[position]
+                htr_node = HtrResolution.from_flat_id(flat_id).node_id
+                if htr_node not in graph:
+                    continue
+                graph.add_edge(
+                    enriched_node, htr_node, key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
+                    evidence=Evidence(
+                        channel="gold_annotation", source=dataset_name, observed=True,
+                        detail={"paragraph_stream_index": position},
+                    ),
+                )
+                added += 1
+    return added
+
+
+def add_aligned_to_legacy_concordance(graph: nx.DiGraph) -> int:
+    """`EnrichedResolution -> HtrResolution`, `observed=False`, from `resolution_concordance_1626_
+    1630` -- the EXISTING production pipeline's own placement (`align_session`/`segment_day`/
+    entity-NW tiers), predating `sequence_graph` entirely.
+
+    Found missing 2026-10-09 (user: "did any other old results not make into the graph? ... why
+    not?"). The honest reason: `ALIGNED_TO` was built the same day as a binary gold-vs-new-solver
+    split, and the already-existing production placement -- 13,374 of 19,120 resolutions (70%),
+    not a small number -- was never considered as its own third evidence category. It is derived,
+    not hard, so `observed=False` like the solver's edges; it is kept in its OWN channel
+    (`legacy_concordance`, key suffix `:legacy`), never merged with `dp_solver`, because the two
+    are different derivation mechanisms built at different times and conflating them would hide
+    exactly the kind of provenance distinction this module exists to preserve.
+
+    Only `status == "resolved_auto"` rows with a located `paragraph_start_index` get an edge --
+    `missing_htr`/`cross_day_shift`/`nihil_actum` rows correctly produce none, same convention as
+    `add_aligned_to_gold`.
+    """
+    from sequence_graph.align import day_paragraph_stream
+    from sequence_graph.nodes import EnrichedResolution, HtrResolution
+
+    stream_cache: dict[str, list[str]] = {}
+    added = 0
+    # resolution_concordance_1626_1630 is a parquet/"frozen" dataset -- `load()` returns a
+    # DataFrame, not a list of row dicts (unlike the jsonl datasets elsewhere in this module);
+    # `.to_dict("records")` is the correct iteration, found the hard way (2026-10-09: an earlier
+    # one-off diagnostic iterated a DataFrame directly and silently got column names instead of
+    # rows -- caught before it shipped here, not after).
+    concordance = load("resolution_concordance_1626_1630")
+    for row in concordance.to_dict("records"):
+        date = str(row.get("enriched_date"))[:10]
         if not in_scope(date):
             continue
-        stream = day_paragraph_stream(date)
-        if not stream:
+        if row.get("status") != "resolved_auto":
             continue
-        starts = gold_start_paragraphs(day, day["k_e"])
-        for index, position in enumerate(starts):
-            if position is None or position >= len(stream):
-                continue
-            enriched_node = EnrichedResolution(date=date, index=index).node_id
-            if enriched_node not in graph:
-                continue
-            flat_id = stream[position]
-            htr_node = HtrResolution.from_flat_id(flat_id).node_id
-            if htr_node not in graph:
-                continue
-            graph.add_edge(
-                enriched_node, htr_node, key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
-                evidence=Evidence(
-                    channel="gold_annotation", source="boundary_gold_sample", observed=True,
-                    detail={"paragraph_stream_index": position},
-                ),
-            )
-            added += 1
+        position = row.get("paragraph_start_index")
+        if position is None or pd.isna(position):
+            continue
+        position = int(position)
+        if date not in stream_cache:
+            stream_cache[date] = day_paragraph_stream(date)
+        stream = stream_cache[date]
+        if not stream or position >= len(stream):
+            continue
+        index = row.get("resolution_index")
+        if index is None:
+            continue
+        enriched_node = EnrichedResolution(date=date, index=int(index)).node_id
+        if enriched_node not in graph:
+            continue
+        flat_id = stream[position]
+        htr_node = HtrResolution.from_flat_id(flat_id).node_id
+        if htr_node not in graph:
+            continue
+        graph.add_edge(
+            enriched_node, htr_node, key=f"{ALIGNED_TO}:legacy", kind=ALIGNED_TO,
+            evidence=Evidence(
+                channel="legacy_concordance", source="resolution_concordance_1626_1630",
+                observed=False,
+                detail={"paragraph_start_index": position, "resolution_source": row.get("resolution_source")},
+            ),
+        )
+        added += 1
     return added
 
 
@@ -445,14 +519,46 @@ def gold_aligned_pairs(graph: nx.DiGraph) -> list[tuple[str, str]]:
     ]
 
 
+def gold_aligned_pairs_detailed(graph: nx.DiGraph) -> list[dict]:
+    """`gold_aligned_pairs`, unpacked into the fields a calibration script actually needs --
+    `{date, ref_index, flat_id, paragraph_stream_index}` -- read from the graph's own node ids
+    and the edge's stored `detail`, never by re-parsing `boundary_gold_sample`/
+    `boundary_gold_hard_period_sample` a second time.
+
+    **Why this exists (found 2026-10-09, user: "this does not look scalable").** `fit_cost.py`
+    and `position_prior.py` each had their own copy of the gold-interpretation logic
+    (`gold_start_paragraphs` + iterating both gold datasets) -- and within the same session, one
+    copy was updated to include `boundary_gold_hard_period_sample` and the other was not,
+    silently diverging (344 positives vs. the graph's 391). The graph, built once via
+    `add_aligned_to_gold`, is now the one place that logic runs; everything downstream reads its
+    result instead of re-deriving it.
+    """
+    from sequence_graph.nodes import EnrichedResolution, HtrResolution
+
+    records: list[dict] = []
+    for u, v, data in graph.edges(data=True):
+        if data.get("kind") != ALIGNED_TO or not data["evidence"].observed:
+            continue
+        enriched = graph.nodes[u]["obj"]
+        htr = graph.nodes[v]["obj"]
+        assert isinstance(enriched, EnrichedResolution) and isinstance(htr, HtrResolution)
+        records.append({
+            "date": enriched.date, "ref_index": enriched.index, "flat_id": htr.flat_id,
+            "paragraph_stream_index": data["evidence"].detail.get("paragraph_stream_index"),
+        })
+    return records
+
+
 def build_correspondence(
     graph: nx.DiGraph | None = None, *, with_bootstrap: bool = True, solver_dates: Sequence[str] = (),
 ) -> nx.DiGraph:
     """The Stage-1 graph plus all cross-sequence edges. Mutates and returns `graph`.
 
-    `solver_dates` is empty by default: running the unfitted DP corpus-wide is not something this
-    builder does silently. Pass specific dates to also write back `ALIGNED_TO` (solver) edges for
-    them (e.g. the days already tested in `notebooks/sequence_graph_exploration.ipynb`).
+    `add_aligned_to_legacy_concordance` runs by default -- it is cheap (one parquet read) and is
+    existing, already-computed evidence, not a new derivation this builder would be making
+    silently (unlike the solver). `solver_dates` stays empty by default: running the unfitted DP
+    corpus-wide is not something this builder does silently. Pass specific dates to also write
+    back `ALIGNED_TO` (solver) edges for them.
     """
     if graph is None:
         graph = build()
@@ -460,6 +566,7 @@ def build_correspondence(
     add_dated_as(graph, with_bootstrap=with_bootstrap)
     add_pinned_and_labelled(graph)
     add_aligned_to_gold(graph)
+    add_aligned_to_legacy_concordance(graph)
     if solver_dates:
         add_aligned_to_solver(graph, solver_dates)
     return graph

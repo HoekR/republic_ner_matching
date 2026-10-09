@@ -94,7 +94,7 @@ def test_aligned_to_status_is_a_genuine_partition_gold_beats_solver():
 
     status = aligned_to_status(graph)
     assert {name: tally.value for name, tally in status.items()} == {
-        "gold_verified": 1, "solver_derived_only": 1, "unaligned": 1,
+        "gold_verified": 1, "legacy_concordance_only": 0, "solver_derived_only": 1, "unaligned": 1,
     }
     assert sum(t.value for t in status.values()) == 3
     assert set(status) == set(ALIGNED_TO_STATUS)
@@ -117,3 +117,37 @@ def test_aligned_to_status_gold_wins_when_a_resolution_has_both():
     status = aligned_to_status(graph)
     assert status["gold_verified"].value == 1
     assert status["solver_derived_only"].value == 0
+
+
+def test_aligned_to_status_legacy_concordance_outranks_solver_but_not_gold():
+    """Priority among the two derived sources: legacy_concordance (the existing, corpus-tested
+    production pipeline) outranks solver_derived (today's new, unfitted, barely-tested DP) -- and
+    gold still outranks both. Three nodes, one of each shape."""
+    graph = nx.MultiDiGraph()
+    for index in range(3):
+        graph.add_node(f"enriched:x:{index}", kind="EnrichedResolution", obj=None)
+    graph.add_node("htr_res:a", kind="HtrResolution", obj=None)
+
+    graph.add_edge(  # has both legacy and solver -- legacy must win
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:legacy", kind=ALIGNED_TO,
+        evidence=Evidence(channel="legacy_concordance", source="resolution_concordance_1626_1630", observed=False),
+    )
+    graph.add_edge(
+        "enriched:x:0", "htr_res:a", key=f"{ALIGNED_TO}:solver", kind=ALIGNED_TO,
+        evidence=Evidence(channel="dp_solver", source="sequence_graph.align", observed=False),
+    )
+    graph.add_edge(  # has gold AND legacy -- gold must win
+        "enriched:x:1", "htr_res:a", key=f"{ALIGNED_TO}:gold", kind=ALIGNED_TO,
+        evidence=Evidence(channel="gold_annotation", source="boundary_gold_sample", observed=True),
+    )
+    graph.add_edge(
+        "enriched:x:1", "htr_res:a", key=f"{ALIGNED_TO}:legacy", kind=ALIGNED_TO,
+        evidence=Evidence(channel="legacy_concordance", source="resolution_concordance_1626_1630", observed=False),
+    )
+    # enriched:x:2: no edges at all -- unaligned
+
+    status = aligned_to_status(graph)
+    assert status["legacy_concordance_only"].value == 1  # enriched:x:0
+    assert status["gold_verified"].value == 1  # enriched:x:1
+    assert status["solver_derived_only"].value == 0
+    assert status["unaligned"].value == 1  # enriched:x:2

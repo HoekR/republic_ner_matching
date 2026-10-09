@@ -366,12 +366,16 @@ targeted, not a neutral sample. Implementation: `segment_day` returns `list[int 
 existing tests pass; added 3 new unit tests for abstention behavior.
 
 ### Step 4 — Two ways to add channels, run as a comparison, not a single choice
-<!-- status: todo — split into 4a/4b 2026-10-01 after pathology-corpus's 0/85-chosen result
-     (plans/PATHOLOGY_CORPUS_RUNLOG.md, "Correction (2026-10-01)"), which showed the current
-     fill algorithm is optimal given group-A-only evidence and 36/60 ambiguous severe-collapse
-     days have a worst gap with paragraph_room=1 -- anchor-starved, not room-starved. That
-     motivates actually wiring B/C/D in, but the plan's own "why staging makes weak anchors
-     safe" argument (line 79) is itself a claim, not yet tested against the alternative. -->
+<!-- status: REDIRECTED 2026-10-09 -- see plans/SEQUENCE_GRAPH_SPINE.md Stage 4 Step 4.8. Both
+     modes below are blocked on align_session/segment_gap's anchor_only_diagonal gate, which
+     makes weak (B/C/D) evidence structurally invisible regardless of staging order -- the exact
+     defect sequence_graph.align.align_bracket does not share (no hard gate; weak overlap is
+     priced, never excluded). Rather than build 4a/4b on a mechanism with that defect, Step 4.8
+     executes this step's own question (does staging matter here?) directly on align_bracket,
+     and answers "combined" differently than originally framed: see Step 4.8's note on why the
+     hard-evidence structural partition already rules out an unstaged combined mode, rather than
+     leaving it as an open A/B test. History below kept for the staging-safety argument and the
+     measured findings (Step 1/2/3), which still stand. -->
 
 Both modes below are blocked on the same prerequisite: **Step 2** (char→paragraph join,
 guardrail 6) must land first — B/C/D anchors are `char_position`-keyed; neither mode can place

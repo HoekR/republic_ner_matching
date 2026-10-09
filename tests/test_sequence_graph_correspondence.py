@@ -19,6 +19,7 @@ from sequence_graph.correspondence import (
     Evidence,
     MonotonicityReport,
     add_aligned_to_gold,
+    add_aligned_to_legacy_concordance,
     add_aligned_to_solver,
     add_dated_as,
     add_observed_on,
@@ -149,3 +150,39 @@ def test_solver_edges_never_overwrite_a_gold_edge_on_the_same_pair():
         if d.get("kind") == ALIGNED_TO and d["evidence"].observed is True
     ]
     assert len(gold_after) == n_gold  # not one gold edge lost to a same-key overwrite
+
+
+def test_aligned_to_gold_includes_both_samples():
+    """Found missing 2026-10-09: the hard-period sample (25 more annotated days, same record
+    shape) was never read into the graph, only the original 50. Both must contribute now."""
+    graph = build()
+    n = add_aligned_to_gold(graph)
+    sources = {
+        d["evidence"].source for _u, _v, d in graph.edges(data=True)
+        if d.get("kind") == ALIGNED_TO and d["evidence"].observed
+    }
+    assert sources == {"boundary_gold_sample", "boundary_gold_hard_period_sample"}
+    assert n > 345  # strictly more than the original sample alone ever gave
+
+
+def test_aligned_to_legacy_concordance_is_observed_false_and_never_collides_with_gold():
+    """resolution_concordance_1626_1630 is derived (the existing production pipeline), not hard
+    evidence -- observed=False, distinct channel from both gold and the Stage 4 solver, and never
+    overwrites a gold edge on the same pair (the same MultiDiGraph key-collision class already
+    found and fixed once for gold-vs-solver)."""
+    graph = build()
+    n_gold = add_aligned_to_gold(graph)
+    n_legacy = add_aligned_to_legacy_concordance(graph)
+    assert n_legacy > 0
+    legacy_edges = [
+        (u, v, d) for u, v, d in graph.edges(data=True)
+        if d.get("kind") == ALIGNED_TO and d["evidence"].channel == "legacy_concordance"
+    ]
+    assert len(legacy_edges) == n_legacy
+    for _u, _v, data in legacy_edges:
+        assert data["evidence"].observed is False
+    gold_after = [
+        (u, v, d) for u, v, d in graph.edges(data=True)
+        if d.get("kind") == ALIGNED_TO and d["evidence"].observed is True
+    ]
+    assert len(gold_after) == n_gold  # legacy concordance never overwrote a gold edge

@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-10-09 14:16
+Last updated: 2026-10-09 15:36
 
 ```mermaid
 flowchart TD
@@ -104,7 +104,7 @@ flowchart TD
 - [/] track-p-subparagraph-division: Track P: sub-paragraph division (place anchors before shifting them) — P1 PASS: typed formula channel beats the null, ranked 0.62, day-clustered p=0.0003. P2 closed at 12 gold/80 (thin yield), redirected to synthetic_boundary_* 2,041 proven-pair rows. P3 NOT YET IMPLEMENTED and is the only open item in the project with a direct line to the separated metric.
 - [x] track-s-anchor-shifting: Track S: anchor shifting (session reassignment) — SUPERSEDED 2026-10-09: S2's many-to-many date<->session schema IS PINNED_TO as an unconstrained edge set in sequence_graph -- building it separately would duplicate the spine. S1's +186/-186 sizing stands as a Stage-2 regression check. The calibrated-anchor-scoring question migrates to Stage 4 (the solver).
 - [/] archival-provenance: Archival provenance: per-resolution secret flags and page/scan provenance — Per-resolution secret flags recovered from source XML; resolution_archival_provenance built (71.7% resolved, 100% of those carry pages) and it is the join that made bracket_business_ledger possible. Secret-session hijack mechanism (34 days / 398 resolutions) measured and UNBLOCKED at <=0.07% of separated cost, not yet built.
-- [/] sequence-graph: sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass) — Stages 0-3b DONE. Stage 4: first pass + 4 move-set decisions + ALIGNED_TO write-back + Step 4.6 week/month report -- all prior entries. NEW: Step 4.7 -- match_cost/gap_cost fitted on gold (sequence_graph.fit_cost): match_cost's formula changed to a real log-probability (softplus of a fitted logit), gap_cost to the empirical deletion rate. Measured across all 50 alignable gold days: separated 15.1%… (full text in docs/state.json)
+- [/] sequence-graph: sequence_graph: the three-sequence spine (nodes/correspondence/consolidate/render done; Stage 4 solver first pass) — Stages 0-3b DONE. Stage 4: first pass, 4 move-set decisions, ALIGNED_TO write-back (gold+legacy+solver), Step 4.6 report, Step 4.7 cost fitting (15.1%->45.2% separated vs 73.9% uniform null), Step 4.7b exact_agreement fixed, Step 4.8 graph persisted + 2 scalability bugs fixed (legacy concordance missing, fit_cost/position_prior duplicate gold-parsing) -- all prior entries. NEW Step 4.9: two 'solve… (full text in docs/state.json)
 
 _1 further task(s) archived — see docs/state_archive.json or `svz.py archived`._
 

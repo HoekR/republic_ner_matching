@@ -13,6 +13,7 @@ from sequence_graph.align import (
     SOFT_CLIP,
     CostModel,
     align_bracket,
+    score_exact_agreement,
 )
 
 
@@ -199,3 +200,38 @@ def test_read_items_are_never_reordered_only_matched_split_or_dropped():
     ref_indices = [p.ref_index for p in result.pairs if p.ref_index is not None]
     assert ref_indices == sorted(ref_indices)
     assert len(ref_indices) == len(set(ref_indices))
+
+
+def test_score_exact_agreement_is_a_strict_generalization_of_the_old_all_or_nothing_form():
+    """A fully-known gold gets exactly the old number -- 'a probability of 1 is perfect anyway'
+    (user, 2026-10-09): this must not be a different metric, just a more permissive one."""
+    agreement, n = score_exact_agreement([0, 1, 2, 3], [0, 1, 2, 3])
+    assert agreement == 1.0 and n == 4
+    agreement, n = score_exact_agreement([0, 1, 2, 3], [0, 5, 2, 9])
+    assert agreement == 0.5 and n == 4  # same as the old form when nothing is None
+
+
+def test_score_exact_agreement_scores_over_known_positions_only():
+    """The fix itself: a day where gold only locates some resolutions must still produce a score
+    (and name its denominator), not null out entirely the way the old form did."""
+    agreement, n = score_exact_agreement([0, 1, 2, 3], [0, None, 2, None])
+    assert n == 2  # only 2 of 4 positions are gold-known
+    assert agreement == 1.0  # both known ones (index 0 and 2) match exactly
+
+    agreement, n = score_exact_agreement([0, 9, 2, 3], [0, None, 5, None])
+    assert n == 2
+    assert agreement == 0.5  # index 0 matches, index 2 (gold=5, predicted=2) does not
+
+
+def test_score_exact_agreement_returns_none_when_nothing_is_known():
+    """Genuinely no information is a different thing from a bad score -- None, not 0.0."""
+    agreement, n = score_exact_agreement([0, 1, 2], [None, None, None])
+    assert agreement is None
+    assert n == 0
+
+
+def test_score_exact_agreement_handles_an_abstained_empty_prediction():
+    """An abstained bracket (no predictions at all) must behave like "nothing known", not raise."""
+    agreement, n = score_exact_agreement([], [0, 1, 2])
+    assert agreement is None
+    assert n == 0

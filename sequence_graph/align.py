@@ -361,6 +361,26 @@ def day_paragraph_stream(date: str) -> list[str]:
     return [row["flat_id"] for row in rows]
 
 
+def score_exact_agreement(
+    predicted: Sequence[int], gold: Sequence[int | None],
+) -> tuple[float | None, int]:
+    """`(agreement, n)`: exact-match rate over whichever positions `gold` actually locates.
+
+    User, 2026-10-09: "strictly justified, but too rigid" against the old all-or-nothing form,
+    which nulled the whole score the instant even one position was gold-unlocated -- with a 42%
+    measured deletion rate (`fit_cost.fit_deletion_rate`), that was true of nearly every
+    multi-resolution gold day. This is a strict generalization, not a different metric: a fully
+    known `gold` gets exactly the old number ("a probability of 1 is perfect anyway"); `n` is the
+    denominator actually used, so a score is never read without knowing how much it covers.
+    `(None, 0)` when nothing is known at all -- that case still means "nothing to score", not 0.
+    """
+    known_pairs = [(p, g) for p, g in zip(predicted, gold) if g is not None]
+    if not known_pairs:
+        return None, 0
+    agreement = sum(p == g for p, g in known_pairs) / len(known_pairs)
+    return agreement, len(known_pairs)
+
+
 def run_bracket(date: str, cost: CostModel = CostModel()) -> dict:
     """The one scoped run: align one gold-annotated day's enriched resolutions against its HTR
     resolutions, then score via `label_separation` against `uniform_start_paragraphs` -- the
@@ -432,12 +452,8 @@ def run_bracket(date: str, cost: CostModel = CostModel()) -> dict:
     if gold_start_positions and gold_start_positions[-1] is None and known_positions:
         gold_start_positions[-1] = max(known_positions) + 1
 
-    exact_agreement = None
-    if predictions and None not in gold_start_positions:
-        predicted_starts = [p["paragraph_start_index"] for p in predictions]
-        exact_agreement = sum(
-            p == g for p, g in zip(predicted_starts, gold_start_positions)
-        ) / n_ref
+    predicted_starts = [p["paragraph_start_index"] for p in predictions]
+    exact_agreement, exact_agreement_n = score_exact_agreement(predicted_starts, gold_start_positions)
 
     return {
         "date": date,
@@ -450,6 +466,7 @@ def run_bracket(date: str, cost: CostModel = CostModel()) -> dict:
         "separated_count": int(scored["separated"].sum()) if not scored.empty else 0,
         "uniform_null_positions": null_positions,
         "exact_agreement": exact_agreement,
+        "exact_agreement_n": exact_agreement_n,  # out of n_ref -- never read the score without this
     }
 
 
@@ -465,7 +482,8 @@ def main() -> None:
         print(f"  {kind:<16} ref={ref_i}  read={read_i}")
     print(f"separated_count: {report['separated_count']} / {report['k_e']}")
     print(f"uniform-null start positions (same gap, no evidence): {report['uniform_null_positions']}")
-    print(f"gold exact agreement: {report['exact_agreement']}")
+    print(f"gold exact agreement: {report['exact_agreement']} "
+          f"(n={report['exact_agreement_n']}/{report['k_e']} gold-located)")
 
 
 if __name__ == "__main__":

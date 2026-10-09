@@ -34,7 +34,7 @@ from data_io import load
 from scripts.build_unplaced_date_review import iiif_url
 
 from sequence_graph.align import DELETION_GAP, INSERTION_SPLIT, MATCH, SOFT_CLIP, run_bracket
-from sequence_graph.build import CONTAINS, build
+from sequence_graph.build import CONTAINS
 from sequence_graph.classify import SessionVerdict, classify
 from sequence_graph.consolidate import correspondence_class, node_aligned_bucket
 from sequence_graph.correspondence import (
@@ -43,21 +43,18 @@ from sequence_graph.correspondence import (
     LABELLED_AS,
     OBSERVED_ON,
     PINNED_TO,
-    add_aligned_to_gold,
     add_aligned_to_solver,
-    add_dated_as,
-    add_observed_on,
-    add_pinned_and_labelled,
     traversal_is_inferred,
 )
 from sequence_graph.nodes import Scan, SittingDay
+from sequence_graph.persist import load_graph
 
 
 def _load():
-    graph = build()
-    add_observed_on(graph)
-    add_dated_as(graph)
-    add_pinned_and_labelled(graph)
+    """Loads the SAVED graph (user, 2026-10-09: "WORK FROM AND ON THE SAVED GRAPH FROM NOW ON") --
+    never rebuilds from source datasets. Run `python -m sequence_graph.persist --build` first if
+    this raises `FileNotFoundError`."""
+    graph = load_graph()
     verdicts = {v.session_id: v for v in classify(graph)}
     return graph, verdicts
 
@@ -156,14 +153,31 @@ def query_scan(inventory: str, scan_num: int) -> None:
 
 
 def _load_for_range(solver_dates: Sequence[str]):
-    """Like `_load`, plus `ALIGNED_TO` -- gold always (cheap, from `boundary_gold_sample`), the
-    solver only for `solver_dates` (expensive, and restricted to gold days -- see
-    `add_aligned_to_solver`'s own docstring for the scope limit)."""
+    """`_load()` plus, for any requested `solver_dates` the saved graph doesn't already have a
+    solver edge for, a TRANSIENT in-memory `ALIGNED_TO` (solver) addition -- not written back.
+    Reading a report should not silently persist new evidence; run `python -m sequence_graph.
+    persist --build --solver-dates ...` to make a solver run permanent."""
     graph, verdicts = _load()
-    add_aligned_to_gold(graph)
-    if solver_dates:
-        add_aligned_to_solver(graph, solver_dates)
+    have_solver = {
+        graph.nodes[u]["obj"].date for u, _v, d in graph.edges(data=True)
+        if d.get("kind") == ALIGNED_TO and d["evidence"].channel == "dp_solver"
+        and graph.nodes[u]["kind"] == "EnrichedResolution"
+    }
+    missing = [d for d in solver_dates if d not in have_solver]
+    if missing:
+        print(f"(running the solver transiently for {missing}, not yet saved -- "
+              f"see `sequence_graph.persist --build --solver-dates` to persist)")
+        add_aligned_to_solver(graph, missing)
     return graph, verdicts
+
+
+def _gold_days() -> set[str]:
+    """Every date `run_bracket` can actually run on -- `boundary_gold_sample` only (its own
+    scope limit, stated in `fit_cost.py`). Used so "solver run" is never claimed for a date the
+    solver structurally cannot touch, the exact bug found live by the user running a 20-day range
+    with every date requested: almost none were gold days, and the report said "solver run" for
+    all of them anyway."""
+    return {day["date"] for day in load("boundary_gold_sample")["days"]}
 
 
 def _week_start(date: str) -> str:
@@ -201,13 +215,16 @@ def _date_aligned_summary(graph, date: str) -> tuple[Counter, int]:
 def _session_resolution_lines(graph, session_id: str, date: str, attempted: bool) -> list[str]:
     """One line per HTR resolution in this session: a clean correspondence (gold or solver,
     tagged), a proposed cut from the solver's own move trace on an unresolved stretch (only where
-    `attempted`), or "not yet attempted" -- never a guess, never silence.
+    it genuinely ran), or "not yet attempted" -- never a guess, never silence.
 
-    `attempted` is the caller's own bookkeeping (did `_load_for_range`'s `solver_dates` include
-    this date), not something read off the graph -- `DELETION_GAP`/`SOFT_CLIP` moves are
-    deliberately not persisted as graph facts yet (Step 4.5's stated, deferred design question),
-    so reading the graph alone cannot distinguish "not tried" from "tried, found nothing": this
-    function reruns `align_bracket` live for an attempted date instead, to show that detail.
+    `attempted` is the CALLER's request (did `_load_for_range`'s `solver_dates` include this
+    date) -- it does not mean the solver actually produced a result. `run_bracket` raises
+    `ValueError` for any date outside `boundary_gold_sample` (most dates, corpus-wide), which a
+    first cut of this function caught and silently treated as "ran, found nothing" -- the exact
+    kind of misleading status this report exists to prevent (found live, 2026-10-09, by the user
+    running a 20-day range with every date passed as a solver date: almost none of them are gold
+    days, and the report still claimed "solver ran" for all of them). `ran` below tracks whether
+    `run_bracket` actually returned a result, independent of what was merely requested.
     """
     session_node = f"session:{session_id}"
     htr_nodes = sorted(
@@ -219,29 +236,40 @@ def _session_resolution_lines(graph, session_id: str, date: str, attempted: bool
 
     move_by_flat_id: dict[str, tuple[str, int | None]] = {}
     bracket_abstained = False
+    ran = False
+    not_a_gold_day = False
     if attempted:
         try:
             report = run_bracket(date)
+            ran = True
             bracket_abstained = report["abstained"]
             for kind, ref_index, read_index in report["moves"]:
                 if read_index is not None:
                     move_by_flat_id[report["flat_ids"][read_index]] = (kind, ref_index)
-        except (ValueError, KeyError):
-            pass  # date not in boundary_gold_sample, or gold couldn't place anything -- stays empty
+        except ValueError:
+            not_a_gold_day = True  # date is not in boundary_gold_sample at all -- never ran
+        except KeyError:
+            ran = True  # a real gold day, but gold couldn't place anything -- genuinely ran
 
     lines: list[str] = []
     for htr_node in htr_nodes:
         flat_id = graph.nodes[htr_node]["obj"].flat_id
-        gold_targets = [
-            u for u, _v, d in graph.in_edges(htr_node, data=True)
-            if d.get("kind") == ALIGNED_TO and d["evidence"].observed
+        in_edges = graph.in_edges(htr_node, data=True)
+        gold_targets = [u for u, _v, d in in_edges if d.get("kind") == ALIGNED_TO and d["evidence"].observed]
+        legacy_targets = [
+            u for u, _v, d in in_edges
+            if d.get("kind") == ALIGNED_TO and not d["evidence"].observed
+            and d["evidence"].channel == "legacy_concordance"
         ]
         solver_targets = [
-            (u, d) for u, _v, d in graph.in_edges(htr_node, data=True)
-            if d.get("kind") == ALIGNED_TO and not d["evidence"].observed
+            (u, d) for u, _v, d in in_edges
+            if d.get("kind") == ALIGNED_TO and d["evidence"].channel == "dp_solver"
         ]
+        # Priority matches consolidate.node_aligned_bucket exactly: gold > legacy > solver.
         if gold_targets:
             lines.append(f"{flat_id} -> {', '.join(sorted(gold_targets))} [gold]")
+        elif legacy_targets:
+            lines.append(f"{flat_id} -> {', '.join(sorted(legacy_targets))} [legacy concordance]")
         elif solver_targets:
             tags = [f"{u} [solver, {d['evidence'].detail.get('move_kind')}, unfitted]" for u, d in solver_targets]
             lines.append(f"{flat_id} -> {', '.join(tags)}")
@@ -251,8 +279,10 @@ def _session_resolution_lines(graph, session_id: str, date: str, attempted: bool
                 lines.append(f"{flat_id}: dropped as margin content (solver, unfitted) -- proposed: no correspondence")
             else:
                 lines.append(f"{flat_id}: proposed cut [solver, {kind}, unfitted, abstained={bracket_abstained}]")
-        elif attempted:
+        elif ran:
             lines.append(f"{flat_id}: unaligned (solver ran for {date}, this resolution outside the scored bracket)")
+        elif not_a_gold_day:
+            lines.append(f"{flat_id}: unaligned ({date} is not a gold day -- the solver has no bracket to run on)")
         else:
             lines.append(f"{flat_id}: unaligned (solver not yet attempted for {date})")
     return lines
@@ -273,6 +303,7 @@ def query_range(start: str, end: str, *, solver_dates: Sequence[str] = ()) -> No
     weeks: dict[str, list[str]] = defaultdict(list)
     for date in dates:
         weeks[_week_start(date)].append(date)
+    gold_days = _gold_days()
 
     print(f"RANGE {start}..{end} ({len(dates)} in-scope dates, {len(weeks)} weeks)")
     for week_start in sorted(weeks):
@@ -288,13 +319,19 @@ def query_range(start: str, end: str, *, solver_dates: Sequence[str] = ()) -> No
             ] or ["no session (PINNED_TO/LABELLED_AS: none)"]
             aligned_bit = (
                 f"ALIGNED_TO {counts.get('gold_verified', 0)}/{total} gold, "
+                f"{counts.get('legacy_concordance_only', 0)}/{total} legacy, "
                 f"{counts.get('solver_derived_only', 0)}/{total} solver, "
                 f"{counts.get('unaligned', 0)}/{total} open"
                 if total else "no enriched resolutions"
             )
             attempted = date in solver_dates
-            print(f"    {date}: {'; '.join(status_bits)} | {aligned_bit} "
-                  f"({'solver run' if attempted else 'solver not yet attempted'})")
+            if attempted and date in gold_days:
+                solver_bit = "solver run"
+            elif attempted:
+                solver_bit = "not a gold day -- solver has no bracket to run on"
+            else:
+                solver_bit = "solver not yet attempted"
+            print(f"    {date}: {'; '.join(status_bits)} | {aligned_bit} ({solver_bit})")
             seen_sessions = dict.fromkeys(session_id for _node, session_id, _kind in sessions)
             for session_id in seen_sessions:
                 for line in _session_resolution_lines(graph, session_id, date, attempted):
