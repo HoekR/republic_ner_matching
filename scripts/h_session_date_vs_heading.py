@@ -110,6 +110,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from data_io import load, save_semi_structured
+from scripts.corpus_scope import in_scope, scope_meta
 from scripts.s6_duplicate_session_date_headings import (
     MONTH_TOKENS,
     WEEKDAY_LOOKUP,
@@ -119,6 +120,14 @@ from scripts.s6_duplicate_session_date_headings import (
 OUTPUT_DATASET = "h_session_date_vs_heading"
 REGION_DATASET = "session_region_text_1626_1630"
 AXIS_DATASET = "paragraph_axis_1626_1630"
+
+# The five annual `ordinaris` registers each hold exactly one calendar year's sessions
+# (plans/SEQUENCE_ALIGNMENT_TRACK.md 2026-10-06/07: "volumes are annual", the constraint flagged
+# as not-yet-applied). 4562/4861 are the secret series and span many years, so they get no
+# nominal-year check at all. A parsed year outside [nominal-1, nominal+1] -- the +/-1 tolerance
+# covers a genuine year-boundary session carrying the adjacent year -- is OCR/HTR digit noise,
+# not data: this is what was producing decade-scale "offsets" like the regression case below.
+INVENTORY_NOMINAL_YEAR = {"3185": 1626, "3186": 1627, "3187": 1628, "3188": 1629, "3189": 1630}
 
 BACK_REFERENCE = re.compile(r"qui\s+heri|praesentibus\s+qui", re.IGNORECASE)
 
@@ -165,6 +174,7 @@ VERDICTS = (
     "disagrees",              # heading consistent, names a different date
     "heading_inconsistent",   # numeral and weekday contradict even after correction
     "unreadable",             # weekday, day, month or year could not be parsed
+    "stated_out_of_scope",    # heading parses to a date past the corpus scope bar (1630-05-14)
 )
 
 
@@ -200,7 +210,7 @@ def has_attendance_formula(text: str) -> bool:
     return bool(BACK_REFERENCE.search(text))
 
 
-def read_heading(text: str) -> dict[str, Any]:
+def read_heading(text: str, inventory: str | None = None) -> dict[str, Any]:
     """Day, month, year and weekday as the page states them, read as ONE coherent date phrase.
 
     No field ever falls back to a substituted value here -- that is left to the caller, which
@@ -210,25 +220,47 @@ def read_heading(text: str) -> dict[str, Any]:
     are the fields searched for independently: `DATE_PHRASE` requires weekday, day, month and
     year to co-occur in the structural order this corpus always uses, so a match can never mix
     fields pulled from two different date mentions in the same region text.
+
+    A parsed year that falls outside its inventory's nominal year +/- 1 (e.g. "1636" or "1619"
+    in an inventory 3188/3189 session nominally 1629/1630) is OCR/HTR digit noise on the year
+    token specifically, not a real decade-scale date -- fixing the bug `PLAN.md` and
+    `plans/SEQUENCE_ALIGNMENT_TRACK.md` (2026-10-07) flagged: "a heading parsed into another
+    decade is wrong by construction". It is replaced with the volume's own nominal year, NOT
+    with the recorded date's year (`ours`) -- substituting `ours` is the other bug this script
+    already rejects elsewhere ("a year forced to the recorded date's year whenever they
+    disagreed"), because `ours` is this specific session's own heuristic label, exactly what is
+    under test. The nominal year is a structural fact about which physical volume the page sits
+    in, independent of any one session's label, so using it is not circular the same way.
+    Weekday/day/month still get checked against it below, so a heading whose OTHER fields are
+    also wrong still comes out `heading_inconsistent`, not silently `agrees`.
     """
     match = DATE_PHRASE.search(text)
     weekday = ALL_WEEKDAY_TOKENS.get(match.group("weekday").lower()) if match else None
     month = MONTH_BY_TOKEN.get(match.group("month").lower()) if match else None
     day = parse_day_token(match.group("day")) if match else None
     year = int(match.group("year")) if match else None
-    return {"day": day, "month": month, "weekday": weekday, "year": year}
+    nominal = INVENTORY_NOMINAL_YEAR.get(inventory or "")
+    year_corrected = year is not None and nominal is not None and abs(year - nominal) > 1
+    if year_corrected:
+        year = nominal
+    return {"day": day, "month": month, "weekday": weekday, "year": year, "year_corrected": year_corrected}
 
 
-def classify_heading(text: str, ours: pd.Period, max_numeral_slip: int) -> dict[str, Any]:
+def classify_heading(
+    text: str, ours: pd.Period, max_numeral_slip: int, inventory: str | None = None
+) -> dict[str, Any]:
     """Verdict for one session's opening heading against its recorded date.
 
     An unparseable weekday, day, month or year yields `unreadable` directly -- never a
     substituted value. Only once all four parse and combine into a valid calendar date does
     internal consistency get checked at all.
     """
-    reading = read_heading(text)
+    reading = read_heading(text, inventory)
     day, month, year, weekday = reading["day"], reading["month"], reading["year"], reading["weekday"]
-    base = {"stated": None, "weekday": weekday, "weekday_corrected_numeral": False}
+    base = {
+        "stated": None, "weekday": weekday, "weekday_corrected_numeral": False,
+        "year_corrected_to_nominal": reading["year_corrected"],
+    }
 
     if day is None or month is None or year is None or weekday is None:
         return {**base, "verdict": "unreadable"}
@@ -297,15 +329,32 @@ def main() -> None:
         rows.sort(key=lambda r: (str(r["scan_id"]), r["reading_order"] or 0))
 
     out: list[dict[str, Any]] = []
+    out_of_scope = 0
     for session, rows in sorted(by_session.items()):
         ours = recorded.get(session)
         if not ours:
             continue
+        # Scope bar (user, 2026-09-25, FULL STOP 2026-10-08): the enriched edition ends
+        # 1630-05-14 and the axis runs to 1630-12-31, so a session recorded past the bar has no
+        # sitting the edition could record and must not enter this population -- it would sit in
+        # the `decidable` denominator behind the cited disagreement rate. See scripts/corpus_scope.
+        if not in_scope(ours):
+            out_of_scope += 1
+            continue
         ours_period = pd.Period(ours, freq="D")
         opening = rows[0]
 
-        result = classify_heading(opening["text"], ours_period, args.max_numeral_slip)
+        result = classify_heading(
+            opening["text"], ours_period, args.max_numeral_slip, opening.get("inventory")
+        )
         stated = result["stated"]
+        # Scope bar applies to the date a heading CLAIMS, not only to the recorded label. A
+        # heading parsing to a post-bar date cannot be a date this project reconsiders, so it is
+        # not a `disagrees` with a 358-day offset -- that would be a date claim past the bar.
+        # The two real cases are session-3188-num-234/235, already named as outliers.
+        verdict = result["verdict"]
+        if stated is not None and not in_scope(stated):
+            verdict = "stated_out_of_scope"
 
         out.append({
             "record_type": "session",
@@ -319,8 +368,9 @@ def main() -> None:
             "recorded_weekday": WEEKDAYS[ours_period.dayofweek],
             "offset_days": None if stated is None else int((stated - ours_period).n),
             "weekday_corrected_numeral": result["weekday_corrected_numeral"],
+            "year_corrected_to_nominal": result["year_corrected_to_nominal"],
             "has_attendance_formula": has_attendance_formula(opening["text"]),
-            "verdict": result["verdict"],
+            "verdict": verdict,
         })
 
     counts = Counter(r["verdict"] for r in out)
@@ -340,6 +390,10 @@ def main() -> None:
     print("  ", offset_counts)
     print(f"  weekday corrected a contradicted numeral in "
           f"{sum(1 for r in out if r['weekday_corrected_numeral']):,} sessions")
+    year_corrected = [r for r in out if r["year_corrected_to_nominal"]]
+    print(f"  year replaced with the volume's nominal year (OCR digit noise) in "
+          f"{len(year_corrected):,} sessions; their verdicts: "
+          f"{dict(Counter(r['verdict'] for r in year_corrected))}")
     attendance_formula_count = sum(1 for r in out if r["has_attendance_formula"])
     print(f"  attendance-formula (`qui heri`) headings: {attendance_formula_count:,} -- "
           f"flagged only, classified on the no-shift default (see has_attendance_formula())")
@@ -354,6 +408,8 @@ def main() -> None:
                 "the weekday-wins numeral-slip search",
             "unreadable": "weekday, day numeral, month or year could not be parsed",
         },
+        **scope_meta(),
+        "sessions_excluded_past_scope_bar": out_of_scope,
         "verdict_counts": dict(counts),
         "sessions_checked": len(out),
         "decidable_sessions": len(decidable),

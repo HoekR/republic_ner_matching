@@ -1,6 +1,6 @@
 # Current Project State (SvZ)
 
-Last updated: 2026-10-02 08:47
+Last updated: 2026-10-09 10:22
 
 ```mermaid
 flowchart TD
@@ -39,10 +39,15 @@ flowchart TD
     metrics_bottleneck_diagnostic["metrics-bottleneck-diagnostic: Tier P: bottleneck diagnostic (evidence vs. algorithm)"]:::done
     metrics_consolidation_overhaul["metrics-consolidation-overhaul: Register the metrics-tier overhaul itself in state.json"]:::done
     metrics_local_inventory_ceiling["metrics-local-inventory-ceiling: metrics-local-inventory-ceiling"]:::done
-    inventory_stream_collision_avoidance["inventory-stream-collision-avoidance: Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md)"]:::inprogress
+    inventory_stream_collision_avoidance["inventory-stream-collision-avoidance: Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md)"]:::done
     tfidf_embeddings_wiring["tfidf-embeddings-wiring: Wire TF-IDF semantic similarity into placement alignment"]:::inprogress
-    resolution_loss_census["resolution-loss-census: Resolution loss census: where do the 5,746 unpaired resolutions go?"]:::todo
+    resolution_loss_census["resolution-loss-census: Resolution loss census: where do the 5,746 unpaired resolutions go?"]:::done
     staged_anchor_consolidation["staged-anchor-consolidation: Staged anchor consolidation (plans/STAGED_ANCHOR_CONSOLIDATION.md)"]:::inprogress
+    sequence_alignment["sequence-alignment: Sequence alignment: align the XML sitting-day calendar against the HTR session sequence"]:::done
+    scan_sequence["scan-sequence: Scan sequence: a physically grounded coordinate (scan_id) instead of inferred session attribution"]:::done
+    track_p_subparagraph_division["track-p-subparagraph-division: Track P: sub-paragraph division (place anchors before shifting them)"]:::inprogress
+    track_s_anchor_shifting["track-s-anchor-shifting: Track S: anchor shifting (session reassignment)"]:::done
+    archival_provenance["archival-provenance: Archival provenance: per-resolution secret flags and page/scan provenance"]:::inprogress
     S0 --> S5
     S1 --> S4
     S2 --> S4
@@ -89,16 +94,21 @@ flowchart TD
 - [x] metrics-bottleneck-diagnostic: Tier P: bottleneck diagnostic (evidence vs. algorithm) — Built scripts/metrics_bottleneck_diagnostic.py. oracle_coverage=0.263 (5/19), real_coverage=0.368 (7/19), recommended_focus=algorithm_redesign. Real>oracle is thin-anchor monotone dodge (same as endpoints density), not evidence that NW anchors beat perfect gold.
 - [x] metrics-consolidation-overhaul: Register the metrics-tier overhaul itself in state.json — Closed 2026-09-22: docs/METRICS.md channel tiers O/P/A-E/V/X in place; V/D/O/P implemented (E retired). Overhaul complete.
 - [x] metrics-local-inventory-ceiling: metrics-local-inventory-ceiling — DONE 2026-09-24. Built scripts/metrics_local_inventory_ceiling.py: per-date pigeonhole ceiling = min(k_e, same-calendar-day raw paragraph_count), summed per inventory_id. Reproduces the cited corpus-wide 11,644 ceiling exactly (and 535 no-HTR dates), closing docs/METRICS.md's 'Known gaps' item. PLAN.md's Local criterion is MET: all 5 main annual inventories (3185-3189) clear >=50% of their own cei… (full text in docs/state.json)
-- [/] inventory-stream-collision-avoidance: Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md) — Step 1 PASS (landmark density gate). Step 2 NEGATIVE (length prior; do not adopt). Steps 5a + 5c.1 DONE 2026-09-25: separated set is accurate enough to freeze as a scaffold except on review-code-M days (0.639 exact / 0.911 within-1 on segmentable days, beating the uniform null 2.4-2.7x). Step 6 gate DONE 2026-09-25, DID NOT PASS -- do not build the session aligner: scripts/session_offset_eval.py (… (full text in docs/state.json)
+- [x] inventory-stream-collision-avoidance: Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md) — SUPERSEDED 2026-10-09: all gates were already PASS/NEGATIVE/closed. Its one open coupling (PINNED_TO monotonicity) is replaced by sequence_graph's monotone_map. See docs/SEQUENCE_MODEL.md, plans/the-two-deep-hits-melodic-avalanche.md.
 - [/] tfidf-embeddings-wiring: Wire TF-IDF semantic similarity into placement alignment — Step 0 complete: paragraph-granularity AUC = 0.893 (target 0.70), clears gate to wiring. Threshold 0.35 admits ~75% of positives (20 percentile), semantic_weight calibration pending Step 1.
-- [ ] resolution-loss-census: Resolution loss census: where do the 5,746 unpaired resolutions go?
+- [x] resolution-loss-census: Resolution loss census: where do the 5,746 unpaired resolutions go? — Completed 2026-09-29, extended 2026-10-05. Duplicate session-claim disambiguation: 25/67 decided via date headings, zero spurious, all shared; gate costs 428/8,084 separated (5.3%) where undecided. Follow-on explanatory-coverage ledger (v1a/v1b/v1c) agreed with user but not started.
 - [/] staged-anchor-consolidation: Staged anchor consolidation (plans/STAGED_ANCHOR_CONSOLIDATION.md) — Steps 1-3 done, Step 4 pre-check done 2026-10-02 (Group B deferred, see docs/DECISIONS.md). Steps 4a/4b (staged vs combined channel wiring) not yet run.
+- [x] sequence-alignment: Sequence alignment: align the XML sitting-day calendar against the HTR session sequence — SUPERSEDED 2026-10-09: this track's question (DATED_AS vs PINNED_TO disagreement) is Stage 2 of sequence_graph. The NEXT item (heading dates into the weekly-walk aligner) is withdrawn -- monotone_map is the one primitive, not a bespoke feed. Measured history (misattribution finding, drift retraction) stands and seeded the spine.
+- [x] scan-sequence: Scan sequence: a physically grounded coordinate (scan_id) instead of inferred session attribution — SUPERSEDED 2026-10-09: OBSERVED_ON + DATED_AS are now sequence_graph edges. reconcile_sequences.py / bracket_gap_census.py / bracket_business_ledger.py / type_scan_gap_findings.py are the duplicated logic Stage 5 retires. Every measured number (610/1,054 anchors, 155/593 room<charge, 323/406/261 reconciliation) is now a regression target for Stage 2's gate, not a line to extend.
+- [/] track-p-subparagraph-division: Track P: sub-paragraph division (place anchors before shifting them) — P1 PASS: typed formula channel beats the null, ranked 0.62, day-clustered p=0.0003. P2 closed at 12 gold/80 (thin yield), redirected to synthetic_boundary_* 2,041 proven-pair rows. P3 NOT YET IMPLEMENTED and is the only open item in the project with a direct line to the separated metric.
+- [x] track-s-anchor-shifting: Track S: anchor shifting (session reassignment) — SUPERSEDED 2026-10-09: S2's many-to-many date<->session schema IS PINNED_TO as an unconstrained edge set in sequence_graph -- building it separately would duplicate the spine. S1's +186/-186 sizing stands as a Stage-2 regression check. The calibrated-anchor-scoring question migrates to Stage 4 (the solver).
+- [/] archival-provenance: Archival provenance: per-resolution secret flags and page/scan provenance — Per-resolution secret flags recovered from source XML; resolution_archival_provenance built (71.7% resolved, 100% of those carry pages) and it is the join that made bracket_business_ledger possible. Secret-session hijack mechanism (34 days / 398 resolutions) measured and UNBLOCKED at <=0.07% of separated cost, not yet built.
 
 _1 further task(s) archived — see docs/state_archive.json or `svz.py archived`._
 
 ## Active Focus
 
-Resolution loss diagnosis: inventorying where the 5,746 unpaired resolutions sit, and deciding which unbanks for free (cross_day_shift on confirmed sessions) vs which needs more work (the 340-day pile-up).
+sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: /Users/rikhoekstra/.claude/plans/the-two-deep-hits-melodic-avalanche.md). Stages 0-3b DONE 2026-10-09, all gates PASS (872 tests, 84 new). Stage 4 (the solver, align.py) first pass DONE 2026-10-09, later the same day: four decisions answered by the user, align_bracket built and tested (11 tests), run once on the scoped clean bracket (1629-03-02): 3/5 gold exact agreement, 1/5 separated. Not gated, not fitted, not benchmarked against the three existing DP mechanisms -- cost fitting and the mechanism comparison are next session's short list. A separate gap raised 2026-10-09 is also still open and NOT locked into the Stage 4 design: nihil-as-SKIP, DATED_AS strict/bootstrap as solver-visible subtypes, Track P's CONTAINS refinement vs ALIGNED_TO identity, and whether to forbid HTR-side insertion in the move set. Stage 5 (retiring legacy scripts) not started. The separated metric itself has not moved -- nothing built so far changes a production placement.
 
 ## Key Intermediate Results & Metrics
 
@@ -229,6 +239,12 @@ Resolution loss diagnosis: inventorying where the 5,746 unpaired resolutions sit
 - **tfidf-embeddings-wiring — S6c position_scores wiring, gold subset (19d, 197 rows): baseline separated=146; similarity scale 0.5/1.0 identical (delta 0, bonus << dispersion penalty); scal… (full text in docs/state.json):** 0
 - **staged-anchor-consolidation — Partial abstention Step 3 gate: gold exact-agreement, old 0.5431 vs new 0.6486:** 0.6486
 - **staged-anchor-consolidation — Step 4 pre-check: Group B exact-agreement on cells Group A doesn't already cover (31/110) -- deferred, below ~65% baseline:** 0.282
+- **scan-sequence — strict 610 + bracket-bootstrapped 444, 98.6% hold-out precision, scope bar applied:** 1054
+- **scan-sequence — free error filter; gate 1%; never available at session level:** 0.0057
+- **scan-sequence — 8 shortfall + 49 surplus of 600 brackets under an empirical null; replaces the median-charge 155:** 57
+- **scan-sequence — 2.6% of 19,278; the 22% headline did not survive its own measurement and the frame was never asked for:** 493
+- **sequence-alignment — 742 decidable sessions in scope; MISATTRIBUTION not drift (14 page reads) -- must not be cited as a drift rate:** 0.778
+- **scan-sequence — of 593 scan brackets (61%), flat across bracket width 59-67% so not a width artefact:** 364
 
 ## Blockers / Open Questions
 

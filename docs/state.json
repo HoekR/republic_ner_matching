@@ -1,7 +1,7 @@
 {
   "project": "republic-ner-matching",
-  "last_updated": "2026-10-02 08:47",
-  "active_focus": "Resolution loss diagnosis: inventorying where the 5,746 unpaired resolutions sit, and deciding which unbanks for free (cross_day_shift on confirmed sessions) vs which needs more work (the 340-day pile-up).",
+  "last_updated": "2026-10-09 10:22",
+  "active_focus": "sequence_graph is the spine (docs/SEQUENCE_MODEL.md; plan: /Users/rikhoekstra/.claude/plans/the-two-deep-hits-melodic-avalanche.md). Stages 0-3b DONE 2026-10-09, all gates PASS (872 tests, 84 new). Stage 4 (the solver, align.py) first pass DONE 2026-10-09, later the same day: four decisions answered by the user, align_bracket built and tested (11 tests), run once on the scoped clean bracket (1629-03-02): 3/5 gold exact agreement, 1/5 separated. Not gated, not fitted, not benchmarked against the three existing DP mechanisms -- cost fitting and the mechanism comparison are next session's short list. A separate gap raised 2026-10-09 is also still open and NOT locked into the Stage 4 design: nihil-as-SKIP, DATED_AS strict/bootstrap as solver-visible subtypes, Track P's CONTAINS refinement vs ALIGNED_TO identity, and whether to forbid HTR-side insertion in the move set. Stage 5 (retiring legacy scripts) not started. The separated metric itself has not moved -- nothing built so far changes a production placement.",
   "tasks": [
     {
       "id": "S0",
@@ -243,8 +243,8 @@
     {
       "id": "inventory-stream-collision-avoidance",
       "title": "Inventory-stream reframing and collision avoidance (plans/COLLISION_AVOIDANCE_TRACK.md)",
-      "status": "inprogress",
-      "notes": "Step 1 PASS (landmark density gate). Step 2 NEGATIVE (length prior; do not adopt). Steps 5a + 5c.1 DONE 2026-09-25: separated set is accurate enough to freeze as a scaffold except on review-code-M days (0.639 exact / 0.911 within-1 on segmentable days, beating the uniform null 2.4-2.7x). Step 6 gate DONE 2026-09-25, DID NOT PASS -- do not build the session aligner: scripts/session_offset_eval.py (15 tests) -> session_offset_eval shows the enriched<->HTR session mapping is already complete wherever there is HTR to map to. In inventories 3185-3189 every enriched sitting resolves to a session (1,089/1,089) and there are ZERO missing_htr rows; all 344 unresolved sittings / 4,482 resolutions are in 4562 (2,095) and 4861 (2,387), the non-annual series PLAN.md's Local criterion already excludes, where 4861 has no axis sessions at all. Only 3 sittings (40 resolutions) sit in order-determined brackets -- all 3 beyond the +/-1-day window at 20/22/36 days, so the mechanism is confirmed on 40 of 19,120 resolutions against a stretch gap of 718. The cited 1,137 cross_day_shift resolutions are NOT unmapped; every one carries a resolved session. Also measured: no-insertion holds at session level in the annual inventories (12/1,034) but breaks in 4562 (39). SCOPE CONSTRAINT (user, 2026-09-25, now a standing track guardrail): the enriched edition ends 1630-05-14 and the alignment does not extend beyond it -- 184 axis sessions / 2,284 paragraphs (10.6%) dated to 1630-12-31 are barred, enforced and asserted (0 claimed today); enforcing it changed no gate quantity. The day partition excluded them for free by keying paragraph counts on enriched dates, so the 11,644 ceiling and Step 1's segment ceilings are safe, but a STREAM framing must bar them explicitly -- Step 5's pending bound re-derivation is the next thing that would hit this. Step 3's design question was settled earlier: no-insertion is a structural constraint, not a gap penalty. Open, unscoped: pin CORRECTNESS is untested (Step 6 closes 'mapping absent', not 'mapping wrong') -- cheap check is enriched date vs the content-verified raw session's date from s6b_session_fingerprint_match, 70 pinned sittings already sit >1 day from their session label; axis_for_date's neighbour fallback places resolutions on days with no HTR of their own (corpus-wide share unmeasured); length_prior_eval.py's gold adapter uses a non-canonical boundary convention (Step 2's ranking survives, its absolute numbers do not). Step 3 first experiment BUILT and MEASURED 2026-09-28 (scripts/s6d_entity_mention_gap_placement.py, scripts/s6d_entity_alignment_gap_eval.py, 6 new tests): align_entity_mentions (existing DP primitive, no-insertion constraint) wired to real gap data on the 21 gold S-code days, chain built from tier-1 anchors only (no gold leakage into placement), gold used only for scoring via separated_accuracy_eval.accuracy() reused directly (fallback-only column reproduces 5c.1 exactly: n=158, exact=0.6392, within_1=0.9114, confirming correct wiring). Of 52 open-gap resolutions on these days, only 20 (38.5%) get a non-abstaining projection -- most open gaps still have zero shared-vocabulary entity matches to align on, which is itself informative (coverage, not just accuracy, is a real constraint here). Of those 20, 14 have a gold label to score: exact agreement moved 0.4286 -> 0.5714 (up), within-1 moved 0.7857 -> 0.6429 (down), mean|disp| 2.0 -> 2.357 (worse) on that projected-and-scored subset. Mixed signal at n=14 -- not enough to call PASS or FAIL. NOT YET DECIDED: whether to (a) extend coverage (most open gaps have zero shared vocabulary -- would need the graded-substitution-cost step explicitly deferred by the plan, or the fuzzy/dictionary vocabulary already used elsewhere in this track), (b) accept current coverage and treat the accuracy wash as inconclusive-at-this-n, or (c) close Step 3 here given bounded upside was already flagged as a risk in the plan text. A corpus-wide 947-gap production run was deliberately not done (gold only exists on these 50 days; a production run is a separate later decision, not needed to answer this question). CORRECTION 2026-09-28 (same day): the 38.5% coverage figure above was diagnosed wrongly as missing entity evidence. It is a defect in align_entity_mentions. The DP offers only match (i+1,j+1) and flat-skip (i+1,j); nothing advances j alone, so reaching (n,m) requires n>=m, and it returns an empty traceback -- indistinguishable from the genuinely-empty-side case -- whenever the HTR side recovers fewer mentions than the enriched side. All 32 non-projected resolutions are this case, with entities present on both sides. Verified not a date/placement artefact (0 of 178 interior enriched indices missing; HTR gap windows carry 8.08 vocab hits/1k chars vs 8.20 for the whole day axis) and not evidence absence (enriched side is DENSER at 10.79/1k, inverting the plan's own premise -- an artefact of literal substring matching against an enriched-derived vocabulary, inherited from the D1c gate without being re-examined for the HTR side). The implementation also contradicts the plan, which requires many-to-one in BOTH directions. Separately, of the 52 matched pairs behind the 20 projections only 14 are identical names and one projecting gap had zero shared names, so most 'coverage' is positional bookkeeping. Diagnostics: abstention_reasons / enriched_lookup on the s6d_entity_alignment_gap_eval summary row. Step 3 (entity-mention gap alignment, first experiment) CLOSED 2026-09-28. Built complete apparatus: added enriched-run DP move (unit cost, symmetric), word-boundary vocab scan (recovering 45 vs 20 projections), matched control via segment_gap with identical chains (honest comparator). Result: entity-DP exact=0.2308 vs control=0.5385 on 39-resolution projected subset — aligner substantially worse than pure interpolation. 73% of new projections are positional name-substitutions (zero shared vocabulary), placing 23/39 by >6 paragraphs (median 6 vs baseline 0). Verdict: close negative per pre-declared threshold. Gated 'second lever' (graded substitution cost) explicitly requires this first experiment to beat the null, and it does not. Track remains open; this reframes the strategy.",
+      "status": "done",
+      "notes": "SUPERSEDED 2026-10-09: all gates were already PASS/NEGATIVE/closed. Its one open coupling (PINNED_TO monotonicity) is replaced by sequence_graph's monotone_map. See docs/SEQUENCE_MODEL.md, plans/the-two-deep-hits-melodic-avalanche.md.",
       "next_action": "Decide whether to (a) re-run the Step 3 entity-mention-DP harness (s6d_entity_alignment_gap_eval.py) against the corrected production-anchor backbone instead of tier1_points, now that the open-gap population it would face is smaller (795 open gaps / 3,827 unplaced vs the 947/5,302 it was built against), or (b) pursue a different strategy for the open-gap majority (57.4% of unplaced work) given Step 3's own mechanism already measured negative on the old backbone. See docs/DECISIONS.md 2026-09-29 'ledger rebuilt on production's own anchors'.",
       "decision_2026_09_28": "User: rebuild (1), measure (2), then decide (3). Rebuild s6b_known_point_ledger.py to call production's own build_axis_overlap + align_session instead of reading stored tier1_anchor; re-measure the 947-gap/70.7% statistic on reconciled anchors; then reassess inventory-stream track based on the new numbers.",
       "goal": "Establish whether posing segmentation on the inventory stream, with session openings as interior landmarks instead of the calendar day as a hard partition, recovers separations the per-day framing declares structurally impossible -- judged by collisions recovered plus a correctness check, never by separated-share alone.",
@@ -260,9 +260,9 @@
     {
       "id": "resolution-loss-census",
       "title": "Resolution loss census: where do the 5,746 unpaired resolutions go?",
-      "status": "todo",
-      "notes": "",
-      "next_action": "Build scripts/resolution_loss_census.py joining s6b_session_fingerprint_match + fingerprint_assignment_audit against resolution_concordance_1626_1630; cross-tab by inventory/position_in_day/fingerprint_offset",
+      "status": "done",
+      "notes": "Completed 2026-09-29, extended 2026-10-05. Duplicate session-claim disambiguation: 25/67 decided via date headings, zero spurious, all shared; gate costs 428/8,084 separated (5.3%) where undecided. Follow-on explanatory-coverage ledger (v1a/v1b/v1c) agreed with user but not started.",
+      "next_action": "If resumed: v1a free heuristic ranking of hot spots, then v1b probe false-negative calibration.",
       "goal": "Bucket all 19,120 enriched resolutions by placement status; measure how many of the 1,057 cross_day_shift sit on content-confirmed sessions with merely mismatched date labels",
       "cost": "cheap"
     },
@@ -272,6 +272,51 @@
       "status": "inprogress",
       "notes": "Steps 1-3 done, Step 4 pre-check done 2026-10-02 (Group B deferred, see docs/DECISIONS.md). Steps 4a/4b (staged vs combined channel wiring) not yet run.",
       "next_action": "Step 4a/4b: staged vs combined channel wiring, scoped to Groups A+C+D, on the 3 pathology seed days first"
+    },
+    {
+      "id": "sequence-alignment",
+      "title": "Sequence alignment: align the XML sitting-day calendar against the HTR session sequence",
+      "status": "done",
+      "notes": "SUPERSEDED 2026-10-09: this track's question (DATED_AS vs PINNED_TO disagreement) is Stage 2 of sequence_graph. The NEXT item (heading dates into the weekly-walk aligner) is withdrawn -- monotone_map is the one primitive, not a bespoke feed. Measured history (misattribution finding, drift retraction) stands and seeded the spine.",
+      "next_action": "Do NOT wire heading dates into the weekly-walk aligner -- it would inject misattribution noise. The real open problem is upstream: which scans a session's text comes from.",
+      "goal": "A dating instrument that is not circular: genuine drift separated from region misattribution, with forced-window counts that survive their own measurement.",
+      "cost": "multi-session"
+    },
+    {
+      "id": "scan-sequence",
+      "title": "Scan sequence: a physically grounded coordinate (scan_id) instead of inferred session attribution",
+      "status": "done",
+      "notes": "SUPERSEDED 2026-10-09: OBSERVED_ON + DATED_AS are now sequence_graph edges. reconcile_sequences.py / bracket_gap_census.py / bracket_business_ledger.py / type_scan_gap_findings.py are the duplicated logic Stage 5 retires. Every measured number (610/1,054 anchors, 155/593 room<charge, 323/406/261 reconciliation) is now a regression target for Stage 2's gate, not a line to extend.",
+      "next_action": "bracket_business_ledger: carry BOTH coordinates (observed scan range + inferred session label) and make the disagreement a first-class column; fix session assignment to overlap rather than first-scan.",
+      "goal": "Typed, localised findings on an observed coordinate, translatable back to sessions -- not a count of determined placements.",
+      "cost": "multi-session"
+    },
+    {
+      "id": "track-p-subparagraph-division",
+      "title": "Track P: sub-paragraph division (place anchors before shifting them)",
+      "status": "inprogress",
+      "notes": "P1 PASS: typed formula channel beats the null, ranked 0.62, day-clustered p=0.0003. P2 closed at 12 gold/80 (thin yield), redirected to synthetic_boundary_* 2,041 proven-pair rows. P3 NOT YET IMPLEMENTED and is the only open item in the project with a direct line to the separated metric.",
+      "next_action": "P3: carry the offset through build_anchor_backbone and segment_gap; score separated against uniform_start_paragraphs, exact agreement only, no tolerance bands.",
+      "goal": "Sub-paragraph offsets carried through build_anchor_backbone/segment_gap, scored on separated against the uniform null.",
+      "cost": "session"
+    },
+    {
+      "id": "track-s-anchor-shifting",
+      "title": "Track S: anchor shifting (session reassignment)",
+      "status": "done",
+      "notes": "SUPERSEDED 2026-10-09: S2's many-to-many date<->session schema IS PINNED_TO as an unconstrained edge set in sequence_graph -- building it separately would duplicate the spine. S1's +186/-186 sizing stands as a Stage-2 regression check. The calibrated-anchor-scoring question migrates to Stage 4 (the solver).",
+      "next_action": "Blocked behind Track P3 by the agreed ordering; do not start first.",
+      "goal": "A many-to-many date<->session schema that can express a reassignment, written to a reviewable dataset and never in place.",
+      "cost": "multi-session"
+    },
+    {
+      "id": "archival-provenance",
+      "title": "Archival provenance: per-resolution secret flags and page/scan provenance",
+      "status": "inprogress",
+      "notes": "Per-resolution secret flags recovered from source XML; resolution_archival_provenance built (71.7% resolved, 100% of those carry pages) and it is the join that made bracket_business_ledger possible. Secret-session hijack mechanism (34 days / 398 resolutions) measured and UNBLOCKED at <=0.07% of separated cost, not yet built.",
+      "next_action": "Give secret-inventory matches their own status track in s4_day_status_resolution.py, outside the normal comparison.",
+      "goal": "Secret-inventory matches on their own status track so they never win resolved_session_id by default.",
+      "cost": "cheap"
     }
   ],
   "dependencies": [
@@ -1788,6 +1833,78 @@
         {
           "date": "2026-10-02",
           "value": "0.282"
+        }
+      ]
+    },
+    {
+      "scope": "scan-sequence",
+      "name": "scan_date_anchors_in_scope",
+      "label": "strict 610 + bracket-bootstrapped 444, 98.6% hold-out precision, scope bar applied",
+      "value": "1054",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "value": "1054"
+        }
+      ]
+    },
+    {
+      "scope": "scan-sequence",
+      "name": "monotonicity_violation_rate",
+      "label": "free error filter; gate 1%; never available at session level",
+      "value": "0.0057",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "value": "0.0057"
+        }
+      ]
+    },
+    {
+      "scope": "scan-sequence",
+      "name": "typed_findings_strict_anchors",
+      "label": "8 shortfall + 49 surplus of 600 brackets under an empirical null; replaces the median-charge 155",
+      "value": "57",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "value": "57"
+        }
+      ]
+    },
+    {
+      "scope": "scan-sequence",
+      "name": "forced_resolutions_retracted",
+      "label": "2.6% of 19,278; the 22% headline did not survive its own measurement and the frame was never asked for",
+      "value": "493",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "value": "493"
+        }
+      ]
+    },
+    {
+      "scope": "sequence-alignment",
+      "name": "heading_label_disagreement_reinterpreted",
+      "label": "742 decidable sessions in scope; MISATTRIBUTION not drift (14 page reads) -- must not be cited as a drift rate",
+      "value": "0.778",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "value": "0.778"
+        }
+      ]
+    },
+    {
+      "scope": "scan-sequence",
+      "name": "sessions_labelled_outside_own_paper",
+      "label": "of 593 scan brackets (61%), flat across bracket width 59-67% so not a width artefact",
+      "value": "364",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "value": "364"
         }
       ]
     }

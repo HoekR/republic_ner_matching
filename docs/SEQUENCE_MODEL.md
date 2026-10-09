@@ -1,0 +1,94 @@
+# The sequence model (rode draad)
+<!-- doc-status: active -->
+
+## Why this document exists
+
+The project has seven active tracks, four scripts that each re-derive the same correspondence, three independent "difficulty = 2" thresholds, and a closed taxonomy registered inside a `main()` and nowhere else. Nothing ties them together, so every new measurement invents its own unit, denominator and yardstick. On 2026-10-08, four of five such inventions were wrong in the same way: each reached for whatever was nearest to hand instead of deriving it from what the project already held.
+
+The one rule that *stopped* being broken was the one made executable (`scripts/corpus_scope.py`): *"a rule that only lives in `plans/*.md` is a rule that gets broken."* This document applies that lesson to the model itself. It exists to stop being broken.
+
+Its tone follows the scope bar precedent: `scripts/corpus_scope.py` implements one guard (`in_scope`, `drop_out_of_scope`), with tests that pass/fail together. This document's spine block is promoted into the four loaded instruction files (CLAUDE.md, AGENTS.md, .cursor/rules/project-standards.mdc, .github/copilot-instructions.md) the same way the scope bar was — a short rule, a pointer to the enforcing machinery, and a note about tests.
+
+## The three sequences
+
+| sequence | order | status |
+|---|---|---|
+| **physical** — scans in book order per inventory | `scan_num` | **observed** in `resolution_archival_provenance.scan_ids`; absent from every model |
+| **HTR** — sessions → resolutions → paragraphs | `(session_num, resolution_num, para_index)` | observed within itself; `stream.py:131` proved flat order *is* physical order |
+| **editorial** — sitting days → enriched resolutions | date, `resolution_index` | observed within itself; the XML has no physical grounding (`Stgen.dtd` has no folio/page/scan element) |
+
+`running_axis` holds sessions and dates in one object with the pin denormalised across both sides (`place_anchor` writes `DateState.resolved_session_id` *and* `SessionSpan.resolved_dates`) and records no provenance for it at all. The single inferred link in the chain — `session → date`, which the 2026-10-08 page reads showed is the broken one — is stored as if it were a fact, cannot carry evidence, cannot hold a competing hypothesis, and cannot be compared against the observed physical path.
+
+## The four cross-sequence edges
+
+| edge | from → to | observed? | evidence | source |
+|---|---|---|---|---|
+| **OBSERVED_ON** | Session / HtrResolution → Scan | **yes** | recorded archival addressing | `resolution_archival_provenance.scan_ids` |
+| **DATED_AS** | Scan → SittingDay | **yes** | date heading on the page | the date region's own heading on that scan; channel ∈ {strict, bootstrap}, bootstrap carrying its measured 1.3% parse error |
+| **PINNED_TO** | SittingDay → Session | **no — inferred** | no independent evidence | concordance `resolved_session_id`; this is the broken link |
+| **ALIGNED_TO** | EnrichedResolution → HtrResolution | derived | solved via DP | Stage 4, first pass built 2026-10-09 (`align.py`, one scoped bracket, unfitted cost) |
+
+The fifth edge, **MENTIONS** (EnrichedResolution / HtrResolution → Entity), is observed but used only for scoring, not for placement.
+
+## Seven tracks, four edges
+
+This is the single most important table in the project. Every active track is a question about one of these edges. `kind` names what the track structurally *is*; `tension` names what it establishes, where it falls short today, and what it structurally cannot establish — the `kind` column used to carry both, which hid the second and third parts.
+
+| track | edge(s) | kind | tension |
+|---|---|---|---|
+| `scan-sequence` | OBSERVED_ON + DATED_AS | observe both and compare physical vs editorial order | **Establishes:** scan-keyed anchors that never consult session attribution, with near-zero monotonicity violations per inventory. **Falls short:** only 12–27% scan density per inventory is anchored this way; it routes around the region→session defect, it does not fix it. **Cannot establish:** positional correspondence between the two layers — they come from independent archival series, so agreement/disagreement is evidence of a real relation, never proof of one at the position level. |
+| `sequence-alignment` | DATED_AS vs PINNED_TO | compare two independently-observed sequences for drift | **Establishes:** that the two sequences' disagreement *is* the dating problem, and one checkable ledger (`running_axis`) that stops ambiguous counts from circulating. **Falls short:** 344 unresolved sittings against only 79 unclaimed sessions, so reassignment cannot absorb the gap; two explanatory hypotheses (orphan pages, under-transcription) were raised and refuted, leaving the shortfall's cause open. **Cannot establish:** which session a stuck sitting belongs to — that is PINNED_TO itself, the edge this track studies rather than resolves. |
+| `inventory-stream-collision-avoidance` | PINNED_TO | monotonicity within an inventory | **Establishes:** collisions dominate loss 4:1 over extent, and much of the pigeonhole ceiling (2,614 resolutions, 22.5%) is a day-partition artifact, not an archive limit. **Falls short:** the higher stream ceiling is a loose upper bound assuming free reallocation; raising it makes the headline coverage number look worse, not better. **Cannot establish:** which specific resolution fills a freed slot — monotonicity bounds position, it supplies no placement evidence. |
+| `track-s-anchor-shifting` | PINNED_TO | many-to-many session↔date mapping, replacing one-date-one-session | **Establishes:** the rigid concordance is itself the problem — 67 sessions legitimately serve 2-3 dates (S1: +186/−186, net +60). **Falls short:** the S2 many-to-many schema is unbuilt, so no resolution has actually been reassigned; S3's 42 undecided duplicates are untouched. **Cannot establish:** *which* date owns a shared session from fingerprint identity alone — fingerprinting proves a raw session's identity, never its ownership. |
+| `track-p-subparagraph-division` | CONTAINS (HTR hierarchy) | splitting a Paragraph | **Establishes:** sub-paragraph collision is the single largest loss class (34% of placed resolutions), and Group C candidates beat a uniform-random null (P1, done). **Falls short:** P0 (whether to actually re-paragraph) is still an unsigned gate; splitting would also push 273 currently-separated resolutions over the extent limit. **Cannot establish:** that the top-ranked candidate is the correct cut — the channel's own ranking "cannot find it" per its own measurement; availability is not accuracy. |
+| `staged-anchor-consolidation` | ALIGNED_TO | derivation inside a bracket | **Establishes:** a confidence-ordered procedure (objective anchors → reconcile → subdivide → repeat) with an abstain-honestly rule that cannot be gamed by declaring one maximal clump. **Falls short:** it is a specification, not yet executed — the one code change it needs (partial abstention in `segment_day`) is unwired. **Cannot establish:** correctness — gap-minimisation measures how much of the stream is pinned, not whether each pinning is right. |
+| `tfidf-embeddings-wiring` | ALIGNED_TO | cost channel | **Establishes:** per-rank, row-normalised similarity moves placements and improves gold correctness (0.5032 → 0.5865) where the absolute-level form provably could not. **Falls short:** NEGATIVE on `separated_count` globally (−25); only positive (+315) when gated to `weak_separation` days. **Cannot establish:** which objective should gate it — correctness vs. coverage is an open, unscoped decision needing the user's call. |
+| `archival-provenance` | OBSERVED_ON | source provenance | **Establishes:** real scan/page addressing for 71.7% of resolutions (100% integrity where resolved), and a secret-flag channel that arbitrates duplicate session claims 3-for-3. **Falls short:** 28.3% of flat ids still don't resolve in ES, inventory 4861 has zero rows at all, and 6 of 34 secret-hijack days remain undetermined. **Cannot establish:** a scan address for ids outside ES's coverage, or any claim about session/date identity — OBSERVED_ON is addressing only, nothing else. |
+| `resolution-loss-census` | ALIGNED_TO | EnrichedResolution nodes with no edge | **Establishes:** most `cross_day_shift` mass is collision-locked, not a true date-label conflict (552/621 vs 27), and duplicate session claims are shared anchors, not ownership contests (25/67 decided, all `shared`). **Falls short:** 42 of 67 duplicate sessions remain undecided; the entity-overlap probe failed outright on modern-summary-vs-HTR vocabulary mismatch. **Cannot establish:** absence vs. recovery-elsewhere for an unmatched resolution without a calibrated false-negative rate — "no evidence" cannot yet be read as "no match." |
+
+Seven tracks, four edges. That collapse is the point.
+
+## The PINNED_TO rule
+
+Any traversal crossing PINNED_TO is inferred and must say so. This replaces a judgement call that failed repeatedly on 2026-10-08: *"state which of your unit, denominator and yardstick rests on `session → date`"*. The graph form is a query property: **does this path cross PINNED_TO?** If yes, the result is inferred. That is checkable in code, and three of the five 2026-10-08 breaches were exactly this.
+
+## Current status
+
+As of 2026-10-09 (overnight session after Stage 0): **Stages 0–3b are DONE, all gates pass.**
+`sequence_graph/` exists and is tested (84 tests, all passing):
+
+- **Stage 0** — guards: `scripts/corpus_scope.py` (`is_sidelined`, `suspicious_secret_dates`,
+  `assert_no_sidelined`, recursive and string-only).
+- **Stage 1** — `sequence_graph/nodes.py`, `build.py`. The three sequences as six `NEXT`-ordered
+  chains (`Scan`; `Session`→`HtrResolution`→`Paragraph`; `SittingDay`→`EnrichedResolution`), no
+  correspondence yet. Exact node counts verified against the corpus.
+- **Stage 2** — `sequence_graph/correspondence.py` (`OBSERVED_ON`, `DATED_AS`, `PINNED_TO`,
+  `LABELLED_AS`, `monotone_map`, `traversal_is_inferred`) and `classify.py`. Reproduces
+  `reconcile_sequences.py`'s own verdicts exactly: 323 hard anchors / 406 bounded gaps / 81
+  unconstrained, problem types `T0`-`T6` matching to the digit.
+- **Stage 3** — `sequence_graph/consolidate.py` (`CORRESPONDENCE_CLASSES`, `PROBLEM_TYPES`,
+  registered via `running_axis.tally.POPULATIONS`, `check_partition`-verified) and `query.py`
+  (`--session`/`--date`/`--scan`, both paths, both pieces of evidence, the IIIF link).
+- **Stage 3b** — `sequence_graph/render.py` (three-lane SVG, `TrackNode`/`TrackEdge`), with the
+  extraction (`consolidate.track_records`) kept structurally outside it.
+
+**Stage 4** (the solver, `align.py`) has a first pass, later the same day: the four decisions the
+overnight stop-note left open were answered by the user, and `align_bracket` (O(NM), typed
+MATCH/DELETION_GAP/INSERTION_SPLIT/SOFT_CLIP moves, semi-global with evidence-gated free end gaps
+and abstention, non-collapsing cost) is built and tested (`tests/test_sequence_graph_align.py`).
+Run once on the scoped clean bracket (`1629-03-02`, k_e=k_f=5): 3/5 gold exact agreement, 1/5
+`separated`. **Not gated, not fitted, not benchmarked against the three existing DP mechanisms** —
+see `plans/the-two-deep-hits-melodic-avalanche.md`'s "Next session's short list" for what is still
+open (cost fitting, the three-mechanism comparison), and a separate open gap raised 2026-10-09
+(not yet resolved): whether nihil-actum days need their own SKIP move, whether `DATED_AS`'s
+`strict`/`bootstrap` channels should be distinct edge subtypes for the solver, how Track P's
+sub-paragraph `CONTAINS` refinement interacts with `ALIGNED_TO` identity, and whether the move set
+should forbid HTR-side insertion outright — none of these four are locked into the Stage 4 design
+yet. **Stage 5** (retiring the legacy scripts) is still not started.
+
+See `plans/the-two-deep-hits-melodic-avalanche.md` for full stage descriptions, every gate's
+actual figures, and the bugs each stage's gate caught.
+
+## How to use this document
+
+When starting any new measurement or script in this project, state which of the four edges the question is about before writing code. If you cannot, the question is probably not yet well-posed. If a result crosses PINNED_TO, it is inferred and must say so. This replaces a standing instruction that lived in a plan file; here it is executable because the model names what "inferred" means.
