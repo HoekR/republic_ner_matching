@@ -1111,3 +1111,92 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **This is directly responsive to an external review comment relayed by the user** (a "cursor comment" critiquing that the spine had become infrastructure/classification without a hand-drawable worklist of where to cut): the 25-row proposed-cut list, each located by an already-verified heading, is exactly that worklist, not another classification layer.
 - 6 new tests in `tests/test_sequence_graph_duplicate_sessions.py` (the known 67-session count, the `session-3186-num-46` validation case against the live run, undecided sessions get no proposal, 2-date splits partition exactly, the 3-date undivided case, the helper's `None` handling), module-scoped fixture so the fuzzy search runs once not six times. New dataset `duplicate_session_date_splits` registered in `data_manifest.toml`.
 - Full suite, `data_io.check`, `scripts/svz.py doctor` run clean before stopping for the day.
+
+## 2026-10-09: duplicate-session splits machine-gated (no pin review); what it buys
+
+- **User:** will not review all proposed pins. Extended `sequence_graph/duplicate_sessions.py` with an aggregate gate: held-out `3185-num-56` verifies `1626-03-28`; structural partition of every `shared*` proposal; control = single-claimant 3187 sessions + **distant (+40d)** fake date must yield zero `shared*` (adjacent-day fakes wrongly fail because under-claimed next-day headings are real, e.g. `3187-num-271`). Sidelines 4562 (64 in-scope main-series of the corpus 67).
+- **Result:** `gate_pass=True`, **25/25 proposed eligible**, 39 undecided abstain. Dataset first record is `record_type=gate` aggregates; rows carry `gate_eligible`. 9 tests pass. Still **no PINNED_TO / placement write**.
+- **What it brings (sized, not applied):** the 25 sessions hold **727** concordance resolutions / **52** dates, including **410 of 1,137 `cross_day_shift` (36%)**. So this is a real slice of the shared-session / cross-day mass with located paragraph cuts -- enough to matter if wired later, not enough to close Track S or move `separated` by itself. The 39 undecided remain the entity-channel population. Applying still needs a separate step (many-to-many date↔session paragraph ranges) scored on `separated` vs null.
+
+## 2026-10-09: diagnostic apply of 25 splits — GO (+403 separated)
+
+- **User:** "do it" — apply the 25 gate-eligible splits diagnostically and score. Built `scripts/apply_duplicate_session_splits_eval.py` → `duplicate_session_splits_apply_eval`: exclusive `proposed_ranges` get sequential/packed placement on a concordance *copy*; 4 undivided (3+ earlier) dates abstain; no production write.
+- **Result: GO.** Applied-date slice separated **171 → 574 (Δ+403)**; corpus **8,084 → 8,487 (Δ+403)**; 48 dates applied, 4 abstained. Gate rule: slice rises and corpus does not fall — both hold. 4 unit tests pass.
+- **Caveat (honest):** within-range placement is sequential packing, not NW/anchors — most of the gain is giving `cross_day_shift` dates *any* exclusive span after the heading-located session cut. Production wire should still be many-to-many paragraph ranges + prefer known-point placement inside the span when available; this eval only proves the *session cut* is worth promoting.
+- **Next knelpunt:** production wire for the 48 exclusive dates, or entity channel on the 39 undecided — not Stage 4.
+
+## 2026-10-09: production wire of 48 exclusive duplicate-session splits
+
+- **User:** wire first, then size remaining bottlenecks before encoder/further work. Ran `scripts/wire_duplicate_session_splits.py` (prefer in-range existing starts; fill NaN/out-of-range; promote `cross_day_shift`→`resolved_auto` when attributed). Wrote `resolution_concordance_1626_1630` + `duplicate_session_splits_wire_report`.
+- **Result:** 48 dates wired, 4 abstained (undivided 3+ earlier on `3185-num-13` / `num-28`). Slice/corpus separated **8,084 → 8,433 (Δ+349)**; **385** status promotions. Slightly below diagnostic +403 because prefer-existing keeps some colliding in-range starts. `go_confirmed=True`.
+- **After wire (bottleneck census, decide next):** separated **8,433 / 11,644 = 72.4%** of ceiling; stretch gap to 75% is now **300** (was 718). Main-line remaining only: `cross_day_shift` **752** / 49 dates; duplicate undecided **39** sessions; crowded exclusive spans **6** dates / 124 `k_e`. Do **not** list concordance `missing_htr` / 4562–4861 (user: out until said otherwise). Encoder deferred pending this status.
+
+## 2026-10-09: pick the 39 undecided — `lesten` heading fix wired; entity channel NO-GO
+
+- **User:** `missing_htr` is almost never missing HTR; pick the 39 undecided (entity channel) instead.
+- **Heading blind spot found while inventorying the 39:** REPUBLIC's relative day tokens (`lesten`/`leste`/`Ultima` → 0, `naestlesten` → −1) were parsed but never resolved against the target month, so month-end headings never verified. Fixed in `scripts/s6_duplicate_session_date_headings.py` (`resolve_day_token`, relative phrases in `date_phrases`); relative hits also require the matched year equals the target year so prose like `missive den lesten May ontfangen` cannot verify. Held-out `3185-num-56` still passes; distant control still 0/20 false shared.
+- **Heading result:** 25 → **28** `shared*` (3 new `shared_one_heading`: `3185-num-155` / `3185-num-22` / `3186-num-209`, all real `… den lesten … YYYY` headings with weekday). Undecided 39 → **36**. Rebuild + gate_pass; production wire of the enlarged exclusive set: corpus separated **8,433 → 8,470 (Δ+37)**; stretch gap to 75% now **263**; CDS **698** / 46 dates. Tests: `tests/test_s6_relative_day_headings.py`.
+- **Entity channel (S3) on the remaining 36:** `scripts/s6_duplicate_session_entity_splits.py` → `duplicate_session_entity_splits`. Instrument = IDF-weighted exclusive person/place surfaces from `enriched_person_name_variants` + enriched places into session HTR text (not modern-summary lexical overlap — that probe already failed 2026-10-05). Production `place`/`org`/`per_overlap` cannot feed this channel: window-days 0 against catalog `flat_date` leaves the second claimant with zero rows inside the shared session.
+- **Entity gate NO-GO:** calibrate recover heading `split_at_paragraph` on the 28 gold; confidence filter (purity≥0.75, both sides ≥20) yields n=3, within-3 = **0.67** (bar was ≥0.80 on n≥10). Two undecided sessions look confident under the filter but are not wired — the channel does not clear the machine gate. `gate_eligible=0`.
+- **`missing_htr` / 4562 / 4861:** OUT of this pipeline until the user says otherwise (restated 2026-10-09). Do not list the 4,482 as a main-line knelpunt — that bag reimports the secret series by candidate-inventory tautology.
+- **Next knelpunt (main series only):** remaining 36 undecided stay open (no honest entity wire); CDS **698** / 46 dates, or crowded exclusive spans — not encoder unless user picks it.
+
+## 2026-10-09: sitting ≡ session — synchronisation, not two populations
+
+- **User:** sitting and session refer to the same thing. The different series are separate evidence / representations of the same phenomenon. **It is a synchronisation question.**
+- **Decision:** Adopt that reading in `docs/SEQUENCE_MODEL.md`. Keep `SittingDay` / `Session` as distinct node types (different sources); treat correspondence edges as sync links that identify representations of one meeting. Frame work as aligning evidence streams, not as assigning sittings into a foreign session population.
+
+## 2026-10-09: sync-gap sequence align — gold/silver/projection, then push into the graph
+
+- **User:** entity comparison is also a sequence comparison; prove on a few (preferably random); gold–silver–projection is fine; perfection was never the point; **push results back into the graph after the run**.
+- **Built:** `sequence_graph/sync_gaps.py` (broad brackets) + `sequence_graph/sync_gap_align.py` (random gold / silver / projection on `align_bracket`) + `persist.save_loaded_graph` for in-place plow-back. Dataset `sequence_graph_sync_gap_align_proof`. Main series only; scope bar at entry.
+- **Proof run (seed=20261009, n=3 each):**
+  - **Gold:** 1628-01-27 exact=0.50 (n=8); 1630-02-16 exact=0.08 (n=12); 1627-08-19 exact=0.14 (n=7) — paths emit MATCH; accuracy varies (expected, unfitted cost).
+  - **Silver:** 1627-12-29 recovered 8/8; 1626-06-25 1/4; 1627-03-03 2/2 vs legacy concordance flats.
+  - **Projection (random brackets):** 3189 1630-02-28..03-01 (12 evidenced MATCH); 3185 1626-01-01..01-02 (10); 3186 1627-11-22..11-23 (10) — each with entity-overlap crumbs on the path.
+- **Graph push:** 67 `ALIGNED_TO:solver` edges (`source=sequence_graph.sync_gap_align`; 21 gold / 14 silver / 32 projection). Coverage buckets unchanged (391 / 12661 / 0 / 6068) because these resolutions were already `legacy_concordance`/`gold_verified` — solver edges coexist as parallel MultiDiGraph keys, not a new population claim.
+- **Later same day:** unaligned-refs-only projection → MATCH=0 everywhere (overlap tables have no signal on open mass). **NO-GO** for placing unaligned via NW conditioned on sessions. Pivot to physical pin shift (next entry).
+
+## 2026-10-09: physical session extents → pin proposals → gaps change
+
+- **User:** matching must not depend on (wrong) sessions; session↔scan is physical and has nothing to do with text; determine session boundaries on the book first, then find text inside; undated sessions benefit because gaps change; continuous sample not random.
+- **Built:** `sequence_graph/physical_extents.py` (OBSERVED_ON spans + continuous scan stretch) + `sequence_graph/physical_pin_shift.py` (unique DATED_AS→scan→OBSERVED_ON → `PINNED_TO` proposals).
+- **Continuous proof `3185` 95..110:** gate PASS — `1626-03-27` physical → `num-57`; production pins `num-56`; `num-56` undated on scan 98. Corpus undated sessions **173/953 (18.2%)**.
+- **Pin propose + remeasure:** eligible 693 (shift 430 / new 87 / agree 176); gate `03-27→57` PASS. Gaps **1017→895**; pin sessions **1022→900**. Stretch undated membership **CHANGED**: `num-56` was anchor `55|56` → interior of `55|57`; `num-60` `59|60` → `59|61`.
+- **Staged:** 693 `PINNED_TO:physical` edges (production `PINNED_TO` key untouched). Datasets: `sequence_graph_physical_extents_proof`, `session_anchor_shift_proposals`.
+- **Next:** review shifts; optional production wire of physical pins; then text *inside* new brackets — not NW to invent containers.
+
+## 2026-10-09: physical pin-shift review — date-on-scan GO; session numbers OUT of judgment
+
+- **User review** (`notebooks/physical_pin_shift_review.ipynb` → `session_anchor_shift_approvals`): ~39 cards (stretch 5/5, ambiguous ~28/57, far sample 6/40). Enough for method GO; not a full ambiguous clearance.
+- **Impressions:** dates on scans are usually right; occasional scan with two date headings; many Dominica headaches are 1–4 resolutions ≈ nihil actum / cohabit with Monday.
+- **Decision:** Judge **calendar date on scan** (`DATED_AS`) only. `session_num` is a parsing artefact (same sitting, other ledger → other number, same date) and must not drive approve/reject. Secret inventories stay out of this pipeline; they only explain why numbers mislead. Keep `PINNED_TO:physical` **staged** — do **not** production-wire from this pass. Session↔date sync is a later step.
+- **UI:** review cards drop session pickers/prompts; notes remain the qualitative channel.
+- **Next:** filter or trust staged physical pins by **approved dates** (not by session id); then text inside new brackets — or clear chat and pick the next PLAN item.
+
+## 2026-10-09: approved dates → trusted physical overrides → text inside new brackets
+
+- **Built:** `sequence_graph.physical_pin_shift --trust-approvals` (+ optional `--annotate-graph`). Dataset `session_anchor_shift_date_trust`.
+- **Trust set:** 29 approved / 10 rejected calendar dates from review. Overrides apply only when the date is approved **and** has a unique physical proposal (11 eligible, 10 shifts). `session_num` unused. Production `PINNED_TO` untouched. Staged edges stamped `date_trust`: approved=11, unreviewed=682, rejected=0 (rejects were ambiguous cards without unique physical pins).
+- **Gaps:** production 1017 → trusted-physical 1011; **14 new bracket geometries**. Stretch membership CHANGED for `num-56`/`57`/`60` (same qualitative move as full physical remeasure, on the smaller trust set).
+- **Text inside (inventory, no DP):** 14 brackets; **836 unaligned / 893 aligned** enriched; k_e=1729; htr_paras=932. Largest open mass on 3185 Aug–Sep wide brackets (sparse trusted pins); March stretch brackets smaller (e.g. 03-22..27: 28/58 unaligned).
+- **Decision:** Trust is date-only; do not production-wire. Next work is placing text *inside* these brackets (openings / entity DP), not inventing containers via NW.
+
+## 2026-10-09: text inside trusted brackets — entity DP GO on synced mass; unaligned NO-GO
+
+- **Built:** `sequence_graph.sync_gap_align --trusted-brackets` → `session_anchor_shift_bracket_align`. Two passes on the 14 date-trusted new brackets; openings via missive/requeste regex on first para; entity DP where `k_e`/`k_f` ≤ 80.
+- **Pass A (full editorial):** 8 DP / 6 openings-only (oversize Aug–Sep). **80** evidenced MATCH (e.g. 03-30..04-03: 17; 08-19..08-24: 27); many openings on path. Pushed 80 `ALIGNED_TO:solver` — coverage buckets **unchanged** (edges land on already legacy/gold-aligned refs).
+- **Pass B (unaligned refs only):** MATCH=0 / entity=0 on all tractable brackets (same class of failure as earlier open-mass NW projection). Openings still present (128 hits across brackets) but do not alone place unaligned enriched.
+- **Decision:** Entity DP confirms ordered paths *inside* trusted brackets for already-synced mass; it does **not** place the open unaligned mass. Next: different signal for unaligned (short-resolution / opening pairing, or fit cost) — not more unaligned-refs entity DP. No production `PINNED_TO` wire.
+
+## 2026-10-09: two DP aligners hand off — entity then short/opening
+
+- **User:** DP only works inside gaps; it should switch modes — or two DPs that hand work to each other.
+- **Decision:** One `align_bracket` primitive, two scorers, explicit hand-off inside date-trusted brackets. **DP₁** (`entity_dp`): full editorial stream, entity overlap (gap interior). **DP₂** (`short_opening_dp`): unaligned short / no-decision enriched × HTR flats not taken by DP₁ MATCH/INSERTION_SPLIT; cost = opening strength (1.0 open+close, 0.5 open-only). The prior unaligned-refs + same entity scorer pass was a mode bug, not a negative about openings.
+- **Built:** `sequence_graph.sync_gap_align --trusted-brackets` rewritten; dataset `session_anchor_shift_bracket_align` description updated. Freeze DP₁ reads before DP₂. Push channels distinguishable. No production `PINNED_TO` wire.
+- **Run:** `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` (add `--push-graph` to plow MATCH into the saved graph).
+
+## 2026-10-09: 4562 / 4861 OUT — again. FULL STOP
+
+- **User:** after `missing_htr` re-entered the conversation via “often 4562/4861”: leave them out of this pipeline until explicitly told otherwise. This had already been ruled 2026-10-08 (`corpus_scope.SIDELINED_INVENTORIES`) and was breached by treating concordance `missing_htr` as an active bottleneck.
+- **Decision:** Secret inventories are not a population, denominator, knelpunt, diagnostic side-finding, or completeness footnote. Agent standards (`AGENTS.md`, project-standards) carry a FULL STOP section. Main-line knelpunten = 3185–3189 only (CDS, undecided duplicates, crowded spans). Displacement work, if any, stays on the main series without routing through 4562/4861.

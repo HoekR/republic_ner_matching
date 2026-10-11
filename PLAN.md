@@ -121,6 +121,14 @@
 
 8. **`resolution-loss-census`** ([plans/RESOLUTION_LOSS_CENSUS_TRACK.md](plans/RESOLUTION_LOSS_CENSUS_TRACK.md), completed 2026-09-29, extended 2026-10-05)
    - Duplicate session-claim disambiguation (67 sessions claimed by >1 date): 25/67 decided via date headings, zero spurious, all `shared`; gate costs 428/8,084 (5.3%) `separated` where undecided
+   - **DONE 2026-10-09 — proposals + gate + diagnostic GO + production wire:** `duplicate_session_date_splits` → `wire_duplicate_session_splits` wrote concordance; **8,084→8,433 separated (Δ+349)**, 385 `cross_day_shift`→`resolved_auto`; 4 undivided abstain. After wire: 72.4% of ceiling; stretch gap **300**. Main-line knelpunten only (3185–3189): CDS, undecided duplicates, crowded spans — **not** concordance `missing_htr` / 4562–4861.
+   - **DONE 2026-10-09 — 39 undecided:** relative-day (`lesten`) heading fix → 28 shared wired (**8,433→8,470**, gap75=263); entity channel on remaining 36 **NO-GO**. See `docs/DECISIONS.md` 2026-10-09 entity/lesten entry.
+   - **DONE 2026-10-09 — sync-gap sequence align proof:** broad brackets + gold/silver/projection; unaligned-refs MATCH=0 (**NO-GO** for open mass via NW). See `docs/DECISIONS.md`.
+   - **DONE 2026-10-09 — physical pin shift (continuous sample):** `physical_extents` + `physical_pin_shift`; `03-27` paper→`num-57` (prod had `num-56`); 430 shifts; gaps 1017→895; undated `num-56`/`num-60` change brackets; 693 `PINNED_TO:physical` staged.
+   - **DONE 2026-10-09 — pin-shift review (date-on-scan):** ~39 approvals; dates usually good; two-date scans / Dominica≈nihil; **session_num not a judgment key**. Physical pins stay staged (no production wire). See `docs/DECISIONS.md`.
+   - **DONE 2026-10-09 — date trust + text-inside inventory:** `--trust-approvals` → 29 approved dates / 11 trusted overrides / 14 new brackets; 836 unaligned enriched inside them. No production wire. Dataset `session_anchor_shift_date_trust`.
+   - **DONE 2026-10-09 — bracket text (openings / entity DP):** `--trusted-brackets` → 80 evidenced MATCH on synced mass (coverage unchanged); unaligned-refs **MATCH=0 NO-GO**; 128 opening hits. Dataset `session_anchor_shift_bracket_align`.
+   - **DONE 2026-10-09 — two-DP hand-off (mode switch):** entity DP₁ stays gap-interior; DP₂ = short/opening cost on unaligned short residue with DP₁ reads frozen (`entity_dp` / `short_opening_dp` channels). Replaces the broken unaligned-refs entity second pass. Command: `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` (optional `--push-graph`). No production `PINNED_TO` wire.
    - NEXT (agreed with user 2026-10-05): explanatory-coverage ledger — v1a (free heuristic ranking of hot spots) → v1b (probe false-negative calibration) → v1c (entity-channel probe on hot spots + 74 gold/hard-period days)
 
 

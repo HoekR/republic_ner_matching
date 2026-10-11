@@ -137,21 +137,9 @@ def _coverage_counts(graph: nx.MultiDiGraph) -> dict[str, int]:
     return {name: tally.value for name, tally in aligned_to_status(graph).items()}
 
 
-def save_graph(*, with_bootstrap: bool = True, solver_dates: Sequence[str] = ()) -> dict:
-    """Build, compare against whatever was previously saved (if anything), log the comparison,
-    then save -- "for a risky operation you can make a new copy... eventually it should be
-    plowed back into the graph" (user): the new build becomes the one canonical saved graph, not
-    a permanent fork, but only after its effect is measured and logged.
-    """
-    try:
-        before_graph = load_graph()
-        before = _coverage_counts(before_graph)
-    except FileNotFoundError:
-        before = None
-
-    graph = build_full_graph(with_bootstrap=with_bootstrap, solver_dates=solver_dates)
+def _log_coverage_and_write(graph: nx.MultiDiGraph, *, before: dict[str, int] | None) -> dict:
+    """Shared write path: coverage log + nodes/edges. Used by full rebuild and in-place push."""
     after = _coverage_counts(graph)
-
     timestamp = datetime.now(timezone.utc).isoformat()
     log_rows = [
         {
@@ -166,7 +154,6 @@ def save_graph(*, with_bootstrap: bool = True, solver_dates: Sequence[str] = ())
         logical_name="sequence_graph_aligned_to_coverage_log",
         script="sequence_graph.persist",
     )
-
     save_semi_structured(
         node_records(graph), logical_name="sequence_graph_nodes", script="sequence_graph.persist",
     )
@@ -174,6 +161,35 @@ def save_graph(*, with_bootstrap: bool = True, solver_dates: Sequence[str] = ())
         edge_records(graph), logical_name="sequence_graph_edges", script="sequence_graph.persist",
     )
     return {"before": before, "after": after}
+
+
+def save_loaded_graph(graph: nx.MultiDiGraph) -> dict:
+    """Persist an already-mutated in-memory graph (e.g. after pushing solver MATCH edges).
+
+    Does **not** rebuild from sources. Logs ALIGNED_TO coverage before→after against the
+    previously saved graph, then overwrites `sequence_graph_nodes` / `sequence_graph_edges`.
+    """
+    try:
+        before = _coverage_counts(load_graph())
+    except FileNotFoundError:
+        before = None
+    return _log_coverage_and_write(graph, before=before)
+
+
+def save_graph(*, with_bootstrap: bool = True, solver_dates: Sequence[str] = ()) -> dict:
+    """Build, compare against whatever was previously saved (if anything), log the comparison,
+    then save -- "for a risky operation you can make a new copy... eventually it should be
+    plowed back into the graph" (user): the new build becomes the one canonical saved graph, not
+    a permanent fork, but only after its effect is measured and logged.
+    """
+    try:
+        before_graph = load_graph()
+        before = _coverage_counts(before_graph)
+    except FileNotFoundError:
+        before = None
+
+    graph = build_full_graph(with_bootstrap=with_bootstrap, solver_dates=solver_dates)
+    return _log_coverage_and_write(graph, before=before)
 
 
 def _dataset_exists(logical_name: str) -> bool:

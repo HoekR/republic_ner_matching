@@ -12,6 +12,7 @@ from sequence_graph.align import (
     MATCH,
     SOFT_CLIP,
     CostModel,
+    DpPrinciples,
     align_bracket,
     score_exact_agreement,
 )
@@ -235,3 +236,32 @@ def test_score_exact_agreement_handles_an_abstained_empty_prediction():
     agreement, n = score_exact_agreement([], [0, 1, 2])
     assert agreement is None
     assert n == 0
+
+
+def test_dp_principles_containment_charge_and_meet():
+    """User DP principles live as callables on DpPrinciples (optional; not required by align_bracket)."""
+    p = DpPrinciples()
+    assert p.opening_move_kind() == INSERTION_SPLIT
+    assert p.containment_window(2, 16)["n_after"] == 13
+    charge = p.charge_between_anchors(
+        start_ref_index=0,
+        start_k_e=5,
+        end_ref_index=2,
+        end_k_e=5,
+        intervening_k_e=(3,),
+    )
+    assert charge["charge_resolutions"] == 9  # 4 after start + 3 mid + 2 before end
+    assert p.priors_meet_index(
+        j_left=10, leftover_after_left=4, j_right=20, leftover_before_right=4
+    ) == 15
+    assert p.paragraphs_per_resolution(40, 10) == 4.0
+
+
+def test_dp_principles_annotate_matches_optional():
+    def overlap(i: int, j: int) -> float:
+        return 5.0 if i == j else 0.0
+
+    result = align_bracket(5, 5, overlap, CostModel())
+    notes = DpPrinciples().annotate_matches(result, k_e=5)
+    assert any("window" in n for n in notes)
+    assert any("meet" in n for n in notes)

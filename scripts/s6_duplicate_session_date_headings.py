@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import re
+from calendar import monthrange
 from collections import Counter, defaultdict
 from typing import Any
 
@@ -50,6 +51,15 @@ from data_io import load
 from scripts._republic_date_vocab import DAY_TOKENS, MONTH_NAMES, WEEKDAY_NAMES
 
 from fuzzy_search.search.phrase_searcher import FuzzyPhraseSearcher
+
+# Relative day tokens in REPUBLIC's table: 0 = last of month, -1 = second-to-last.
+# They must not be compared as literal calendar days (day 0 is invalid).
+RELATIVE_LAST = 0
+RELATIVE_SECOND_LAST = -1
+RELATIVE_DAY_SPELLINGS = {
+    RELATIVE_LAST: ["lesten", "leste", "Ultima"],
+    RELATIVE_SECOND_LAST: ["naestlesten", "naestleste", "nalesten", "naleste"],
+}
 
 CONCORDANCE_DATASET = "resolution_concordance_1626_1630"
 AXIS_DATASET = "paragraph_axis_1626_1630"
@@ -129,13 +139,46 @@ def weekday_before(text: str, offset: int) -> int | None:
     return None if best is None else best[1]
 
 
+def resolve_day_token(parsed_day: int | None, period: pd.Period) -> int | None:
+    """Map a parsed day token onto a calendar day for ``period``'s month.
+
+    Absolute tokens (1–31) pass through. Relative tokens from REPUBLIC's table
+    (``0`` = last of month, ``-1`` = second-to-last) resolve against that month's
+    length. Without this, ``lesten`` never verifies against the 28th–31st.
+    """
+    if parsed_day is None:
+        return None
+    if parsed_day > 0:
+        return parsed_day
+    last = monthrange(period.year, period.month)[1]
+    if parsed_day == RELATIVE_LAST:
+        return last
+    if parsed_day == RELATIVE_SECOND_LAST:
+        return last - 1
+    return None
+
+
+def matched_year(matched: str) -> int | None:
+    """Year numeral inside a heading match, if any (relative-day false-positive guard)."""
+    years = re.findall(r"\b(1[5-7]\d{2})\b", matched)
+    if not years:
+        return None
+    return int(years[-1])
+
+
 def date_phrases(period: pd.Period) -> list[str]:
     """Heading phrases for one date, over every day and month spelling REPUBLIC records.
 
     The weekday is excluded here on purpose and applied afterwards as a cross-check -- see
-    `weekday_before`.
+    `weekday_before`. Relative month-end spellings (``lesten`` / ``naestlesten``) are added
+    only when this date is the last / second-to-last day of its month.
     """
     days = set(DAY_SPELLINGS.get(period.day, [])) | {str(period.day), f"{period.day}."}
+    last = monthrange(period.year, period.month)[1]
+    if period.day == last:
+        days.update(RELATIVE_DAY_SPELLINGS[RELATIVE_LAST])
+    if period.day == last - 1:
+        days.update(RELATIVE_DAY_SPELLINGS[RELATIVE_SECOND_LAST])
     months = MONTH_TOKENS.get(period.month, [])
     phrases = {f"den {d} {m} {period.year}" for d in days for m in months}
     return sorted(p for p in phrases if len(p) >= 12)
@@ -148,6 +191,10 @@ def find_headings(paragraphs: list[dict[str, Any]], date: str) -> list[dict[str,
     adjacent-day collisions stage 1 cannot avoid, by parsing the matched text's own day token and
     requiring it to equal this date's day. Hits failing stage 2 are returned with
     `verified: False` so the collision rate stays measurable rather than invisible.
+
+    Relative day tokens (``lesten`` → last of month) resolve against the target month. They also
+    require the matched year to equal the target year, so prose like ``missive den lesten May
+    ontfangen`` cannot verify as a session heading.
     """
     period = pd.Period(date, freq="D")
     phrases = date_phrases(period)
@@ -161,13 +208,19 @@ def find_headings(paragraphs: list[dict[str, Any]], date: str) -> list[dict[str,
             continue
         for match in searcher.find_matches(text):
             matched = str(getattr(match, "string", ""))
-            parsed_day = next(
+            raw_day = next(
                 (d for d in (parse_day_token(t) for t in matched.split()[1:]) if d is not None),
                 None,
             )
+            relative = raw_day is not None and raw_day <= RELATIVE_LAST
+            parsed_day = resolve_day_token(raw_day, period)
             offset = int(getattr(match, "offset", 0) or 0)
             weekday = weekday_before(text, offset)
+            year = matched_year(matched)
             day_ok = parsed_day == period.day
+            if relative:
+                # Relative tokens are too common in non-heading prose without a year.
+                day_ok = bool(day_ok and year == period.year)
             weekday_ok = None if weekday is None else (weekday == period.dayofweek)
             hits.append({
                 "paragraph_position": position,
@@ -176,6 +229,7 @@ def find_headings(paragraphs: list[dict[str, Any]], date: str) -> list[dict[str,
                 "matched": matched,
                 "score": float(getattr(match, "levenshtein_similarity", 0.0) or 0.0),
                 "parsed_day": parsed_day,
+                "raw_day_token": raw_day,
                 "weekday_found": weekday,
                 "weekday_agrees": weekday_ok,
                 # The day numeral and the weekday are independent constraints: a disagreeing weekday

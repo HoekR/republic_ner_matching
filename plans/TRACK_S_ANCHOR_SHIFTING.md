@@ -23,7 +23,8 @@ not session — so the address is partly free already.
   verified shared sessions plus the 3 secret-flag-arbitrated spurious claims. Monotonicity brackets
   stay hard constraints; fingerprint verification is never an arbiter (it identifies a raw session,
   never which date owns it). Scored on `separated`.
-- **S3 — extend to the 42 undecided duplicates** via the entity channel.
+- **S3 — extend to the undecided duplicates** via the entity channel.
+  - **2026-10-09:** heading `lesten` fix took 39→36 undecided (3 wired). Entity channel (`s6_duplicate_session_entity_splits`) **NO-GO** against heading gold (filtered within-3 0.67 on n=3). S3 remains open for a stronger instrument, not a weak wire.
 
 **Open design question (user, 2026-10-05): calibrate the anchor scoring instead of adding hard rules.**
 Three channels failed the same way in one day — Group C attribution (30.9% vs 47.9% baseline), the

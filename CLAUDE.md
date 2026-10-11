@@ -25,6 +25,13 @@ Read `AGENTS.md`, `docs/DATA.md`, and `PLAN.md` before pipeline work.
   post-bar pages, and a contaminated 80.9% disagreement rate). If a result involves dated HTR
   material, state that the bar was applied.
 
+## Secret inventories 4562 / 4861 — OUT. FULL STOP
+
+**Leave 4562 and 4861 out of this pipeline until the user explicitly says otherwise**
+(2026-10-08; restated 2026-10-09). Not as population, denominator, knelpunt, or via the
+`missing_htr` bag (that count reimports them by tautology). Use `is_main_series` /
+`drop_sidelined` / `assert_no_sidelined`. Sequence = **3185–3189 only**.
+
 - Never hardcode absolute data paths; use `data_manifest.toml` + `data_io.resolve` / `load` / `save_*`
 - Register datasets in the manifest before referencing them in code or notebooks
 - After manifest edits: `uv run python -m data_io.check`
@@ -37,7 +44,10 @@ Read `AGENTS.md`, `docs/DATA.md`, and `PLAN.md` before pipeline work.
 
 ## The spine: three sequences, four edges
 
-The project models three sequences (physical scans, HTR sessions, editorial dates) that must not be conflated. Four cross-sequence edges hold the evidence: **OBSERVED_ON** (archival), **DATED_AS** (heading), **PINNED_TO** (inferred session→date link), and **ALIGNED_TO** (derivable). Before reporting a new measurement, state which edge the question is about. If a result crosses PINNED_TO, it is inferred and must say so. This applies to the agent's own claims, not only to pipeline code: before asserting a conclusion, name which edge it rests on — if you cannot, the claim is not yet well-posed, no matter how confident it reads. See `docs/SEQUENCE_MODEL.md` and `plans/SEQUENCE_GRAPH_SPINE.md`; the graph package `sequence_graph/` is built through Stage 4 (the solver, unfitted/ungated) -- `sequence_graph.query` answers session/date/scan questions directly.
+**Sitting ≡ session** (user, 2026-10-09): one HHM meeting; sequences are separate evidence;
+the task is synchronisation across representations. See `docs/SEQUENCE_MODEL.md`.
+
+The project models three sequences (physical scans, HTR sessions, editorial dates) that must not be conflated *as evidence streams*. Four cross-sequence edges hold the evidence: **OBSERVED_ON** (archival), **DATED_AS** (heading), **PINNED_TO** (inferred session→date link), and **ALIGNED_TO** (derivable). Before reporting a new measurement, state which edge the question is about. If a result crosses PINNED_TO, it is inferred and must say so. This applies to the agent's own claims, not only to pipeline code: before asserting a conclusion, name which edge it rests on — if you cannot, the claim is not yet well-posed, no matter how confident it reads. See `docs/SEQUENCE_MODEL.md` and `plans/SEQUENCE_GRAPH_SPINE.md`; the graph package `sequence_graph/` is built through Stage 4 (the solver, unfitted/ungated) -- `sequence_graph.query` answers session/date/scan questions directly.
 
 ## Workflow
 

@@ -116,11 +116,12 @@ def scope_meta() -> dict[str, str]:
 # The sequence is the main register. The secret series is sidelined.
 # --------------------------------------------------------------------------------------------
 # User, 2026-10-08: *"leave 4562 out of it! it is something different. Sideline them, they do not
-# enter into the sequence as yet"*. Promoted here from a per-script constant for the same reason
-# the scope bar was: it existed as `PATHOLOGICAL_INVENTORIES` in `measure_scans_per_day`, was
-# imported by name, and got breached anyway by a new measurement that had its own idea of a
-# denominator. A rule that is not executable at the point data enters a script is a rule that
-# gets broken.
+# enter into the sequence as yet"*. Restated 2026-10-09 after agents reimported them via the
+# concordance `missing_htr` bag (4,482) — that count is not a main-line knelpunt. Promoted here
+# from a per-script constant for the same reason the scope bar was: it existed as
+# `PATHOLOGICAL_INVENTORIES` in `measure_scans_per_day`, was imported by name, and got breached
+# anyway by a new measurement that had its own idea of a denominator. A rule that is not
+# executable at the point data enters a script is a rule that gets broken.
 
 MAIN_SERIES: frozenset[str] = frozenset({"3185", "3186", "3187", "3188", "3189"})
 """The ordinary resolution registers 1626-1630. These are *the* sequence."""

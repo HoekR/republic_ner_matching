@@ -24,6 +24,11 @@ decisions" list):
    `align_session`'s 0.957/0.962, `align_entity_mentions`'s closed-negative result, or `segment_gap`'s
    0.628 baseline -- that comparison is explicitly deferred, per decision 4.
 
+**Usable DP principles (user, 2026-10-09 — this *is* the alignment reasoning, not a side track).**
+``DpPrinciples`` holds callables (containment window, charge between anchors, priors meet,
+opening→``INSERTION_SPLIT``). Optional: construct and call after ``align_bracket``; the DP
+path itself does not require the object.
+
 **The four defects this fixes, relative to the demo the plan describes** (not present in this
 repo -- rebuilt from the plan's specification, not patched from existing code):
 
@@ -70,6 +75,302 @@ MATCH = "MATCH"
 DELETION_GAP = "DELETION_GAP"
 INSERTION_SPLIT = "INSERTION_SPLIT"
 SOFT_CLIP = "SOFT_CLIP"
+
+@dataclass(frozen=True)
+class DpPrinciples:
+    """Usable DP principles (user, 2026-10-09) — callables, not side-track prose.
+
+    Optional helpers for containment charge, soft boundaries, and opening→split typing.
+    ``align_bracket`` does not require this object; pass it when a caller wants the
+    quantities explicitly. Defaults use the measured position_prior MAD (1.0 paragraph)
+    as the decay scale — robust, not a fitted global length prior.
+    """
+
+    # position_prior MAD after excluding severe-mismatch days (docs/DECISIONS.md 2026-10-09)
+    decay_mad_paragraphs: float = 1.0
+
+    def session_num_is_label(self, session_id: str) -> str:
+        """Identity: return the id unchanged; documents that num-N is bookkeeping only."""
+        return session_id
+
+    def containment_window(self, ref_index: int, k_e: int) -> dict[str, int]:
+        """One MATCH of resolution ``ref_index`` (0-based) in a day with ``k_e`` resolutions.
+
+        Returns how many enriched resolutions must still sit *before* / *after* that MATCH
+        in the same HTR block (soft window; not a hard count under over-/under-segmentation).
+        """
+        if k_e < 1:
+            raise ValueError("k_e must be >= 1")
+        if not 0 <= ref_index < k_e:
+            raise ValueError(f"ref_index {ref_index} out of range for k_e={k_e}")
+        return {
+            "k_e": k_e,
+            "ref_index": ref_index,
+            "n_before": ref_index,
+            "n_after": k_e - ref_index - 1,
+        }
+
+    def charge_between_anchors(
+        self,
+        *,
+        start_ref_index: int,
+        start_k_e: int,
+        end_ref_index: int,
+        end_k_e: int,
+        intervening_k_e: Sequence[int] = (),
+    ) -> dict[str, int | float]:
+        """Editorial resolution charge strictly between two ordered MATCHes.
+
+        Leftover after the first day's match + full ``K_e`` of intervening sitting days +
+        head of the end day before its match. That charge is what the paragraph stretch
+        between the two read indices ought to carry — bracket-level, not a mean length.
+        """
+        if start_k_e < 1 or end_k_e < 1:
+            raise ValueError("k_e must be >= 1")
+        after_start = self.containment_window(start_ref_index, start_k_e)["n_after"]
+        before_end = self.containment_window(end_ref_index, end_k_e)["n_before"]
+        middle = sum(int(k) for k in intervening_k_e)
+        charge = after_start + middle + before_end
+        return {
+            "charge_resolutions": charge,
+            "after_start": after_start,
+            "intervening": middle,
+            "before_end": before_end,
+        }
+
+    def paragraphs_per_resolution(
+        self, n_paragraphs: int, charge_resolutions: int
+    ) -> float | None:
+        """Bracket-local paragraphs/resolution ratio. ``None`` if charge is 0.
+
+        Explicitly *not* a corpus-wide average length prior — only the two-anchor stretch.
+        """
+        if charge_resolutions <= 0:
+            return None
+        return n_paragraphs / charge_resolutions
+
+    def containment_plausibility(self, paragraph_distance: int) -> float:
+        """Soft same-block plausibility decaying with |Δparagraph| from a MATCH centre.
+
+        Laplace-style in MAD units: 1 / (1 + |d|/MAD). Not a calibrated probability; a
+        monotone prior weight for optional cost shaping.
+        """
+        mad = max(self.decay_mad_paragraphs, 1e-6)
+        return 1.0 / (1.0 + abs(int(paragraph_distance)) / mad)
+
+    def priors_meet_index(
+        self,
+        *,
+        j_left: int,
+        leftover_after_left: int,
+        j_right: int,
+        leftover_before_right: int,
+    ) -> int:
+        """Read-index soft boundary between two MATCH centres (priors meet).
+
+        Weighted toward the side with more leftover ``K_e`` charge; equal leftovers →
+        arithmetic midpoint. Clamped to ``(j_left, j_right)``.
+        """
+        if j_right <= j_left + 1:
+            return j_left
+        w_left = max(leftover_after_left, 0) + 1
+        w_right = max(leftover_before_right, 0) + 1
+        # Distance from left grows as right's weight pulls the meet point leftward.
+        span = j_right - j_left
+        meet = j_left + int(round(span * w_right / (w_left + w_right)))
+        return max(j_left + 1, min(j_right - 1, meet)) if span > 1 else j_left
+
+    def opening_move_kind(self) -> str:
+        """Undetected sitting opening → paragraph-split hypothesis, not a new session.
+
+        Typed as ``INSERTION_SPLIT`` in this DP (extra read under the current ref / cut in
+        the stream). Never mint a Session id; never treat as PINNED_TO.
+        """
+        return INSERTION_SPLIT
+
+    def evidenced_matches(
+        self,
+        result: "AlignmentResult",
+        overlap: Callable[[int, int], float],
+        *,
+        min_overlap: float = 0.0,
+    ) -> tuple["AlignedPair", ...]:
+        """MATCH steps whose entity overlap clears ``min_overlap`` (strictly ``>``)."""
+        out: list[AlignedPair] = []
+        for p in result.pairs:
+            if p.kind != MATCH or p.ref_index is None or p.read_index is None:
+                continue
+            if overlap(int(p.ref_index), int(p.read_index)) > min_overlap:
+                out.append(p)
+        return tuple(out)
+
+    def two_evidence_gate(
+        self,
+        result: "AlignmentResult",
+        overlap: Callable[[int, int], float],
+        *,
+        min_overlap: float = 0.0,
+        min_margin: float = 0.0,
+    ) -> dict[str, object]:
+        """Diagnostic gate: principles that need two centres fire only with ≥2 evidenced MATCHES.
+
+        Safer variant: each of the two outermost evidenced matches must beat the best
+        *other* read's overlap for that ref by ``min_margin`` (default 0 = overlap>0 only).
+
+        Does **not** change the DP path — callers use the returned diagnosis optionally.
+        """
+        evidenced = self.evidenced_matches(result, overlap, min_overlap=min_overlap)
+        if len(evidenced) < 2:
+            return {
+                "fires": False,
+                "reason": "fewer_than_two_evidenced_matches",
+                "n_evidenced": len(evidenced),
+            }
+        left, right = evidenced[0], evidenced[-1]
+        if int(left.read_index) >= int(right.read_index):
+            return {
+                "fires": False,
+                "reason": "non_ordered_reads",
+                "n_evidenced": len(evidenced),
+            }
+
+        def margin(p: AlignedPair) -> float:
+            i, j = int(p.ref_index), int(p.read_index)
+            own = overlap(i, j)
+            # Best competing read for this ref (any other j').
+            best_other = 0.0
+            # n_read unknown; probe j' in a generous band from path reads.
+            read_js = sorted({
+                int(q.read_index) for q in result.pairs if q.read_index is not None
+            })
+            for j2 in read_js:
+                if j2 == j:
+                    continue
+                best_other = max(best_other, overlap(i, j2))
+            return own - best_other
+
+        m_left, m_right = margin(left), margin(right)
+        if m_left < min_margin or m_right < min_margin:
+            return {
+                "fires": False,
+                "reason": "margin_below_threshold",
+                "n_evidenced": len(evidenced),
+                "margin_left": m_left,
+                "margin_right": m_right,
+                "min_margin": min_margin,
+            }
+        return {
+            "fires": True,
+            "reason": "two_evidenced_matches",
+            "n_evidenced": len(evidenced),
+            "left": left,
+            "right": right,
+            "margin_left": m_left,
+            "margin_right": m_right,
+        }
+
+    def diagnose_two_evidence(
+        self,
+        result: "AlignmentResult",
+        overlap: Callable[[int, int], float],
+        *,
+        k_e: int,
+        min_overlap: float = 0.0,
+        min_margin: float = 0.0,
+        intervening_k_e: Sequence[int] = (),
+        n_paragraphs_between: int | None = None,
+    ) -> dict[str, object]:
+        """Second-pass diagnosis when ``two_evidence_gate`` fires; empty diagnosis otherwise."""
+        gate = self.two_evidence_gate(
+            result, overlap, min_overlap=min_overlap, min_margin=min_margin
+        )
+        if not gate["fires"]:
+            return {"gate": gate, "diagnosis": None}
+        left = gate["left"]
+        right = gate["right"]
+        assert isinstance(left, AlignedPair) and isinstance(right, AlignedPair)
+        charge = self.charge_between_anchors(
+            start_ref_index=int(left.ref_index),
+            start_k_e=k_e,
+            end_ref_index=int(right.ref_index),
+            end_k_e=k_e,
+            intervening_k_e=intervening_k_e,
+        )
+        wa = self.containment_window(int(left.ref_index), k_e)
+        wb = self.containment_window(int(right.ref_index), k_e)
+        meet = self.priors_meet_index(
+            j_left=int(left.read_index),
+            leftover_after_left=wa["n_after"],
+            j_right=int(right.read_index),
+            leftover_before_right=wb["n_before"],
+        )
+        n_read_between = max(0, int(right.read_index) - int(left.read_index) - 1)
+        ratio = None
+        if n_paragraphs_between is not None:
+            ratio = self.paragraphs_per_resolution(
+                n_paragraphs_between, int(charge["charge_resolutions"])
+            )
+        return {
+            "gate": {k: v for k, v in gate.items() if k not in ("left", "right")}
+            | {
+                "left_ref": left.ref_index,
+                "left_read": left.read_index,
+                "right_ref": right.ref_index,
+                "right_read": right.read_index,
+            },
+            "diagnosis": {
+                "charge": charge,
+                "meet_read_index": meet,
+                "n_read_between": n_read_between,
+                "n_paragraphs_between": n_paragraphs_between,
+                "paragraphs_per_resolution": ratio,
+                "opening_move_kind": self.opening_move_kind(),
+            },
+        }
+
+    def annotate_matches(
+        self,
+        result: "AlignmentResult",
+        *,
+        k_e: int | None = None,
+    ) -> tuple[dict[str, object], ...]:
+        """Optional post-pass: per MATCH, emit containment windows (and meet points if ≥2).
+
+        Does not alter ``result``; callers opt in. Prefer ``diagnose_two_evidence`` when the
+        two-evidence gate matters.
+        """
+        matches = [
+            p for p in result.pairs if p.kind == MATCH and p.ref_index is not None
+        ]
+        notes: list[dict[str, object]] = []
+        for p in matches:
+            note: dict[str, object] = {
+                "ref_index": p.ref_index,
+                "read_index": p.read_index,
+            }
+            if k_e is not None:
+                note["window"] = self.containment_window(int(p.ref_index), k_e)
+            notes.append(note)
+        if len(matches) >= 2 and k_e is not None:
+            for a, b in zip(matches, matches[1:]):
+                wa = self.containment_window(int(a.ref_index), k_e)
+                wb = self.containment_window(int(b.ref_index), k_e)
+                notes.append({
+                    "meet": self.priors_meet_index(
+                        j_left=int(a.read_index),
+                        leftover_after_left=wa["n_after"],
+                        j_right=int(b.read_index),
+                        leftover_before_right=wb["n_before"],
+                    ),
+                    "between_refs": (a.ref_index, b.ref_index),
+                    "charge": self.charge_between_anchors(
+                        start_ref_index=int(a.ref_index),
+                        start_k_e=k_e,
+                        end_ref_index=int(b.ref_index),
+                        end_k_e=k_e,
+                    ),
+                })
+        return tuple(notes)
 
 
 @dataclass(frozen=True)
@@ -470,10 +771,199 @@ def run_bracket(date: str, cost: CostModel = CostModel()) -> dict:
     }
 
 
+PRINCIPLES_PROOF_DATASET = "sequence_graph_dp_principles_proof"
+
+
+def prove_dp_principles(
+    *,
+    min_overlap: float = 0.0,
+    min_margin: float = 0.0,
+    write: bool = False,
+) -> dict:
+    """Diagnostic proof of the two-evidence gate on ``boundary_gold_sample`` days.
+
+    First pass: unfitted ``align_bracket``. Second pass: ``diagnose_two_evidence`` (no path
+    change). Reports gate fire rate and, when it fires, whether gold-located interior
+    resolutions fall inside the read span between the two evidenced MATCH centres, and the
+    bracket-local paragraphs/resolution ratio vs charge.
+
+    Does not reshape ``CostModel`` — measure before promoting to a cost term.
+    """
+    from data_io import save_semi_structured
+    from scripts.corpus_scope import scope_meta
+
+    gold = load("boundary_gold_sample")
+    principles = DpPrinciples()
+    cost = CostModel()
+    scorer = build_entity_overlap_scorer()
+
+    day_rows: list[dict] = []
+    n_fire = n_skip = 0
+    n_interior_gold = n_interior_in_span = 0
+
+    for day in gold["days"]:
+        date = day["date"]
+        flat_ids = sorted(day["flat_ids"], key=lambda fid: parse_flat_id(fid)[2])
+        n_ref, n_read = len(day["enriched_ids"]), len(flat_ids)
+        if n_ref < 2 or n_read < 2:
+            continue
+        volgnrs = [f"{date}_{index}" for index in range(n_ref)]
+        cache: dict[tuple[int, int], float] = {}
+
+        def overlap(i: int, j: int, _c=cache, _v=volgnrs, _f=flat_ids) -> float:
+            key = (i, j)
+            if key not in _c:
+                _c[key] = scorer(_v[i], _f[j])
+            return _c[key]
+
+        result = align_bracket(n_ref, n_read, overlap, cost)
+        if result.abstained:
+            n_skip += 1
+            day_rows.append({
+                "record_type": "day",
+                "date": date,
+                "k_e": n_ref,
+                "k_f": n_read,
+                "gate_fires": False,
+                "reason": "abstained",
+            })
+            continue
+
+        stream = day_paragraph_stream(date)
+        flat_first: dict[int, int] = {}
+        for pos, fid in enumerate(stream):
+            if fid in flat_ids:
+                ri = flat_ids.index(fid)
+                flat_first.setdefault(ri, pos)
+
+        gate_probe = principles.two_evidence_gate(
+            result, overlap, min_overlap=min_overlap, min_margin=min_margin
+        )
+        n_paras = None
+        p_lo = p_hi = None
+        if gate_probe["fires"]:
+            left, right = gate_probe["left"], gate_probe["right"]
+            j_lo, j_hi = int(left.read_index), int(right.read_index)
+            p_lo = flat_first.get(j_lo)
+            p_hi = flat_first.get(j_hi)
+            if p_lo is not None and p_hi is not None and p_hi >= p_lo:
+                n_paras = p_hi - p_lo + 1
+
+        diag = principles.diagnose_two_evidence(
+            result,
+            overlap,
+            k_e=n_ref,
+            min_overlap=min_overlap,
+            min_margin=min_margin,
+            n_paragraphs_between=n_paras,
+        )
+        fires = bool(diag["gate"]["fires"])
+        if fires:
+            n_fire += 1
+            g = diag["gate"]
+            flat_to_gold: dict[str, int] = {}
+            for boundary in day["boundaries"]:
+                if boundary["kind"] in ("cut", "end_of_last_resolution") and boundary.get("flat_id"):
+                    flat_to_gold.setdefault(
+                        boundary["flat_id"], boundary["paragraph_stream_index"]
+                    )
+            left_ref, right_ref = int(g["left_ref"]), int(g["right_ref"])
+            for ref_i in range(left_ref + 1, right_ref):
+                read_i = result.match_for_ref(ref_i)
+                if read_i is None or read_i >= len(flat_ids):
+                    continue
+                gold_para = flat_to_gold.get(flat_ids[read_i])
+                if gold_para is None or p_lo is None or p_hi is None:
+                    continue
+                n_interior_gold += 1
+                if p_lo <= gold_para <= p_hi:
+                    n_interior_in_span += 1
+        else:
+            n_skip += 1
+
+        day_rows.append({
+            "record_type": "day",
+            "date": date,
+            "k_e": n_ref,
+            "k_f": n_read,
+            "gate_fires": fires,
+            "reason": diag["gate"].get("reason"),
+            "diagnosis": diag.get("diagnosis"),
+            "gate": diag["gate"],
+        })
+
+    summary = {
+        "record_type": "meta",
+        "channel": "dp_principles_two_evidence_gate",
+        "min_overlap": min_overlap,
+        "min_margin": min_margin,
+        "n_days_scored": len(day_rows),
+        "n_gate_fires": n_fire,
+        "n_gate_skips": n_skip,
+        "fire_rate": n_fire / len(day_rows) if day_rows else None,
+        "interior_gold_located": n_interior_gold,
+        "interior_gold_in_read_span": n_interior_in_span,
+        "interior_in_span_rate": (
+            n_interior_in_span / n_interior_gold if n_interior_gold else None
+        ),
+        "path_changed": False,
+        "note": (
+            "Diagnostic only: two-evidence gate + charge/meet/capacity. "
+            "Does not reshape CostModel. Promote only after this proof."
+        ),
+        **scope_meta(),
+    }
+    if write:
+        save_semi_structured(
+            [summary, *day_rows],
+            logical_name=PRINCIPLES_PROOF_DATASET,
+            script=__file__,
+            description=(
+                "Proof of DpPrinciples two-evidence gate on boundary_gold_sample: "
+                "first-pass align_bracket, second-pass diagnose_two_evidence (no path change). "
+                "Meta: fire rate; interior gold in read-span rate."
+            ),
+            parent_sources=["boundary_gold_sample", "paragraph_axis_1626_1630"],
+        )
+    return summary
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--date", default="1629-03-02", help="the scoped first bracket (decision 3)")
+    parser.add_argument(
+        "--prove-principles",
+        action="store_true",
+        help="diagnostic proof of two-evidence DpPrinciples gate on boundary_gold_sample",
+    )
+    parser.add_argument("--write", action="store_true", help="with --prove-principles, persist dataset")
+    parser.add_argument("--min-overlap", type=float, default=0.0)
+    parser.add_argument(
+        "--min-margin",
+        type=float,
+        default=0.0,
+        help="require each gate MATCH to beat best other-read overlap by this margin",
+    )
     args = parser.parse_args()
+
+    if args.prove_principles:
+        summary = prove_dp_principles(
+            min_overlap=args.min_overlap,
+            min_margin=args.min_margin,
+            write=args.write,
+        )
+        print(
+            f"dp_principles proof: days={summary['n_days_scored']} "
+            f"fires={summary['n_gate_fires']} skips={summary['n_gate_skips']} "
+            f"fire_rate={summary['fire_rate']}"
+        )
+        print(
+            f"  interior gold in read-span: "
+            f"{summary['interior_gold_in_read_span']}/{summary['interior_gold_located']} "
+            f"rate={summary['interior_in_span_rate']}"
+        )
+        print(f"  path_changed={summary['path_changed']} write={args.write}")
+        return
 
     report = run_bracket(args.date)
     print(f"date: {report['date']}  k_e={report['k_e']}  k_f={report['k_f']}")

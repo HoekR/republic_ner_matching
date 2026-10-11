@@ -79,8 +79,11 @@ OPENING_PHRASES = [
     "ontfangen een missive",
     "ontfangen een missiue",
     "ontfangen eenige missiven",
+    "ontfangen een brief",
     "ontfangen een requeste",
     "is gelesen de requeste",
+    "is gelesen de reqte",
+    "houdende advertentie",
     "opt versouck",
     "opt versoeck",
 ]
@@ -91,6 +94,10 @@ CLOSING_PHRASES = [
     "waerop geen resolutie is gevallen",
     "egeen resolutie is genomen",
     "geen resolutie is genomen",
+    "waerop geen resolutie is genomen",
+    "geen resolutie vereisende",
+    "geen resolutie vereysende",
+    "vereist geen resolutie",
     "sonder resolutie",
 ]
 

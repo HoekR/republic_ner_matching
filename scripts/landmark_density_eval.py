@@ -93,8 +93,11 @@ FORMULAIC_OPENING_PHRASES = [
     "ontfangen een missive",
     "ontfangen een missiue",
     "ontfangen eenige missiven",
+    "ontfangen een brief",
     "ontfangen een requeste",
     "is gelesen de requeste",
+    "is gelesen de reqte",
+    "houdende advertentie",
 ]
 # 0.85 is this codebase's phrase-search convention (s6b_anchor_harvest.PHRASE_SEARCH_CONFIG);
 # these phrases are 17+ chars so the short-word false-positive problem that forced 0.95 for

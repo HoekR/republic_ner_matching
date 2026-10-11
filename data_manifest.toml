@@ -943,9 +943,93 @@ phase = "semi"
 description = "Before/after ALIGNED_TO coverage (sequence_graph.consolidate.aligned_to_status) across each sequence_graph.persist.save_graph run -- one row per run per bucket (gold_verified/legacy_concordance_only/solver_derived_only/unaligned), so a graph rebuild's actual effect is a logged number, never an unverified claim (user, 2026-10-09: 'measure improvement... save the results to a log')."
 parent = "sequence_graph_edges"
 
+[datasets.sequence_graph_sync_gaps]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_sync_gaps.jsonl"
+phase = "semi"
+description = "Broad synchronisation gaps on the saved graph (sequence_graph.sync_gaps): between consecutive main-series production PINNED_TO sessions on HTR NEXT, charges all editorial k_e and all interior HTR paragraphs in the calendar/session span — not only unpinned/unclaimed material. User 2026-10-09: no 'outside' mass; widen the gap bracket for anchor work."
+parent = "sequence_graph_edges"
+
+[datasets.sequence_graph_dp_principles_proof]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_dp_principles_proof.jsonl"
+phase = "semi"
+description = "Diagnostic proof of DpPrinciples two-evidence gate (sequence_graph.align --prove-principles): first-pass align_bracket on boundary_gold_sample, second-pass diagnose_two_evidence (charge/meet/capacity). Does not change the DP path or CostModel. Meta: fire_rate, interior_gold_in_read_span rate."
+parent = "boundary_gold_sample"
+
+[datasets.sequence_graph_sync_gap_align_proof]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_sync_gap_align_proof.jsonl"
+phase = "semi"
+description = "Gold/silver/projection proof rows for bracket-level editorial↔HTR sequence alignment (sequence_graph.sync_gap_align). Random samples; mechanism check, not a perfection gate. Optional push writes MATCH/INSERTION_SPLIT as ALIGNED_TO:solver on the saved graph."
+parent = "sequence_graph_sync_gaps"
+
+[datasets.sequence_graph_physical_extents_proof]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_physical_extents_proof.jsonl"
+phase = "semi"
+description = "Physical session extents from OBSERVED_ON (+ DATED_AS on those scans). Continuous scan-stretch proof (book order), not random. Text unused. Undated sessions get neighbour dated-scan calendar brackets."
+parent = "sequence_graph_edges"
+
+[datasets.session_anchor_shift_proposals]
+tier = "hot"
+path = "republic_ner_matching/output/session_anchor_shift_proposals.jsonl"
+phase = "semi"
+description = "PINNED_TO proposals from physical track only (unique DATED_AS→scan→OBSERVED_ON). Never overwrites production PINNED_TO; optional PINNED_TO:physical staging. Includes gap remeasure before/after overrides for undated session membership."
+parent = "sequence_graph_physical_extents_proof"
+
+[datasets.session_anchor_shift_approvals]
+tier = "hot"
+path = "republic_ner_matching/output/session_anchor_shift_approvals.jsonl"
+phase = "semi"
+description = "Human approvals for physical pin-shift review cards (dated_scan / ambiguous / far_shift) from notebooks/physical_pin_shift_review.ipynb. Actions approve|reject|defer plus free-text note. Judgment is date-on-scan only; session_num is not a key."
+parent = "session_anchor_shift_proposals"
+
+[datasets.session_anchor_shift_date_trust]
+tier = "hot"
+path = "republic_ner_matching/output/session_anchor_shift_date_trust.jsonl"
+phase = "semi"
+description = "Approved calendar dates as trust set for staged PINNED_TO:physical (no production wire, no session_num scoring). Includes trusted-override remeasure and text-inside inventory (unaligned enriched vs HTR mass) for new bracket geometries. From sequence_graph.physical_pin_shift --trust-approvals."
+parent = "session_anchor_shift_approvals"
+
+[datasets.session_anchor_shift_bracket_align]
+tier = "hot"
+path = "republic_ner_matching/output/session_anchor_shift_bracket_align.jsonl"
+phase = "semi"
+description = "Two DP hand-off inside date-trusted new brackets: DP1 entity on full editorial stream, DP2 short/opening on unaligned short residue with DP1 reads frozen. Channels entity_dp / short_opening_dp. Optional ALIGNED_TO:solver push. No production PINNED_TO wire. From sequence_graph.sync_gap_align --trusted-brackets."
+parent = "session_anchor_shift_date_trust"
+
+[datasets.displaced_sitting_proposals]
+tier = "hot"
+path = "republic_ner_matching/output/displaced_sitting_proposals.jsonl"
+phase = "semi"
+description = "Date-blind entity displacement: in-scope SittingDays with no main-series PINNED_TO searched into 3185–3189 session text (enriched surfaces × paragraph_axis). First record is gate; remaining are proposals. Optional DISPLACED_IN edges via --write; never rewrites PINNED_TO. 4562/4861 out."
+parent = "sequence_graph_edges"
+
 [datasets.duplicate_session_date_splits]
 tier = "hot"
 path = "republic_ner_matching/output/duplicate_session_date_splits.jsonl"
 phase = "semi"
-description = "A reviewable PROPOSAL set, not applied anywhere: one row per session claimed by >1 enriched date (67 total, from resolution_concordance_1626_1630's resolved_session_id), with scripts.s6_duplicate_session_date_headings's own heading-based verdict (run for real here, persisted for the first time -- that script states 'diagnostic only, no dataset write'). 25 of 67 get a `verdict` starting 'shared' and a located split_at_paragraph/split_axis_id, plus a precomputed `proposed_ranges` (per-claimant-date paragraph range; for 3+-date sessions the earlier dates share one undivided range, named explicitly, never guessed). Does not touch sequence_graph's PINNED_TO edges or any production placement -- user, 2026-10-09: 'persist the 25 located splits as a reviewable proposal set; pause before rewriting graph edges or production pins.'"
+description = "Duplicate-session split PROPOSALS with a machine gate (not a human pin-review queue). First JSONL record is record_type=gate (held_out / control_false_shared / structural / gate_pass aggregates). Remaining rows: in-scope main-series sessions claimed by >1 enriched date (64; 3 of the corpus 67 are sidelined 4562), from s6_duplicate_session_date_headings classify(); shared* rows carry proposed_ranges, split_at_paragraph, and gate_eligible. Gate: held-out session-3185-num-56 verifies 1626-03-28; distant (+40d) fake-date controls on single-claimant 3187 must yield zero shared* (adjacent fakes are real under-claims, not FPs); structural paragraph partition. Does not touch PINNED_TO or production placement. User 2026-10-09: persist map half; will not review all proposed pins."
 parent = "resolution_concordance_1626_1630"
+
+[datasets.duplicate_session_splits_apply_eval]
+tier = "hot"
+path = "republic_ner_matching/output/duplicate_session_splits_apply_eval.jsonl"
+phase = "semi"
+description = "Diagnostic apply of gate-eligible duplicate_session_date_splits (scripts/apply_duplicate_session_splits_eval.py): exclusive proposed_ranges get sequential/packed paragraph placement on a concordance copy; undivided 3+ earlier dates abstain. Meta reports separated before/after on the applied-date slice and corpus-wide; go=true iff slice separated rises and corpus does not fall. No concordance/PINNED_TO/prediction write."
+parent = "duplicate_session_date_splits"
+
+[datasets.duplicate_session_splits_wire_report]
+tier = "hot"
+path = "republic_ner_matching/output/duplicate_session_splits_wire_report.jsonl"
+phase = "semi"
+description = "Production wire report for scripts/wire_duplicate_session_splits.py: per-date wire log for gate-eligible exclusive duplicate-session ranges written into resolution_concordance_1626_1630; separated before/after on wired dates and corpus-wide; cross_day_shift→resolved_auto promotions counted. Undivided 3+ earlier dates abstain."
+parent = "duplicate_session_date_splits"
+
+[datasets.duplicate_session_entity_splits]
+tier = "hot"
+path = "republic_ner_matching/output/duplicate_session_entity_splits.jsonl"
+phase = "semi"
+description = "Entity-channel split proposals for heading-undecided duplicate sessions (scripts/s6_duplicate_session_entity_splits.py). First record is record_type=gate: IDF-weighted exclusive person/place surfaces calibrated against heading-confirmed gate_eligible splits; gate_pass only if confidence-filtered within-3 recovery ≥0.80 on n≥10. Remaining rows: one per heading-undecided session. Does not touch concordance / PINNED_TO. Production place/org/per_overlap cannot feed this channel (window-days 0 against flat_date leaves the second claimant with zero rows in the shared session)."
+parent = "duplicate_session_date_splits"

@@ -9,6 +9,26 @@ The one rule that *stopped* being broken was the one made executable (`scripts/c
 
 Its tone follows the scope bar precedent: `scripts/corpus_scope.py` implements one guard (`in_scope`, `drop_out_of_scope`), with tests that pass/fail together. This document's spine block is promoted into the four loaded instruction files (CLAUDE.md, AGENTS.md, .cursor/rules/project-standards.mdc, .github/copilot-instructions.md) the same way the scope bar was — a short rule, a pointer to the enforcing machinery, and a note about tests.
 
+## Sitting ≡ session — a synchronisation problem
+
+**User, 2026-10-09:** sitting and session refer to the **same** thing — one HHM meeting. The
+three sequences below are **separate evidence / representations** of that phenomenon, not three
+different events. The open problem is **synchronisation**: aligning those representations (which
+scan / HTR block / editorial date name the same meeting), not matching two unlike populations
+competing for slots. Graph node types `SittingDay` and `Session` stay distinct because their
+*sources* differ; correspondence edges (`PINNED_TO`, `DATED_AS`, …) are the sync links.
+
+**Broad gaps (user, 2026-10-09):** do not treat unsynced mass as “outside” the model. A sync gap
+is the **full bracket** between consecutive production anchors on the HTR chain: all editorial
+`k_e` and all interior HTR paragraphs in that calendar/session span, whether or not a pin already
+exists. Measure with `uv run python -m sequence_graph.sync_gaps` → `sequence_graph_sync_gaps`.
+
+**Entity comparison is sequence comparison (user, 2026-10-09):** inside a bracket, align the
+ordered editorial stream against the ordered HTR stream (`align_bracket`); pairwise entity
+overlap is only the cell cost. Proof protocol: gold / silver / projection
+(`sequence_graph.sync_gap_align --prove`); MATCH cells are plowed back as `ALIGNED_TO:solver`
+(`--push-graph`). Perfection is not the gate — ordered evidenced MATCH paths are.
+
 ## The three sequences
 
 | sequence | order | status |
