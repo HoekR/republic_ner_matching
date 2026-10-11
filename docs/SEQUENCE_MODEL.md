@@ -29,6 +29,12 @@ overlap is only the cell cost. Proof protocol: gold / silver / projection
 (`sequence_graph.sync_gap_align --prove`); MATCH cells are plowed back as `ALIGNED_TO:solver`
 (`--push-graph`). Perfection is not the gate — ordered evidenced MATCH paths are.
 
+**Sync gaps / trusted brackets are work views, not ALIGNED_TO containers (user, 2026-10-11):**
+pin lids must not redefine membership. Soft-window hand-off
+(`sequence_graph.sync_gap_align --trusted-brackets`) expands seed geometries by calendar/session
+margins; locality is cost (rescaled openings, optional day decay), not a sealed box. Gaps remain
+useful *report* slices of where mass sits.
+
 ## The three sequences
 
 | sequence | order | status |
@@ -71,6 +77,37 @@ Seven tracks, four edges. That collapse is the point.
 ## The PINNED_TO rule
 
 Any traversal crossing PINNED_TO is inferred and must say so. This replaces a judgement call that failed repeatedly on 2026-10-08: *"state which of your unit, denominator and yardstick rests on `session → date`"*. The graph form is a query property: **does this path cross PINNED_TO?** If yes, the result is inferred. That is checkable in code, and three of the five 2026-10-08 breaches were exactly this.
+
+## Anchors are claims (not absolute lids)
+
+**User, 2026-10-11:** dates and other anchors are relational, especially when wrong. Treat them as provenance-tagged **claims** on the existing four edges — not as absolute calendar truths baked into node identity.
+
+**Claim ≠ identity.** `SittingDay` / `Session` / `Scan` nodes stay stable identities. Fallible sync lives on correspondence edges. Never overwrite an ISO day node because a clerk lied; add or prefer a competing claim edge.
+
+**Absolute axes** (within an inventory) — `NEXT` chains / order keys:
+- physical `scan_num`
+- HTR `session_num`
+- editorial `resolution_index` within a day
+
+**Relational / fallible** — correspondence edges (parallel channels, same pattern as `PINNED_TO` vs `PINNED_TO:physical` and multi-source `ALIGNED_TO`):
+
+| channel | edge | meaning |
+|---|---|---|
+| `DATED_AS` / `DATED_AS:literal` | Scan → SittingDay | parser of clerk heading (observed text; calendar can be wrong) |
+| `DATED_AS:review` | Scan → SittingDay | human date↔scan note (shaped from `problem_sequence_review_notes`; **not yet written to the graph**) |
+| `PINNED_TO` | SittingDay → Session | production concordance (inferred) |
+| `PINNED_TO:physical` | SittingDay → Session | physical path (already present) |
+
+**Hard constraints (user-agreed):**
+1. **No fifth edge kind** — no `RELATIVE_TO`, no claim-node types.
+2. **Absolute axes stay absolute** — scan/session order remain hard scaffolds; calendar sync is what is relational.
+3. **Doctrine before graph write** — emit `DATED_AS:review` only after note language is stable. **No `PINNED_TO:review`** until a note explicitly asserts session↔date (date↔scan is weaker and stays on `DATED_AS:review`).
+
+**Conflicts are typed, not merged.** When literal parse, physical pin, and review disagree, record the conflict; query/policy selects an active claim set. Reports must name which set. Trusted brackets / soft windows are **claim-dependent work views**, not sealed absolute lids.
+
+**Note → claim shape** (date track only; not `ALIGNED_TO`): see `sequence_graph.problem_sequence_review.dated_as_review_claims_from_notes` — `{claim_kind: dated_as_review, inventory, scan_num, date, evidence_url, review_id, decided_at, …}`. Resolution↔folio matching is a separate track.
+
+Every measurement must say whether it uses **literal**, **physical**, **production pin**, or **review** claims. Paths that cross any `PINNED_TO*` remain inferred.
 
 ## Current status
 
@@ -154,4 +191,4 @@ actual figures, and the bugs each stage's gate caught.
 
 ## How to use this document
 
-When starting any new measurement or script in this project, state which of the four edges the question is about before writing code. If you cannot, the question is probably not yet well-posed. If a result crosses PINNED_TO, it is inferred and must say so. This replaces a standing instruction that lived in a plan file; here it is executable because the model names what "inferred" means.
+When starting any new measurement or script in this project, state which of the four edges the question is about before writing code. If you cannot, the question is probably not yet well-posed. If a result crosses PINNED_TO, it is inferred and must say so. Name which claim channel is active (literal / physical / production / review) when the question is about dating or pins. This replaces a standing instruction that lived in a plan file; here it is executable because the model names what "inferred" means.

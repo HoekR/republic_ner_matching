@@ -15,11 +15,11 @@ Three tiers (same DP, different claims):
   editorial stream (calendar order) and HTR stream (session-num order, main series only) inside
   the bracket; run `align_bracket`; report path shape. No accuracy claim.
 
-**Trusted brackets — two DPs with hand-off** (user, 2026-10-09): entity DP only works inside
-gaps; unaligned open mass needs a second aligner. DP₁ = entity overlap on the full editorial
-stream; DP₂ = short-resolution / opening cost on the residue (unaligned short refs × HTR flats
-not taken by DP₁). Same `align_bracket` primitive, different scorer, distinct
-``evidence.channel``. No production ``PINNED_TO`` wire.
+**Trusted brackets — two DPs with soft-window hand-off** (user, 2026-10-09/11): date-trust
+geometries are **seeds**, not sealed lids. Soft margins expand editorial/HTR streams past pin
+walls; locality is cost (rescaled opening + optional day decay), not membership. DP₁ = entity
+overlap; DP₂ = short/opening on residue. Freeze = DP₁ taken ∪ graph ``ALIGNED_TO`` reads.
+Same ``align_bracket`` primitive, distinct ``evidence.channel``. No production ``PINNED_TO``.
 
 4562/4861 out (`is_main_series`). Scope bar applied at data entry.
 
@@ -40,12 +40,8 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 import networkx as nx
+import pandas as pd
 
-from align_short_resolutions import (
-    CLOSE_WINDOW,
-    OPEN_WINDOW,
-    classify_enriched,
-)
 from build_alignment_new import enriched_volgnr
 from data_io import load, save_semi_structured
 from scripts.corpus_scope import in_scope, is_main_series, scope_meta
@@ -64,6 +60,7 @@ from sequence_graph.consolidate import node_aligned_bucket
 from sequence_graph.correspondence import ALIGNED_TO, Evidence
 from sequence_graph.nodes import EnrichedResolution, HtrResolution
 from sequence_graph.persist import load_graph, save_loaded_graph
+from sequence_graph.short_signal import classify_enriched, opening_strength
 from sequence_graph.sync_gaps import build_broad_gaps
 from running_axis.stream import parse_flat_id
 
@@ -78,23 +75,12 @@ MIN_SIDE = 2
 CHANNEL_ENTITY = "entity_dp"
 CHANNEL_SHORT_OPENING = "short_opening_dp"
 
-# Cheap opening inventory (missive / requeste receipts) — regex, not fuzzy.
-# Same family as align_short_resolutions.OPENING_PHRASES; typed as INSERTION_SPLIT
-# hypothesis when the DP leaves an extra read (DpPrinciples.opening_move_kind).
-_OPENING_RE = re.compile(
-    r"(ontfangen\s+een(ige)?\s+(missive|missiue|brief|requeste)"
-    r"|is\s+gelesen\s+de\s+req(uest)?e"
-    r"|houdende\s+advertentie"
-    r"|opt\s+versou?ck)",
-    re.IGNORECASE,
-)
-_CLOSING_RE = re.compile(
-    r"(e?geen\s+resolutie\s+(is\s+gevallen|is\s+genomen|vereisende|vereysende)"
-    r"|vereist\s+geen\s+resolutie"
-    r"|sonder\s+resolutie"
-    r"|waerop\s+e?geen\s+resolutie)",
-    re.IGNORECASE,
-)
+# Soft locality: seeds expand past pin lids (not membership walls).
+SOFT_MARGIN_DAYS = 3
+SOFT_MARGIN_SESSIONS = 2
+# DP₂ overlap in entity-like units so MATCH beats gap_cost=1 under CostModel.
+OPEN_ONLY_OVERLAP = 2.0
+OPEN_CLOSE_OVERLAP = 3.0
 
 
 @dataclass(frozen=True)
@@ -177,23 +163,6 @@ def push_batches_to_graph(graph: nx.MultiDiGraph, batches: list[PathBatch]) -> i
     return added
 
 
-def opening_strength(text: str) -> float:
-    """Non-entity HTR score: 1.0 open+close receipt, 0.5 open-only, else 0.0.
-
-    Open searched in the leading window (OPEN_WINDOW, with a 400-char inventory
-    fallback). Close searched in CLOSE_WINDOW after the opening match — same
-    under-segmentation rule as ``align_short_resolutions``.
-    """
-    body = text or ""
-    open_m = _OPENING_RE.search(body[:OPEN_WINDOW]) or _OPENING_RE.search(body[:400])
-    if open_m is None:
-        return 0.0
-    close_window = body[open_m.end() : open_m.end() + CLOSE_WINDOW]
-    if _CLOSING_RE.search(close_window):
-        return 1.0
-    return 0.5
-
-
 def taken_read_flats(result: AlignmentResult, flats: list[str]) -> set[str]:
     """HTR flats consumed by DP₁ MATCH / INSERTION_SPLIT — frozen for DP₂."""
     taken: set[str] = set()
@@ -207,18 +176,73 @@ def taken_read_flats(result: AlignmentResult, flats: list[str]) -> set[str]:
     return taken
 
 
+def rescale_opening_overlap(strength: float) -> float:
+    """Map detection strength {0, 0.5, 1.0} → entity-like overlap for CostModel."""
+    if strength >= 1.0:
+        return OPEN_CLOSE_OVERLAP
+    if strength >= 0.5:
+        return OPEN_ONLY_OVERLAP
+    return 0.0
+
+
 def build_short_opening_scorer(
     short_volgnrs: set[str],
     flat_strength: dict[str, float],
+    *,
+    volgnr_dates: dict[str, str] | None = None,
+    flat_dates: dict[str, str] | None = None,
+    principles: DpPrinciples | None = None,
 ) -> Callable[[str, str], float]:
-    """DP₂ overlap: short enriched × opening-strength HTR (no entity tables)."""
+    """DP₂ overlap: short enriched × rescaled opening strength (+ optional day decay)."""
+    principles = principles or DpPrinciples()
+    volgnr_dates = volgnr_dates or {}
+    flat_dates = flat_dates or {}
 
     def scorer(volgnr: str, flat_id: str) -> float:
         if volgnr not in short_volgnrs:
             return 0.0
-        return float(flat_strength.get(flat_id, 0.0))
+        ov = rescale_opening_overlap(float(flat_strength.get(flat_id, 0.0)))
+        if ov <= 0:
+            return 0.0
+        d_ref = volgnr_dates.get(volgnr)
+        d_read = flat_dates.get(flat_id)
+        if d_ref and d_read and len(d_ref) >= 10 and len(d_read) >= 10:
+            try:
+                delta = abs(
+                    (pd.Period(d_ref[:10], freq="D") - pd.Period(d_read[:10], freq="D")).n
+                )
+            except ValueError:
+                delta = 0
+            ov *= principles.containment_plausibility(delta)
+        return float(ov)
 
     return scorer
+
+
+def soft_calendar_span(lo: str, hi: str, *, margin_days: int = SOFT_MARGIN_DAYS) -> tuple[str, str]:
+    """Expand ISO day span by margin; scope bar still applied when streaming enriched."""
+    lo_p = pd.Period(str(lo)[:10], freq="D") - int(margin_days)
+    hi_p = pd.Period(str(hi)[:10], freq="D") + int(margin_days)
+    return str(lo_p), str(hi_p)
+
+
+def soft_session_span(
+    sess_lo: int, sess_hi: int, *, margin: int = SOFT_MARGIN_SESSIONS
+) -> tuple[int, int]:
+    """Expand session-num band; floor at 0 (ids are non-negative)."""
+    return max(0, int(sess_lo) - int(margin)), int(sess_hi) + int(margin)
+
+
+def flats_with_aligned_to(graph: nx.MultiDiGraph) -> set[str]:
+    """HTR flat_ids that already carry any ALIGNED_TO (legacy/gold/solver)."""
+    taken: set[str] = set()
+    for _u, v, ed in graph.edges(data=True):
+        if ed.get("kind") != ALIGNED_TO:
+            continue
+        if graph.nodes[v].get("kind") != "HtrResolution":
+            continue
+        taken.add(graph.nodes[v]["obj"].flat_id)
+    return taken
 
 
 def _axis_by_inv_sess() -> dict[tuple[str, int], list[str]]:
@@ -654,9 +678,10 @@ def prove_projection(
     return rows, batches
 
 
-def _flat_text_by_id() -> dict[str, str]:
-    """flat_id → concatenated paragraph text (para_index order) for open/close scan."""
+def _flat_text_and_dates() -> tuple[dict[str, str], dict[str, str]]:
+    """flat_id → (concatenated text, earliest in-scope date label on axis)."""
     parts: dict[str, list[tuple[int, str]]] = defaultdict(list)
+    dates: dict[str, str] = {}
     for row in load("paragraph_axis_1626_1630"):
         flat = str(row.get("flat_id") or "")
         if not flat or not is_main_series(flat):
@@ -666,10 +691,16 @@ def _flat_text_by_id() -> dict[str, str]:
         except (TypeError, ValueError):
             pi = 0
         parts[flat].append((pi, str(row.get("text") or "")))
-    return {
+        date = str(row.get("date") or "")[:10]
+        if date and in_scope(date):
+            prev = dates.get(flat)
+            if prev is None or date < prev:
+                dates[flat] = date
+    text = {
         fid: " ".join(t for _pi, t in sorted(chunks))
         for fid, chunks in parts.items()
     }
+    return text, dates
 
 
 def _opening_hits(flats: list[str], flat_text: dict[str, str]) -> list[dict[str, Any]]:
@@ -729,42 +760,48 @@ def align_trusted_brackets(
     *,
     push_graph: bool = False,
 ) -> tuple[list[dict[str, Any]], list[PathBatch], nx.MultiDiGraph]:
-    """Two DPs with hand-off inside date-trusted new brackets.
+    """Two DPs with soft-window hand-off; date-trust rows are seeds, not lids.
 
-    DP₁ — entity overlap on the full editorial stream (gap interior).
-    DP₂ — short-resolution / opening cost on residue: unaligned short refs × HTR flats
-    not taken by DP₁ MATCH/INSERTION_SPLIT.
-
-    No production ``PINNED_TO`` wire. Oversized brackets: opening inventory + DP₂ if the
-    residue still fits caps.
+    Soft margins expand calendar/session spans past pin walls. DP₁ entity on the soft
+    editorial×HTR streams; DP₂ short/opening on residue. Freeze = DP₁ taken ∪ any
+    graph ``ALIGNED_TO`` read. Oversize after margin → abstain (do not re-seal).
     """
     print("Loading entity-overlap scorer (once)…")
     entity_scorer = build_entity_overlap_scorer()
     print("Loading saved graph…")
     graph = load_graph()
-    brackets = load_trusted_bracket_rows()
-    print(f"Trusted new brackets: {len(brackets)}")
+    seeds = load_trusted_bracket_rows()
+    print(f"Trusted seeds (report keys): {len(seeds)}")
     print("Indexing axis + enriched + flat text (once)…")
     axis_index = _axis_by_inv_sess()
     enr_by_date = _enriched_by_date()
     enriched_by_vid = _enriched_by_volgnr()
-    flat_text = _flat_text_by_id()
+    flat_text, flat_dates = _flat_text_and_dates()
+    graph_aligned_flats = flats_with_aligned_to(graph)
     principles = DpPrinciples()
+    volgnr_dates = {
+        vid: str(er.get("date") or "")[:10]
+        for vid, er in enriched_by_vid.items()
+    }
 
     rows: list[dict[str, Any]] = [
         {
             "record_type": "meta",
-            "channel": "entity_dp_then_short_opening_dp",
+            "channel": "entity_dp_then_short_opening_dp_soft_window",
             "parent": DATE_TRUST_DATASET,
             "max_ref": MAX_REF_PROJ,
             "max_read": MAX_READ_PROJ,
+            "soft_margin_days": SOFT_MARGIN_DAYS,
+            "soft_margin_sessions": SOFT_MARGIN_SESSIONS,
+            "open_only_overlap": OPEN_ONLY_OVERLAP,
+            "open_close_overlap": OPEN_CLOSE_OVERLAP,
             "evidence_channels": [CHANNEL_ENTITY, CHANNEL_SHORT_OPENING],
             "opening_move_kind": principles.opening_move_kind(),
             "policy": (
-                "Two DP aligners hand off inside date-trusted physical brackets. "
-                "DP₁ entity on full editorial stream; DP₂ short/opening on unaligned "
-                "short residue with DP₁ read flats frozen. session_num unused for trust. "
-                "No production PINNED_TO wire. Optional ALIGNED_TO:solver push."
+                "Soft-window hand-off: date-trust geometries are seeds/report keys, "
+                "not sealed lids. DP₁ entity then DP₂ short/opening with rescaled "
+                "opening overlap; freeze = DP₁ taken ∪ graph ALIGNED_TO. "
+                "No production PINNED_TO wire."
             ),
             **scope_meta(),
         }
@@ -775,15 +812,21 @@ def align_trusted_brackets(
     total_match_entity = 0
     total_match_short = 0
 
-    print("\n=== TRUSTED BRACKETS — DP₁ entity → DP₂ short/opening hand-off ===")
-    for gap in brackets:
-        lo_n = _session_num(gap["anchor_lo_session"])
-        hi_n = _session_num(gap["anchor_hi_session"])
-        volgnrs = _editorial_stream(
-            gap["calendar_lo"], gap["calendar_hi"], enr_by_date=enr_by_date
-        )
+    print(
+        "\n=== SOFT WINDOWS — DP₁ entity → DP₂ short/opening "
+        f"(margin ±{SOFT_MARGIN_DAYS}d / ±{SOFT_MARGIN_SESSIONS} sess) ==="
+    )
+    for seed in seeds:
+        seed_lo = str(seed["calendar_lo"])[:10]
+        seed_hi = str(seed["calendar_hi"])[:10]
+        seed_sess_lo = _session_num(seed["anchor_lo_session"])
+        seed_sess_hi = _session_num(seed["anchor_hi_session"])
+        soft_lo, soft_hi = soft_calendar_span(seed_lo, seed_hi)
+        soft_sess_lo, soft_sess_hi = soft_session_span(seed_sess_lo, seed_sess_hi)
+
+        volgnrs = _editorial_stream(soft_lo, soft_hi, enr_by_date=enr_by_date)
         flats = _sorted_flats_for_sessions(
-            gap["inventory"], lo_n, hi_n, axis_index=axis_index
+            seed["inventory"], soft_sess_lo, soft_sess_hi, axis_index=axis_index
         )
         n_unaligned = _n_unaligned(graph, volgnrs)
         openings = _opening_hits(flats, flat_text)
@@ -792,47 +835,58 @@ def align_trusted_brackets(
 
         base = {
             "record_type": "trusted_bracket",
-            "inventory": gap["inventory"],
-            "calendar_lo": gap["calendar_lo"],
-            "calendar_hi": gap["calendar_hi"],
-            "anchor_lo_session": gap["anchor_lo_session"],
-            "anchor_hi_session": gap["anchor_hi_session"],
+            "inventory": seed["inventory"],
+            "seed_calendar_lo": seed_lo,
+            "seed_calendar_hi": seed_hi,
+            "seed_anchor_lo_session": seed["anchor_lo_session"],
+            "seed_anchor_hi_session": seed["anchor_hi_session"],
+            "calendar_lo": soft_lo,
+            "calendar_hi": soft_hi,
+            "anchor_lo_session": f"session-{seed['inventory']}-num-{soft_sess_lo}",
+            "anchor_hi_session": f"session-{seed['inventory']}-num-{soft_sess_hi}",
+            "soft_margin_days": SOFT_MARGIN_DAYS,
+            "soft_margin_sessions": SOFT_MARGIN_SESSIONS,
             "k_e": len(volgnrs),
             "k_f": len(flats),
             "n_unaligned_in_stream": n_unaligned,
             "n_opening_hits": len(openings),
             "opening_examples": openings[:5],
             "opening_as_dp_move": principles.opening_move_kind(),
+            "n_graph_aligned_flats": len(graph_aligned_flats),
         }
 
         if len(volgnrs) < MIN_SIDE or len(flats) < MIN_SIDE:
             n_skip_side += 1
-            rows.append({**base, "status": "skipped_too_small", "dp1_ran": False, "dp2_ran": False})
+            rows.append({
+                **base,
+                "status": "skipped_too_small",
+                "dp1_ran": False,
+                "dp2_ran": False,
+            })
             print(
-                f"  SKIP small {gap['inventory']} {gap['calendar_lo']}.."
-                f"{gap['calendar_hi']}  k_e={len(volgnrs)} k_f={len(flats)}  "
-                f"openings={len(openings)}"
+                f"  SKIP small {seed['inventory']} soft {soft_lo}..{soft_hi}  "
+                f"k_e={len(volgnrs)} k_f={len(flats)}  openings={len(openings)}"
             )
             continue
 
         dp1_result: AlignmentResult | None = None
-        frozen: set[str] = set()
+        frozen: set[str] = set(graph_aligned_flats)
         if len(volgnrs) <= MAX_REF_PROJ and len(flats) <= MAX_READ_PROJ:
             dp1_result, cache1 = align_streams(volgnrs, flats, entity_scorer)
             n_dp1 += 1
-            frozen = taken_read_flats(dp1_result, flats)
+            frozen = frozen | taken_read_flats(dp1_result, flats)
             batch1 = PathBatch(
                 tier="trusted_bracket_dp1",
                 volgnrs=tuple(volgnrs),
                 flat_ids=tuple(flats),
                 result=dp1_result,
                 detail={
-                    "inventory": gap["inventory"],
-                    "calendar_lo": gap["calendar_lo"],
-                    "calendar_hi": gap["calendar_hi"],
-                    "anchor_lo_session": gap["anchor_lo_session"],
-                    "anchor_hi_session": gap["anchor_hi_session"],
-                    "source": "date_trust_new_bracket",
+                    "inventory": seed["inventory"],
+                    "calendar_lo": soft_lo,
+                    "calendar_hi": soft_hi,
+                    "seed_calendar_lo": seed_lo,
+                    "seed_calendar_hi": seed_hi,
+                    "source": "date_trust_soft_window",
                     "aligner": "dp1_entity",
                     "evidence_channel": CHANNEL_ENTITY,
                 },
@@ -861,12 +915,13 @@ def align_trusted_brackets(
                 "aligner": "dp1_entity",
                 "evidence_channel": CHANNEL_ENTITY,
                 "n_frozen_reads": len(frozen),
-                "claim": "entity_path_inside_trusted_bracket",
+                "claim": "entity_path_inside_soft_window",
                 "example_evidenced_matches": crumbs1,
                 **summary1,
             })
             print(
-                f"  DP1 {gap['inventory']} {gap['calendar_lo']}..{gap['calendar_hi']}  "
+                f"  DP1 {seed['inventory']} soft {soft_lo}..{soft_hi} "
+                f"(seed {seed_lo}..{seed_hi})  "
                 f"k_e={len(volgnrs)} k_f={len(flats)}  unaligned={n_unaligned}  "
                 f"MATCH={summary1['n_match']} (entity={summary1['n_match_with_entity']})  "
                 f"frozen={len(frozen)}  openings={len(openings)}  "
@@ -878,17 +933,17 @@ def align_trusted_brackets(
             n_skip_size += 1
             rows.append({
                 **base,
-                "status": "dp1_oversize_openings_only",
+                "status": "dp1_oversize_abstain",
                 "dp1_ran": False,
-                "claim": "entity_dp_deferred_oversize",
+                "claim": "entity_dp_abstain_oversize_no_reseal",
             })
             print(
-                f"  DP1-SKIP-SIZE {gap['inventory']} {gap['calendar_lo']}.."
-                f"{gap['calendar_hi']}  k_e={len(volgnrs)} k_f={len(flats)}  "
+                f"  DP1-ABSTAIN-SIZE {seed['inventory']} soft {soft_lo}..{soft_hi}  "
+                f"k_e={len(volgnrs)} k_f={len(flats)}  "
                 f"unaligned={n_unaligned}  openings={len(openings)}"
             )
 
-        # --- DP₂ hand-off: short unaligned × free HTR (opening strength) ---
+        # --- DP₂ hand-off: short unaligned × unclaimed HTR ---
         residue_refs = _short_unaligned_volgnrs(graph, volgnrs, enriched_by_vid)
         free_flats = [f for f in flats if f not in frozen]
         n_open_free = sum(1 for f in free_flats if flat_strength.get(f, 0.0) > 0)
@@ -908,9 +963,9 @@ def align_trusted_brackets(
                 "claim": "short_opening_residue_too_thin",
             })
             print(
-                f"  DP2-SKIP {gap['inventory']} {gap['calendar_lo']}.."
-                f"{gap['calendar_hi']}  short={len(residue_refs)}  "
-                f"free_flats={len(free_flats)}  open_free={n_open_free}"
+                f"  DP2-SKIP {seed['inventory']} soft {soft_lo}..{soft_hi}  "
+                f"short={len(residue_refs)}  free_flats={len(free_flats)}  "
+                f"open_free={n_open_free}"
             )
             continue
 
@@ -919,24 +974,29 @@ def align_trusted_brackets(
             rows.append({
                 **base,
                 "record_type": "trusted_bracket_handoff",
-                "status": "dp2_oversize",
+                "status": "dp2_oversize_abstain",
                 "dp2_ran": False,
                 "aligner": "dp2_short_opening",
                 "n_residue_short": len(residue_refs),
                 "n_free_flats": len(free_flats),
                 "n_opening_free": n_open_free,
                 "n_frozen_reads": len(frozen),
-                "claim": "short_opening_dp_deferred_oversize",
+                "claim": "short_opening_dp_abstain_oversize_no_reseal",
             })
             print(
-                f"  DP2-SKIP-SIZE {gap['inventory']} {gap['calendar_lo']}.."
-                f"{gap['calendar_hi']}  short={len(residue_refs)}  "
-                f"free_flats={len(free_flats)}"
+                f"  DP2-ABSTAIN-SIZE {seed['inventory']} soft {soft_lo}..{soft_hi}  "
+                f"short={len(residue_refs)}  free_flats={len(free_flats)}"
             )
             continue
 
         short_set = set(residue_refs)
-        dp2_scorer = build_short_opening_scorer(short_set, flat_strength)
+        dp2_scorer = build_short_opening_scorer(
+            short_set,
+            flat_strength,
+            volgnr_dates=volgnr_dates,
+            flat_dates=flat_dates,
+            principles=principles,
+        )
         dp2_result, cache2 = align_streams(residue_refs, free_flats, dp2_scorer)
         n_dp2 += 1
         batch2 = PathBatch(
@@ -945,12 +1005,12 @@ def align_trusted_brackets(
             flat_ids=tuple(free_flats),
             result=dp2_result,
             detail={
-                "inventory": gap["inventory"],
-                "calendar_lo": gap["calendar_lo"],
-                "calendar_hi": gap["calendar_hi"],
-                "anchor_lo_session": gap["anchor_lo_session"],
-                "anchor_hi_session": gap["anchor_hi_session"],
-                "source": "date_trust_new_bracket",
+                "inventory": seed["inventory"],
+                "calendar_lo": soft_lo,
+                "calendar_hi": soft_hi,
+                "seed_calendar_lo": seed_lo,
+                "seed_calendar_hi": seed_hi,
+                "source": "date_trust_soft_window",
                 "aligner": "dp2_short_opening",
                 "evidence_channel": CHANNEL_SHORT_OPENING,
                 "n_frozen_reads": len(frozen),
@@ -959,7 +1019,6 @@ def align_trusted_brackets(
         )
         batches.append(batch2)
         summary2 = _path_summary(dp2_result, cache2)
-        # For DP₂, "entity" slot in summary is opening-evidenced MATCH.
         n_open_match = int(summary2["n_match_with_entity"])
         total_match_short += n_open_match
         crumbs2 = []
@@ -989,23 +1048,23 @@ def align_trusted_brackets(
             "n_free_flats": len(free_flats),
             "n_opening_free": n_open_free,
             "n_frozen_reads": len(frozen),
-            "claim": "short_opening_path_on_unaligned_residue",
+            "claim": "short_opening_path_on_soft_window_residue",
             "example_evidenced_matches": crumbs2,
             **summary2,
         })
         print(
-            f"  DP2 {gap['inventory']} {gap['calendar_lo']}..{gap['calendar_hi']}  "
+            f"  DP2 {seed['inventory']} soft {soft_lo}..{soft_hi}  "
             f"short={len(residue_refs)} free={len(free_flats)}  "
             f"open_free={n_open_free}  "
             f"MATCH={summary2['n_match']} (opening={n_open_match})  "
             f"DEL={summary2['n_deletion']}  cost={summary2['total_cost']}"
         )
         for c in crumbs2[:3]:
-            print(f"    SHORT {c['volgnr']} ↔ {c['flat_id']}  strength={c['overlap']}")
+            print(f"    SHORT {c['volgnr']} ↔ {c['flat_id']}  overlap={c['overlap']}")
 
     rows.append({
         "record_type": "summary",
-        "n_brackets": len(brackets),
+        "n_brackets": len(seeds),
         "n_dp1_ran": n_dp1,
         "n_dp2_ran": n_dp2,
         "n_dp1_oversize": n_skip_size,
@@ -1015,6 +1074,8 @@ def align_trusted_brackets(
         "n_match_with_entity_total": total_match_entity,
         "n_match_with_opening_total": total_match_short,
         "n_batches": len(batches),
+        "soft_margin_days": SOFT_MARGIN_DAYS,
+        "soft_margin_sessions": SOFT_MARGIN_SESSIONS,
     })
     print(
         f"\nsummary: dp1={n_dp1}  dp2={n_dp2}  dp1_oversize={n_skip_size}  "
@@ -1184,9 +1245,10 @@ def main() -> None:
                 logical_name=TRUSTED_BRACKET_DATASET,
                 script=__file__,
                 description=(
-                    "Two DP hand-off inside date-trusted physical brackets: DP₁ entity "
-                    "on full editorial stream, DP₂ short/opening on unaligned short "
-                    "residue with DP₁ reads frozen. Channels entity_dp / "
+                    "Soft-window DP hand-off: date-trust seeds expand by "
+                    f"±{SOFT_MARGIN_DAYS}d / ±{SOFT_MARGIN_SESSIONS} sessions. "
+                    "DP₁ entity then DP₂ short/opening (rescaled overlap); freeze = "
+                    "DP₁ taken ∪ graph ALIGNED_TO. Channels entity_dp / "
                     "short_opening_dp. No production PINNED_TO wire."
                 ),
                 parent_sources=[

@@ -1195,6 +1195,43 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Decision:** One `align_bracket` primitive, two scorers, explicit hand-off inside date-trusted brackets. **DP₁** (`entity_dp`): full editorial stream, entity overlap (gap interior). **DP₂** (`short_opening_dp`): unaligned short / no-decision enriched × HTR flats not taken by DP₁ MATCH/INSERTION_SPLIT; cost = opening strength (1.0 open+close, 0.5 open-only). The prior unaligned-refs + same entity scorer pass was a mode bug, not a negative about openings.
 - **Built:** `sequence_graph.sync_gap_align --trusted-brackets` rewritten; dataset `session_anchor_shift_bracket_align` description updated. Freeze DP₁ reads before DP₂. Push channels distinguishable. No production `PINNED_TO` wire.
 - **Run:** `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` (add `--push-graph` to plow MATCH into the saved graph).
+- **Measured later same day:** `match_entity=80`, `match_opening=2`. Opening strength [0.5,1.0] does not beat `gap_cost=1` under shared `CostModel`. Deeper issue: trusted brackets re-containerised the streams (gaps as lids). Soft-window redesign gated on multi-day stretch review.
+
+## 2026-10-11: problem-sequence review before soft-locality DP
+
+- **User:** want to review a multi-day/session problem sequence in a UI first; so far only single sessions; locality must not be smuggled in as containment.
+- **Decision:** Ship stretch review first. Judgment unit = continuous inventory stretch (calendar × session band), not `session_num`. Notes only; no production wire. Soft-window / DP₂ rescale / sparse shortest-path wait until after a human pass.
+- **Built:** `sequence_graph/problem_sequence_review.py` + `notebooks/problem_sequence_review.ipynb`; dataset `problem_sequence_review_notes`. Seeds = `session_anchor_shift_date_trust` `text_inside` (largest unaligned first).
+
+## 2026-10-11: stretch review note — 3185 late Aug dating
+
+- **Source:** `problem_sequence_review_notes` on card `stretch:3185:1626-08-27:1626-09-21:147:148` (flag `seen`; note corrected same day — was 09-01, now **08-31**).
+- **User diagnosis:** (1) `1626-08-29` was missed, so its business is written under `1626-08-28`; last resolution of 08-28 coincides with last of 08-29. (2) Dominica `1626-08-30` is nihil actum. (3) **`1626-08-31` is erroneously marked as `1626-08-01` by the clerk** (`Luna den eersten Augusti 1626`).
+- **Checked against graph + `session_region_text` (main series, scope bar):**
+  - **08-28:** no production `PINNED_TO`; concordance all `missing_htr` (15) — empty pin fits “sitting missed / mass not synced.”
+  - **08-29:** production `PINNED_TO` → `session-3185-num-139`, whose date heading is **`Jovis den xiijen. Augusti 1626` = Thursday 13 August**, not the 29th. Pin for 08-29 is on the wrong sitting — supports “29th missed” as sync failure.
+  - **08-30:** concordance `nihil_actum`; headings on num-148/149 `Dominica den xxxen. Augusti` — **confirms** Dominica nihil.
+  - **08-31:** Monday (Luna). HTR on num-148/149 also carries **`Luna den lesten Augusti 1626`** (last of August = Mon 31). True **08-01** is Saturday; its heading on num-134 is **`Sabbathi den eersten Augusti 1626`**. User read clerk **`Luna den eersten Augusti`** on the late-August page — weekday Luna fits **31**, numeral “eersten” is the error (should be lesten / 31). Pipeline already has *lesten* in the region text for 148/149; if a pin or bootstrap still routes that sitting to 08-01, that is a parse/sync bug to chase, not a Sept-01 issue.
+  - **Seed geometry:** anchors **147–148** vs calendar **08-27..09-21** remain a thin session band for a wide span (container artefact).
+- **Decision:** Dating / `PINNED_TO` evidence for the stretch, not an `ALIGNED_TO` result. Next: sync repair for 08-28/08-29 and verify 08-31 is not pinned or dated as 08-01; do not treat 08-28 `missing_htr` as secret-series mass.
+
+## 2026-10-11: soft-window DP hand-off (locality as cost, not lids)
+
+- **User:** implement stream soft-locality redesign (explicit go-ahead; stretch review UI already shipped).
+- **Decision:** Date-trust geometries are **seeds/report keys**, not sealed containers. Soft margins `±3` days / `±2` sessions expand streams past pin walls. DP₂ opening detection still `{0,0.5,1.0}` but overlap is rescaled to `{0,2.0,3.0}` so MATCH beats `gap_cost` under shared `CostModel`. Freeze = DP₁ MATCH/INSERTION_SPLIT reads ∪ any graph `ALIGNED_TO` flat. Oversize after margin → abstain (never re-seal to the old lid). Optional day-distance decay via `DpPrinciples.containment_plausibility`. No production `PINNED_TO` wire.
+- **Built:** `sequence_graph.sync_gap_align --trusted-brackets` rewritten; `short_signal.py` stays the import-safe classifier/opening source. Dataset description updated.
+- **Measure:** `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` — compare `match_opening` to prior 2.
+
+## 2026-10-11: anchors are relational claims (doctrine)
+
+- **User:** dates and other anchors have been treated as absolute, but they are relational — especially when wrong. Agreed: (1) no fifth edge kind; (2) absolute axes stay absolute; (3) doctrine before graph write. Fits the graph better than absolute lids.
+- **Decision:** Claim ≠ identity. Stable nodes; fallible sync on parallel edge channels (`DATED_AS*` / `PINNED_TO*`). Typed conflicts; no silent merge; no production overwrite. `DATED_AS:review` shaped from stretch notes but **not** emitted to the graph yet. No `PINNED_TO:review` until notes explicitly assert session↔date.
+- **Built:** `docs/SEQUENCE_MODEL.md` section “Anchors are claims”; `sequence_graph.problem_sequence_review.dated_as_review_claims_from_notes` (parse-only).
+- **Examples from `problem_sequence_review_notes` (date track, not ALIGNED_TO):**
+  - Scan 340 **contains** `1626-08-22` → review claim; agrees `PINNED_TO:physical` → `num-143`; production `PINNED_TO` still `num-135`.
+  - Scan 344 **contains** `1626-08-25` → review claim; agrees physical `num-146`; production still `num-138`.
+  - Stretch 147–148: missed 08-29 / Dominica 08-30 OK / clerk `eersten` vs true 08-31 — dating diagnosis, not resolution match.
+  - Stretch 150–151: UI lid insufficient for resolution compare; one local folio crumb stays on a separate ALIGNED_TO track when pursued.
 
 ## 2026-10-09: 4562 / 4861 OUT — again. FULL STOP
 

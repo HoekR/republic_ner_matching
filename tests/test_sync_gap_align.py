@@ -1,18 +1,24 @@
-"""Unit tests for sync_gap_align push + DP₂ short/opening helpers — no full corpus DP."""
+"""Unit tests for sync_gap_align push + soft-window / DP₂ helpers — no full corpus DP."""
 
 from __future__ import annotations
 
 import networkx as nx
 
-from sequence_graph.align import INSERTION_SPLIT, MATCH, AlignedPair, AlignmentResult
+from sequence_graph.align import INSERTION_SPLIT, MATCH, AlignedPair, AlignmentResult, CostModel
 from sequence_graph.correspondence import ALIGNED_TO, Evidence
 from sequence_graph.nodes import EnrichedResolution, HtrResolution
+from sequence_graph.short_signal import opening_strength
 from sequence_graph.sync_gap_align import (
     CHANNEL_SHORT_OPENING,
+    OPEN_CLOSE_OVERLAP,
+    OPEN_ONLY_OVERLAP,
     PathBatch,
     build_short_opening_scorer,
-    opening_strength,
+    flats_with_aligned_to,
     push_batches_to_graph,
+    rescale_opening_overlap,
+    soft_calendar_span,
+    soft_session_span,
     taken_read_flats,
 )
 
@@ -99,6 +105,17 @@ def test_opening_strength_open_close_and_open_only():
     assert opening_strength(none) == 0.0
 
 
+def test_rescale_opening_beats_gap_cost():
+    cost = CostModel()
+    assert rescale_opening_overlap(0.5) == OPEN_ONLY_OVERLAP
+    assert rescale_opening_overlap(1.0) == OPEN_CLOSE_OVERLAP
+    assert cost.match_cost(OPEN_ONLY_OVERLAP) < cost.gap_cost
+    assert cost.match_cost(OPEN_CLOSE_OVERLAP) < cost.gap_cost
+    # Raw detection strength must NOT beat gap (the bug that made MATCH=0).
+    assert cost.match_cost(0.5) > cost.gap_cost
+    assert cost.match_cost(1.0) == cost.gap_cost
+
+
 def test_taken_read_flats_freezes_match_and_insertion():
     flats = ["a", "b", "c", "d"]
     result = AlignmentResult(
@@ -115,11 +132,36 @@ def test_taken_read_flats_freezes_match_and_insertion():
     assert taken_read_flats(result, flats) == {"a", "b", "d"}
 
 
-def test_short_opening_scorer_zero_unless_short_and_opening():
+def test_short_opening_scorer_rescales():
     scorer = build_short_opening_scorer(
         {"1626-01-01_0"},
-        {"flat-open": 1.0, "flat-plain": 0.0},
+        {"flat-open": 1.0, "flat-half": 0.5, "flat-plain": 0.0},
     )
-    assert scorer("1626-01-01_0", "flat-open") == 1.0
+    assert scorer("1626-01-01_0", "flat-open") == OPEN_CLOSE_OVERLAP
+    assert scorer("1626-01-01_0", "flat-half") == OPEN_ONLY_OVERLAP
     assert scorer("1626-01-01_0", "flat-plain") == 0.0
     assert scorer("1626-01-01_9", "flat-open") == 0.0
+
+
+def test_soft_spans_extend_past_seed_lids():
+    lo, hi = soft_calendar_span("1626-03-22", "1626-03-27", margin_days=3)
+    assert lo == "1626-03-19"
+    assert hi == "1626-03-30"
+    s_lo, s_hi = soft_session_span(55, 57, margin=2)
+    assert (s_lo, s_hi) == (53, 59)
+
+
+def test_flats_with_aligned_to_collects_reads():
+    graph = nx.MultiDiGraph()
+    enriched = EnrichedResolution(date="1626-03-27", index=0)
+    htr = HtrResolution.from_flat_id("session-3185-num-57-resolution-1")
+    graph.add_node(enriched.node_id, kind="EnrichedResolution", obj=enriched)
+    graph.add_node(htr.node_id, kind="HtrResolution", obj=htr)
+    graph.add_edge(
+        enriched.node_id,
+        htr.node_id,
+        key=f"{ALIGNED_TO}:legacy",
+        kind=ALIGNED_TO,
+        evidence=Evidence(channel="legacy_concordance", source="t", observed=False),
+    )
+    assert flats_with_aligned_to(graph) == {"session-3185-num-57-resolution-1"}

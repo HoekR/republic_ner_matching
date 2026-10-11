@@ -996,7 +996,14 @@ parent = "session_anchor_shift_approvals"
 tier = "hot"
 path = "republic_ner_matching/output/session_anchor_shift_bracket_align.jsonl"
 phase = "semi"
-description = "Two DP hand-off inside date-trusted new brackets: DP1 entity on full editorial stream, DP2 short/opening on unaligned short residue with DP1 reads frozen. Channels entity_dp / short_opening_dp. Optional ALIGNED_TO:solver push. No production PINNED_TO wire. From sequence_graph.sync_gap_align --trusted-brackets."
+description = "Soft-window DP hand-off from date-trust seeds (±3d / ±2 sessions): DP1 entity then DP2 short/opening with rescaled opening overlap; freeze = DP1 taken ∪ graph ALIGNED_TO. Channels entity_dp / short_opening_dp. Optional ALIGNED_TO:solver push. No production PINNED_TO wire. From sequence_graph.sync_gap_align --trusted-brackets."
+parent = "session_anchor_shift_date_trust"
+
+[datasets.problem_sequence_review_notes]
+tier = "hot"
+path = "republic_ner_matching/output/problem_sequence_review_notes.jsonl"
+phase = "semi"
+description = "Human notes on multi-day/multi-session problem-sequence review cards (seeded from session_anchor_shift_date_trust text_inside). Judgment unit is the stretch, not session_num. Flags seen/walls_feel_wrong/opening_cluster/other. No production PINNED_TO wire. From notebooks/problem_sequence_review.ipynb."
 parent = "session_anchor_shift_date_trust"
 
 [datasets.displaced_sitting_proposals]
