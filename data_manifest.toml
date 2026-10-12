@@ -1006,6 +1006,13 @@ phase = "semi"
 description = "Human notes on multi-day/multi-session problem-sequence review cards (seeded from session_anchor_shift_date_trust text_inside). Judgment unit is the stretch, not session_num. Flags seen/walls_feel_wrong/opening_cluster/other. No production PINNED_TO wire. From notebooks/problem_sequence_review.ipynb."
 parent = "session_anchor_shift_date_trust"
 
+[datasets.hard_recalibrate_proof]
+tier = "hot"
+path = "republic_ner_matching/output/hard_recalibrate_proof.jsonl"
+phase = "semi"
+description = "Hard-evidence recalibration a→b→c: lag window from production≠physical; lids = unique OBSERVED_ON∘DATED_AS only; literal_opening seeds; soft-window DP1 entity + DP2 short/opening; optional held-out compare to review notes. No production PINNED_TO wire. From sequence_graph.hard_recalibrate."
+parent = "sequence_graph_edges"
+
 [datasets.displaced_sitting_proposals]
 tier = "hot"
 path = "republic_ner_matching/output/displaced_sitting_proposals.jsonl"
