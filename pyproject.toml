@@ -49,10 +49,12 @@ dev = [
 [project.scripts]
 lumped-paragraph-gold-ui = "lumped_paragraph_labeller.app:main"
 boundary-day-gold-ui = "boundary_day_labeller.app:main"
+neighbourhood-shift-gold-ui = "neighbourhood_shift_labeller.app:main"
 
 [tool.setuptools.packages.find]
-include = ["generate_alignment", "lumped_paragraph_labeller", "boundary_day_labeller", "data_io", "running_axis", "tests"]
+include = ["generate_alignment", "lumped_paragraph_labeller", "boundary_day_labeller", "neighbourhood_shift_labeller", "data_io", "running_axis", "tests"]
 
 [tool.setuptools.package-data]
 lumped_paragraph_labeller = ["templates/*", "static/*"]
 boundary_day_labeller = ["templates/*", "static/*"]
+neighbourhood_shift_labeller = ["templates/*", "static/*"]

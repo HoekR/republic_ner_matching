@@ -1020,6 +1020,83 @@ phase = "semi"
 description = "Isolated corpus-wide train/test resolution fingerprint on alignment_1626_1630 tier1_anchor pairs (main series only). Calendar-day split stratified by inventory; TF-IDF fingerprint fitted on train-day texts only; test top-1/AUC vs within-day derangements; entity_overlap on the same split. Not scoped to hard-recalibrate windows. No production ALIGNED_TO/PINNED_TO wire. From sequence_graph.resolution_fingerprint_eval."
 parent = "alignment_1626_1630"
 
+[datasets.fingerprint_session_shift_gold]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_session_shift_gold.jsonl"
+phase = "semi"
+description = "Gold-first synthetic session-lag gate (--on-gold): held-out tier1 × competitor session num+Δ; entity+scaled TF-IDF. Separate from lag proof so save_semi_structured does not overwrite. No production wire. From sequence_graph.fingerprint_session_shift."
+parent = "alignment_1626_1630"
+
+[datasets.fingerprint_session_shift_lag]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_session_shift_lag.jsonl"
+phase = "semi"
+description = "Diagnostic only (date-join): production≠hard days; fingerprint prefer hard vs production. Not the apply gate — use neighbourhood_shift_gold + --on-neighbourhood-gold. No production wire. From sequence_graph.fingerprint_session_shift --on-lag."
+parent = "hard_recalibrate_proof"
+
+[datasets.neighbourhood_shift_gold]
+tier = "hot"
+path = "republic_ner_matching/output/neighbourhood_shift_gold.jsonl"
+phase = "semi"
+description = "Thin hand gold for date-free ALIGNED_TO session-shift: volgnr, baseline_session, correct_session (fill), competitor hint. Not dating. Scaffold via --scaffold-neighbourhood-gold; gate via --on-neighbourhood-gold."
+parent = "hard_recalibrate_proof"
+
+[datasets.fingerprint_session_shift_neighbourhood_gold]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_session_shift_neighbourhood_gold.jsonl"
+phase = "semi"
+description = "Apply-gate eval against neighbourhood_shift_gold: correct_session recovery under date-free S∪correct pool. No production wire. From sequence_graph.fingerprint_session_shift --on-neighbourhood-gold."
+parent = "neighbourhood_shift_gold"
+
+[datasets.fingerprint_session_shift_neighbourhood]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_session_shift_neighbourhood.jsonl"
+phase = "semi"
+description = "Provisional date-free neighbourhood rematch (S vs S+Δ) on main-series tier1. Trust only after neighbourhood hand-gold PASS. No production wire. From sequence_graph.fingerprint_session_shift --on-neighbourhood."
+parent = "alignment_1626_1630"
+
+[datasets.fingerprint_overflow_split_proof]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_overflow_split_proof.jsonl"
+phase = "semi"
+description = "Overflow/split proof: several XML summaries fingerprinting to the same HTR flat ⇒ should_split; half-windows + GloBERTise encoder cut proposals. No production wire. From sequence_graph.fingerprint_session_shift --on-overflow-split."
+parent = "neighbourhood_shift_gold"
+
+[datasets.aligned_to_overflow_track_gold]
+tier = "hot"
+path = "republic_ner_matching/output/aligned_to_overflow_track_gold.jsonl"
+phase = "semi"
+description = "Overflow slice (stages 5–6 only): as_is lumped flats → proposed_end segment inventory. cut_proposal is_gold=false. Prefer remediation_track_gold for the full 1–6 track. From sequence_graph.fingerprint_session_shift --bake-track-gold."
+parent = "neighbourhood_shift_gold"
+
+[datasets.remediation_track_gold]
+tier = "hot"
+path = "republic_ner_matching/output/remediation_track_gold.jsonl"
+phase = "semi"
+description = "Full remediation track gold (gap→rearrange→diagnostic→recal→realign→split) with residual-gap ledger. Imperfect closure OK. No production wire. From sequence_graph.bake_remediation_track_gold."
+parent = "hard_recalibrate_proof"
+
+[datasets.fingerprint_boundary_gold_check]
+tier = "hot"
+path = "republic_ner_matching/output/fingerprint_boundary_gold_check.jsonl"
+phase = "semi"
+description = "Focused fingerprint check on hand-placed session start/end/date-cut markers in boundary_gold_sample + hard_period (ordinary CUTs excluded). Thin; not a corpus gate. No production wire. From sequence_graph.fingerprint_session_shift --on-boundary-gold."
+parent = "boundary_gold_sample"
+
+[datasets.lag_channel_adjudication]
+tier = "hot"
+path = "republic_ner_matching/output/lag_channel_adjudication.jsonl"
+phase = "semi"
+description = "Human adjudication cards for hard-map dating vs fingerprint-content conflict on pin-disagree days: IIIF both sides, literal/opening snippets, enriched snippets, optional fingerprint day verdicts. No production wire. From sequence_graph.lag_channel_adjudication."
+parent = "hard_recalibrate_proof"
+
+[datasets.lag_channel_adjudication_notes]
+tier = "hot"
+path = "republic_ner_matching/output/lag_channel_adjudication_notes.jsonl"
+phase = "semi"
+description = "Human verdicts on lag_channel_adjudication cards (trust_hard_dating / trust_production_content / both_partially / unclear). No production wire."
+parent = "lag_channel_adjudication"
+
 [datasets.displaced_sitting_proposals]
 tier = "hot"
 path = "republic_ner_matching/output/displaced_sitting_proposals.jsonl"
@@ -1054,3 +1131,10 @@ path = "republic_ner_matching/output/duplicate_session_entity_splits.jsonl"
 phase = "semi"
 description = "Entity-channel split proposals for heading-undecided duplicate sessions (scripts/s6_duplicate_session_entity_splits.py). First record is record_type=gate: IDF-weighted exclusive person/place surfaces calibrated against heading-confirmed gate_eligible splits; gate_pass only if confidence-filtered within-3 recovery ≥0.80 on n≥10. Remaining rows: one per heading-undecided session. Does not touch concordance / PINNED_TO. Production place/org/per_overlap cannot feed this channel (window-days 0 against flat_date leaves the second claimant with zero rows in the shared session)."
 parent = "duplicate_session_date_splits"
+
+[datasets.encoder_crowded_cells_eval]
+tier = "hot"
+path = "republic_ner_matching/output/encoder_crowded_cells_eval.jsonl"
+phase = "semi"
+description = "Encoder test on residual crowded cells (exclusive wired span with k_e > room) left after the duplicate-session split wire. Scored two ways: (1) separated gate -- re-pack crowded dates with encoder-ordered cuts vs the wired sequential pack, go only if separated rises (expected no, structural pigeonhole ceiling); (2) a 12-row lumped_paragraph_boundary_gold smoke test, diagnostic only. Registered retroactively 2026-10-12 -- committed without a manifest entry in 34a3c5a."
+parent = "duplicate_session_splits_wire_report"

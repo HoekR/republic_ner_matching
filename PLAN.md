@@ -138,7 +138,14 @@
    - **DONE 2026-10-12 — fingerprint into hard recalibrate DP1:** entity + scaled TF-IDF fingerprint (fit on tier1 excluding lag window); channel `entity_fingerprint_dp`. `uv run python -m sequence_graph.hard_recalibrate --inventory 3185 --write --compare-notes`.
    - **DONE 2026-10-12 — hard recalibrate oversize clear:** `SESSION_CHUNK=1`; exact hard dates (±1 only if k_e too small); lag window = largest Aug/Sep cluster (not union). Re-run same command.
    - **DONE 2026-10-12 — remediation before→after morph viz:** `sequence_graph.remediation_viz_export` → gitignored `public/remediation.json`; D3 bipartite morph at `/remediate.html` (production pins → hard OBSERVED_ON∘DATED_AS + scan mid-rail + literal/review badges). Tool = D3 not three.js. `stretch.json` / `remediation.json` gitignored — regenerate via exporters before `pnpm dev`. Candidate next window: 3185 `1626-09-21`..`1626-10-25` (second lag cluster, Δ=9).
-   - **NEXT — fingerprint session-shift, gold first:** dating lids and `ALIGNED_TO` stay separate tracks (no corpus-wide dating rewrite first). Gate: synthetic Δ competitor on held-out tier1 — does fingerprint recover the gold session? Then lag-window rematch. Command (when built): `uv run python -m sequence_graph.fingerprint_session_shift --on-gold --write`.
+   - **DONE 2026-10-12 — fingerprint session-shift gold gate PASS:** `--on-gold` → recovery=1.0 under synthetic Δ. Dataset `fingerprint_session_shift_gold`.
+   - **DONE 2026-10-12 — lag-window diagnostic (not apply gate):** `--on-lag` → prefer_hard=0; day-join echoes concordance’s date sign. Dataset `fingerprint_session_shift_lag`.
+   - **DONE 2026-10-12 — lag channel adjudication deck:** superseded for dating trust (PROD folio ≠ live dating candidate once intervening hard lids hold). Dataset `lag_channel_adjudication`.
+   - **DONE 2026-10-12 — neighbourhood hand gold + gate PASS:** recovery=1.0 — fingerprint finds matching HTR text (ALIGNED_TO identity). Not a dating proof.
+   - **DONE 2026-10-12 — overflow/split proof PASS:** split signal = several XML summaries → same HTR flat. 4 multi-claim flats; needs_split_on_overflow=1.0; second_half_note→HALF_B=1.0; GloBERTise proposed cuts on all 4 (vs even-split). Dataset `fingerprint_overflow_split_proof`. `uv run python -m sequence_graph.fingerprint_session_shift --on-overflow-split --write`.
+   - **DONE 2026-10-12 — overflow slice bake:** as-is → proposed_end. Dataset `aligned_to_overflow_track_gold` (stages 5–6 only).
+   - **DONE 2026-10-12 — full remediation track gold:** stages 1–6 + residual ledger (imperfect OK). `uv run python -m sequence_graph.bake_remediation_track_gold --write`. Dataset `remediation_track_gold`. Guide: `docs/steps/STEP_REMEDIATION_TRACK_GOLD.md`.
+   - **NEXT — after track-gold windows + residual inspect:** **correct session overflow using the new align machinery** (fingerprint-gated multi-claim flats → `align_bracket` / INSERTION_SPLIT hand-off on hard lids; human-checked cuts). Not a dating rewrite; no silent production wire.
 
 
 

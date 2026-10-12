@@ -122,7 +122,24 @@ Every measurement must say whether it uses **literal**, **physical**, **producti
 
 Hand review notes / `DATED_AS:review` are **held out** from lids and seeds on the first apply; they score the machine path afterward. No production `PINNED_TO` wire. Module: `sequence_graph.hard_recalibrate`. Before→after morph: `sequence_graph.remediation_viz_export` → gitignored `viz/sequence_stretch/public/remediation.json` (`/remediate.html`).
 
-**Fingerprint session-shift (ALIGNED_TO track, not dating):** gold-first synthetic-Δ gate before lag rematch (`fingerprint_session_shift --on-gold`). **Parked hard-case:** preceding-scan / session-tail evidence (trailing flats → archival scan_ids → raw HTR) to name which resolution closes the prior sitting — not part of the gold gate.
+**Fingerprint / overflow-split (ALIGNED_TO track, not dating):**
+
+Content matching is **date-free** — texts only; never join on calendar day. Concordance `PINNED_TO` is date-signed (lag artifact: production often has the **right text on the wrong date**). Fingerprinting proves HTR **identity**, never date ownership (same rule as track-s, above).
+
+| Layer | Role | Status (2026-10-12) |
+|-------|------|---------------------|
+| Full track gold | Stages 1–6 + residual ledger | `remediation_track_gold` — imperfect OK if residuals sized |
+| Identity (5) | Hand gold → `--on-neighbourhood-gold` | PASS — text identity, not dating |
+| Split (6) | Multi-summary → same flat | PASS seed; slice `aligned_to_overflow_track_gold` |
+| Cut placer | GloBERTise / even-split | `cut_proposal` `is_gold: false` until treatment |
+| Day-keyed `--on-lag` | Hard vs production by day | Diagnostic only |
+| After hard recalibration | Content read-only on lids | Does **not** write `PINNED_TO` |
+
+**Complicated gaps** (several alignments wrong *and* date placement): type by edge — dating = stages 2–4; content = 5; overflow = 6. Do not joint-fix. Residuals may list many kinds at once.
+
+Guide: [`docs/steps/STEP_REMEDIATION_TRACK_GOLD.md`](steps/STEP_REMEDIATION_TRACK_GOLD.md). Neighbourhood UI: [`STEP_NEIGHBOURHOOD_SESSION_SHIFT.md`](steps/STEP_NEIGHBOURHOOD_SESSION_SHIFT.md).
+
+Not yet fitted into solver costs; not yet production `ALIGNED_TO`. **Parked:** preceding-scan channel; bulk `--on-neighbourhood`; overflow treatment UI until residuals reviewed.
 
 ## Current status
 

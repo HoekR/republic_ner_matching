@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ row.volgnr }}{% endblock %}
+{% block content %}
+<nav class="pager">
+  {% if prev_id %}
+  <a class="btn secondary" href="{{ url_for('label_card', review_id=prev_id) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">Card {{ index + 1 }} of {{ stats.total }}</span>
+  {% if next_id %}
+  <a class="btn secondary" href="{{ url_for('label_card', review_id=next_id) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Volgnr</span><code>{{ row.volgnr }}</code></div>
+    <div><span class="label">Edition date (file only)</span><code>{{ row.enriched_date_file }}</code></div>
+    <div><span class="label">Baseline S</span><code>{{ row.baseline_session }}</code></div>
+    <div><span class="label">Competitor hint</span><code>{{ row.competitor_session }}</code></div>
+    <div><span class="label">Δ hint</span>{{ row.delta }}</div>
+    <div><span class="label">Status</span>
+      <span class="status-pill {{ 'done' if labelled else 'pending' }}">
+        {{ row.correct_session if labelled else 'unlabelled' }}
+      </span>
+    </div>
+  </div>
+  <p class="notes-hint">
+    Content match: which session’s <b>best HTR flat</b> carries this enriched text?
+    Session openings are not the foil (mid-sitting resolutions). Competitor is a hint, not truth. Not dating.
+  </p>
+</section>
+
+<section class="card">
+  <h2>Enriched resolution</h2>
+  <pre style="white-space:pre-wrap;font-family:Georgia,serif;margin:0;">{{ row.enriched_full_snippet or row.enriched_snippet }}</pre>
+</section>
+
+<section class="card">
+  <h2>Best flat in each session (content foil)</h2>
+  <div class="meta-grid">
+    <div>
+      <span class="label">Baseline best
+        {% if row.baseline_best_flat %}<code>{{ row.baseline_best_flat }}</code> score={{ row.baseline_best_score }} ({{ row.baseline_n_flats }} flats){% endif %}
+      </span>
+      <pre style="white-space:pre-wrap;font-size:0.9rem;">{{ row.baseline_best_snippet or '(no flat)' }}</pre>
+    </div>
+    <div>
+      <span class="label">Competitor best
+        {% if row.competitor_best_flat %}<code>{{ row.competitor_best_flat }}</code> score={{ row.competitor_best_score }} ({{ row.competitor_n_flats }} flats){% endif %}
+      </span>
+      <pre style="white-space:pre-wrap;font-size:0.9rem;">{{ row.competitor_best_snippet or '(no flat)' }}</pre>
+    </div>
+  </div>
+</section>
+
+<details class="card" style="color:var(--muted);">
+  <summary>Session openings (context only — usually not the match)</summary>
+  <div class="meta-grid" style="margin-top:0.75rem;">
+    <div>
+      <span class="label">Baseline opening</span>
+      <pre style="white-space:pre-wrap;font-size:0.85rem;">{{ row.baseline_opening_snippet }}</pre>
+    </div>
+    <div>
+      <span class="label">Competitor opening</span>
+      <pre style="white-space:pre-wrap;font-size:0.85rem;">{{ row.competitor_opening_snippet }}</pre>
+    </div>
+  </div>
+</details>
+
+<form id="label-form" class="card" data-review-id="{{ review_id }}">
+  <div class="form-header">
+    <h2>Correct session</h2>
+    <div class="actions-inline">
+      <button type="button" class="btn primary" data-choice="baseline">Baseline S</button>
+      <button type="button" class="btn primary" data-choice="competitor">Competitor</button>
+      <button type="button" class="btn secondary" data-choice="other">Other…</button>
+      <button type="button" class="btn secondary" data-choice="not_found">Not found</button>
+      <button type="button" class="btn secondary" data-choice="clear">Clear</button>
+    </div>
+  </div>
+  <p class="notes-hint" style="margin-top:0.5rem;">
+    Not found = resolution absent in this neighbourhood. For session-correct but lumped HTR,
+    pick the session and write “split” in the note (→ found_needs_split).
+  </p>
+  <label>Other session id
+    <input type="text" id="other-session" placeholder="session-3185-num-158"
+           value="{{ row.correct_session if labelled and row.correct_session not in [row.baseline_session, row.competitor_session] else '' }}"
+           style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:8px;margin-top:0.35rem;">
+  </label>
+  <label>Note
+    <textarea id="note" rows="2" placeholder="Why this session…">{{ row.note or '' }}</textarea>
+  </label>
+  <div class="form-actions">
+    <span id="save-status" class="save-status"></span>
+  </div>
+</form>
+
+<script src="{{ url_for('static', filename='label.js') }}"></script>
+{% endblock %}

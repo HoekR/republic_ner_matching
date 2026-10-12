@@ -1237,11 +1237,56 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Decision:** Implement `sequence_graph.hard_recalibrate`: detect pin-channel split window from graph (not notes); active lids = unique hard map; literal_opening seeds; soft-window DP₁/DP₂ with hard lids; `--compare-notes` held-out score. No production wire; no `DATED_AS:review` graph write.
 - **Run:** `uv run python -m sequence_graph.hard_recalibrate --inventory 3185 --write --compare-notes`
 
+## 2026-10-12: date-free neighbourhood rematch — hand gold first; content checks recalibration
+
+- **User:** prove fingerprint session-shift works; agreed hand gold first; content then checks recalibration (does not write lids). Label via UI; unlabeled = not found; sometimes resolutions should be split.
+- **Decision:** Apply = date-free S vs S+Δ content match. Scaffold `neighbourhood_shift_gold`; UI `neighbourhood-shift-gold-ui`. Statuses: `found` / `found_needs_split` (session correct, lumped HTR → later INSERTION_SPLIT) / `not_found` (absent in neighbourhood). Gate foil = competitor when correct==baseline. Bulk `--on-neighbourhood` provisional until PASS. `--on-lag` diagnostic only. Content never writes `PINNED_TO`.
+- **Measured (2026-10-12):** 29 found (all baseline/production; **0 hard competitor**); 1 not_found; 7 needs_split. `--on-neighbourhood-gold` **PASS** recovery=1.0 (25 correct / 0 foil / 4 abstain).
+- **Reading (corrected, user 2026-10-12):** Do **not** conclude “content stays with production, so hard is the wrong session.” Production has the **right text** for those enriched rows; it is often **not on the right date**. The gate only shows fingerprint recovers the HTR block that holds matching text — **ALIGNED_TO / text identity**, not a dating verdict.
+- **Actual research question (user, restated 2026-10-12):** can fingerprinting be used to **split session overflow** (lumped HTR / partial enriched match), not hard vs production dating. **Split signal:** several XML summaries fingerprinting to the same HTR flat ⇒ that flat should be split. Encoder (GloBERTise) places cuts; fingerprint detects.
+- **Overflow proof (2026-10-12):** `--on-overflow-split` **PASS** — 4 multi-claim flats; all 7 needs_split on overflow flats (rate 1.0); explicit “second half” note prefers HALF_B (1.0); encoder cuts on all 4 (e.g. `num-150-resolution-5`: 5 claimants → 4 cuts). Dataset `fingerprint_overflow_split_proof`.
+- **Overflow slice (2026-10-12):** `--bake-track-gold` → `aligned_to_overflow_track_gold` (stages 5–6 only). Cuts stay `cut_proposal` (`is_gold: false`).
+- **Full remediation track gold (2026-10-12, user):** stages **gap → rearrange → diagnostic → recalibration → re-alignment → split**, with **residual ledger** (where holes remain, how big). Imperfect closure OK. Complicated gaps: type by edge (dating 2–4; content 5; overflow 6) — no joint-fix. Dataset `remediation_track_gold`. Guide: `docs/steps/STEP_REMEDIATION_TRACK_GOLD.md`.
+- **Run:** `uv run python -m sequence_graph.bake_remediation_track_gold --write` (seed); `--merge --window-id … --calendar-lo … --calendar-hi … --write` for next gap.
+
+## 2026-10-12: adjudication “HARD vs PROD folio” is the wrong dating question
+
+- **User:** on 23 Sept, HARD `num-159` scan 386 vs PROD `num-150` scan 357 — but PROD `num-150` is ~1 Sept paper; if hard dates already cover ~28 Aug–22 Sep, that folio **cannot** be 23 Sept.
+- **Check:** physical places `num-150` on **1626-09-01**; concordance `resolved_session_id` reuses **`num-150` for 1626-09-23**. Scan 357 is one sitting’s paper, not two. Hard map for 23 Sept is scan 386.
+- **User (follow-up):** yes — because concordance **does** use date as a sign. The lag is the artifact of a date-mediated join, not proof of a second sitting on 357.
+- **Decision:** Drop HARD-vs-PROD folio as a dating bake-off. Concordance `PINNED_TO` is date-signed; physical is `OBSERVED_ON∘DATED_AS`; fingerprint `ALIGNED_TO` must stay content-only (session neighbourhood heuristic, not day-join). “Prefer production” on day-keyed lag runs mostly rediscovers concordance’s date sign, not an independent content verdict about which folio is day D.
+
+## 2026-10-12: rephrase — what “prefer production” does and does not prove
+
+- **User:** the striking lag result (fingerprint prefers production, not hard) *looks* like proof that corpus-wide session recalibration must come first — but that was not the question. The question was: given session shift in many resolutions, can fingerprinting shift them? That assumes we already know which sessions are where, else sequences cannot be compared.
+- **Rephrase (accepted):**
+  1. **Research question (ALIGNED_TO):** resolutions sit in the wrong *session slot*; fingerprint should move them to the right slot among a known session sequence.
+  2. **Prerequisite:** a usable session geometry (where each sitting’s HTR block is). Without that, “match resolution R to session S±Δ” has no stable comparison space.
+  3. **What lag actually measured:** on days where hard dating and production pins disagree, does *day-keyed* enriched text prefer hard’s HTR or production’s HTR? That is a **PINNED_TO / day-join conflict diagnostic**, not a session-shift recovery test.
+- **Evaluate:**
+  - **Gold** answers (1) under synthetic lag: recovery=1.0 — instrument can pick the gold session vs a Δ competitor when the true pairing is known.
+  - **Lag prefer_hard=0** does **not** answer (1). It shows edition text still affiliates with production packing when the day→session lid is contested — expected if enrichment was built on production. It neither proves hard dating wrong nor proves fingerprint cannot shift resolutions once sessions are placed.
+  - **“Recalibrate sessions corpus-wide first”** is right as a *dependency* for applying (1) in production (need trusted candidates), wrong as the *reading* of prefer_hard=0 (that number does not measure session-shift success). Dating lids and ALIGNED_TO rematch stay separate; folio adjudication is about lids, not about whether fingerprint works.
+- **Next well-posed apply of (1):** hold a session axis fixed (production *or* a reviewed hard map), take resolutions believed shifted relative to *that* axis, rematch among neighbouring sessions — do not use “enriched for calendar day D” as the join when D’s pin is the thing in dispute.
+
+## 2026-10-12: lag channel adjudication — harder proof is folio judgment
+
+- **User:** after gold PASS + lag prefer_hard=0 (channels conflict), asked for harder proof they can trust — not another automatic metric.
+- **Decision:** Auto metrics are exhausted on this stretch. Trust step = **human folio adjudication** per pin-disagree day: open HARD bridge scan IIIF vs PRODUCTION session scan IIIF, compare openings and enriched snippets, pick `trust_hard_dating` / `trust_production_content` / `both_partially` / `unclear`. No silent rematch; notes stay out of production until reviewed.
+- **Built:** `sequence_graph.lag_channel_adjudication`; datasets `lag_channel_adjudication` (15 cards, 3185 `1626-09-21`..`1626-10-25`) + `lag_channel_adjudication_notes` (empty until human).
+- **Run:** `uv run python -m sequence_graph.lag_channel_adjudication --write` (after gold/lag proofs on disk).
+- **Example card `1626-09-23`:** hard `num-159` scan 386 vs prod `num-150` scan 357; fingerprint day prefers production 7 / abstain 2; question is which folio carries the sitting for that calendar day.
+
 ## 2026-10-12: fingerprint session-shift — gold first; preceding-scan parked
 
 - **User:** use fingerprinting for resolution session-shift; ask whether that is a separate track or needs full dating recalibration first; try gold first; also float preceding-scan text to decide which resolution ends a session (raw HTR harder).
 - **Decision:** Dating lids (`PINNED_TO*` / hard map) and resolution match (`ALIGNED_TO` / fingerprint) stay **separate tracks** — no corpus-wide dating rewrite before asking whether fingerprint recovers the correct session under lag. **Gold first:** synthetic Δ competitor on held-out tier1 (fit on train days only); gate = gold-session recovery. Lag-window rematch deferred until that gate. **Preceding-scan / session-tail channel deferred** (not part of gold gate): on ambiguous cuts, fingerprint HTR on scans before the next session’s first `OBSERVED_ON` folio to name the closing resolution of the prior sitting — tiers A `paragraph_axis` trail → B archival `scan_ids` (~72%) → C raw HTR.
-- **Next build:** `sequence_graph.fingerprint_session_shift --on-gold --write`.
+- **Built:** `sequence_graph.fingerprint_session_shift --on-gold`; dataset `fingerprint_session_shift_proof`; tests `tests/test_fingerprint_session_shift.py`.
+- **Run:** `uv run python -m sequence_graph.fingerprint_session_shift --on-gold --write`
+- **Measured gold (2026-10-12):** 200 held-out days / 1,182 pairs; primary Δ=8 **gold_session_recovery=1.0** (1032 gold / **0 competitor** / 26 abstain). Instrument PASS under synthetic lag. Persisted as `fingerprint_session_shift_gold` (split from lag after overwrite bug).
+- **Measured lag (2026-10-12):** `--on-lag` on `1626-09-21`..`1626-10-25`: 15 disagree days / 182 enriched → **prefer_hard_rate=0.0** (hard 0 / production 153 / abstain 29). Literal opening on hard 15/15; no review claims in window. Persisted as `fingerprint_session_shift_lag`.
+- **Channel trust on this conflict (explicit, 2026-10-12):** Two independent channels disagree on the same window — scan/hard path (literal openings 15/15 + `OBSERVED_ON∘DATED_AS`) vs enriched-content fingerprint (sides with production). **Dating lids:** keep hard map as the active dating claim set here (archival heading path); do not let fingerprint prefer-production overturn hard dating. **ALIGNED_TO / content:** do **not** rematch flats onto the hard session from fingerprint alone — edition text still affiliates with production HTR. Interpret as: dating and content association are separate problems on this stretch (enriched may be filed under the wrong day relative to the paper), not as “hard recalibrate DP is wrong because fingerprint said production.” Next coupling is not silent flat rematch (boundary-gold / preceding-scan / which-enriched-on-day).
+- **Provenance fix:** `--on-gold` / `--on-lag` previously shared `fingerprint_session_shift_proof` and overwrote each other; split to `fingerprint_session_shift_gold` + `fingerprint_session_shift_lag`.
 
 ## 2026-10-12: remediation morph viz (D3) + gitignore generated payloads
 
