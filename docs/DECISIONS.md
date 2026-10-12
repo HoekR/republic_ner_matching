@@ -1222,6 +1222,12 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Built:** `sequence_graph.sync_gap_align --trusted-brackets` rewritten; `short_signal.py` stays the import-safe classifier/opening source. Dataset description updated.
 - **Measure:** `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` — compare `match_opening` to prior 2.
 
+## 2026-10-12: hard-evidence recalibration (a→b→c)
+
+- **User:** When the scan `DATED_AS` reprojection / production pins are proven wrong, recalibrate on hardest evidence (`OBSERVED_ON` + `DATED_AS`), then (a) literal session-opening → enriched, (b) known DP to baseline XML, (c) extend with the same mechanism. Apply to the known 3185 late-Aug lag **without** hand notes as input — notes only for comparison.
+- **Decision:** Implement `sequence_graph.hard_recalibrate`: detect pin-channel split window from graph (not notes); active lids = unique hard map; literal_opening seeds; soft-window DP₁/DP₂ with hard lids; `--compare-notes` held-out score. No production wire; no `DATED_AS:review` graph write.
+- **Run:** `uv run python -m sequence_graph.hard_recalibrate --inventory 3185 --write --compare-notes`
+
 ## 2026-10-11: stretch claim SVG viewer (not three.js)
 
 - **User:** wanted a visualisation of the annotated problem area; agreed 2D SVG lanes + claim channels beat three.js.
