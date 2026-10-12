@@ -1222,6 +1222,13 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Built:** `sequence_graph.sync_gap_align --trusted-brackets` rewritten; `short_signal.py` stays the import-safe classifier/opening source. Dataset description updated.
 - **Measure:** `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` — compare `match_opening` to prior 2.
 
+## 2026-10-11: stretch claim SVG viewer (not three.js)
+
+- **User:** wanted a visualisation of the annotated problem area; agreed 2D SVG lanes + claim channels beat three.js.
+- **First build:** lane spaghetti — user: “nice but useless.”
+- **Decision (revised):** Conflict **timeline** + table: per day production vs physical (Δ session), review scan, reasons; click → IIIF + note. Export still `sequence_graph.stretch_viz_export`. Review claims from notes only — not graph-written.
+- **Run:** `uv run python -m sequence_graph.stretch_viz_export` then `cd viz/sequence_stretch && pnpm install && pnpm dev`.
+
 ## 2026-10-11: anchors are relational claims (doctrine)
 
 - **User:** dates and other anchors have been treated as absolute, but they are relational — especially when wrong. Agreed: (1) no fifth edge kind; (2) absolute axes stay absolute; (3) doctrine before graph write. Fits the graph better than absolute lids.

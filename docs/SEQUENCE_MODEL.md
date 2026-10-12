@@ -109,6 +109,19 @@ Any traversal crossing PINNED_TO is inferred and must say so. This replaces a ju
 
 Every measurement must say whether it uses **literal**, **physical**, **production pin**, or **review** claims. Paths that cross any `PINNED_TO*` remain inferred.
 
+## Hard-evidence recalibration (when the reprojection fails)
+
+**User, 2026-10-12:** Scan-keyed `DATED_AS` is a convenience reprojection of heading evidence (ES carries date regions on sessions). It is fine until proven wrong. Then do **not** patch soft lids on top of the error — drop contested production `PINNED_TO` as active lids and restring from the hardest remaining evidence.
+
+**Active hard map:** unique `Session -OBSERVED_ON-> Scan -DATED_AS-> SittingDay` (compose; ignore contested production pins as lids). Claim set name: `hard`.
+
+**Then ALIGNED_TO in order:**
+1. **(a)** Literal match of HTR session openings to enriched resolutions (cheap seeds, channel `literal_opening`).
+2. **(b)** Existing `align_bracket` DP₁ entity on soft windows whose lids are the hard map only.
+3. **(c)** DP₂ short/opening extend on residue (same mechanism as trusted-bracket hand-off).
+
+Hand review notes / `DATED_AS:review` are **held out** from lids and seeds on the first apply; they score the machine path afterward. No production `PINNED_TO` wire. Module: `sequence_graph.hard_recalibrate`.
+
 ## Current status
 
 As of 2026-10-09 (overnight session after Stage 0): **Stages 0–3b are DONE, all gates pass.**

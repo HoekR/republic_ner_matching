@@ -1,0 +1,19 @@
+{
+  "name": "sequence-stretch-viz",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "d3-selection": "3.0.0",
+    "d3-zoom": "3.0.0",
+    "openseadragon": "6.1.1"
+  }
+}

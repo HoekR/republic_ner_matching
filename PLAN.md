@@ -132,6 +132,7 @@
    - **DONE 2026-10-11 — problem-sequence review UI:** multi-day×multi-session stretch cards (`sequence_graph/problem_sequence_review.py`, `notebooks/problem_sequence_review.ipynb`) seeded from date-trust `text_inside`; notes → `problem_sequence_review_notes`. Judgment unit = stretch, not one session.
    - **DONE 2026-10-11 — soft-window DP hand-off:** seeds expand ±3d / ±2 sessions; DP₂ opening overlap rescaled (0.5→2.0, 1.0→3.0); freeze = DP₁ taken ∪ graph `ALIGNED_TO`; oversize abstains (no re-seal). Dataset `session_anchor_shift_bracket_align`. Command: `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write`.
    - **DONE 2026-10-11 — relational claim doctrine:** anchors = provenance-tagged claims on existing edges (not absolute lids); `SEQUENCE_MODEL` + `dated_as_review_claims_from_notes` shape; graph wire (`DATED_AS:review`) deferred; no `PINNED_TO:review` yet.
+   - **DONE 2026-10-11 — stretch conflict timeline:** `sequence_graph.stretch_viz_export` → conflict/timeline JSON; Vite viewer = calendar timeline + conflict table + IIIF day detail (not lane spaghetti). `cd viz/sequence_stretch && pnpm dev`.
    - NEXT (agreed with user 2026-10-05): explanatory-coverage ledger — v1a → v1b → v1c; or continue stretch notes in the review notebook.
 
 

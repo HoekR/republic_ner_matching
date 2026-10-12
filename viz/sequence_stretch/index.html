@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stretch conflicts — timeline</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div>
+        <h1>Annotated stretch — claim conflicts</h1>
+        <p id="meta" class="meta">loading…</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="conflictsOnly" checked />
+        conflicts only
+      </label>
+    </header>
+
+    <section class="timeline-wrap">
+      <svg id="timeline" role="img" aria-label="calendar timeline"></svg>
+      <p class="timeline-hint">scroll to zoom · drag to pan · double-click reset</p>
+      <div id="legend" class="legend"></div>
+    </section>
+
+    <div class="split">
+      <section class="table-wrap">
+        <h2>Conflicts</h2>
+        <table id="conflictTable">
+          <thead>
+            <tr>
+              <th>date</th>
+              <th>production</th>
+              <th>physical</th>
+              <th>Δ</th>
+              <th>review scan</th>
+              <th>why</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="detail" id="detail">
+        <h2>Day</h2>
+        <p class="muted">Select a day on the timeline or in the table.</p>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

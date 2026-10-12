@@ -1,0 +1,2136 @@
+{
+  "meta": {
+    "inventory": "3185",
+    "calendar_lo": "1626-08-21",
+    "calendar_hi": "1626-09-24",
+    "display_lo": "1626-08-18",
+    "display_hi": "1626-09-27",
+    "sess_lo": 142,
+    "sess_hi": 151,
+    "margin_days": 3,
+    "n_days": 41,
+    "n_conflicts": 19,
+    "n_review_claims": 3,
+    "view": "conflict_timeline",
+    "policy": "Conflict timeline for annotated stretch. Review claims from notes only — not written to the graph. No production PINNED_TO wire.",
+    "corpus_scope_rule": "The enriched XML edition ends 1630-05-14 (user, 2026-09-25, restated FULL STOP 2026-10-08): dates after it are not reconsidered and scans or HTR text after it are not taken into account -- not as a population, a denominator, a diagnostic or a side finding. The HTR axis runs to 1630-12-31, so material past the bar exists on disk and must be dropped explicitly; see scripts/corpus_scope.py.",
+    "corpus_scope_last_date": "1630-05-14"
+  },
+  "days": [
+    {
+      "date": "1626-08-18",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-19",
+      "production_session": "session-3185-num-132",
+      "production_label": "num-132",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 291,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0291.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-20",
+      "production_session": "session-3185-num-133",
+      "production_label": "num-133",
+      "physical_session": "session-3185-num-141",
+      "physical_label": "num-141",
+      "literal_scans": [
+        {
+          "scan_num": 326,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0326.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 326,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0326.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-21",
+      "production_session": "session-3185-num-134",
+      "production_label": "num-134",
+      "physical_session": "session-3185-num-142",
+      "physical_label": "num-142",
+      "literal_scans": [
+        {
+          "scan_num": 327,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [
+        {
+          "scan_num": 327,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg",
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143"
+        }
+      ],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        }
+      ],
+      "focus_scan": 327,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical",
+        "review_claim"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-22",
+      "production_session": "session-3185-num-135",
+      "production_label": "num-135",
+      "physical_session": "session-3185-num-143",
+      "physical_label": "num-143",
+      "literal_scans": [
+        {
+          "scan_num": 340,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [
+        {
+          "scan_num": 340,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg",
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144"
+        }
+      ],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        }
+      ],
+      "focus_scan": 340,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical",
+        "review_claim"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-23",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-145",
+      "physical_label": "num-145",
+      "literal_scans": [
+        {
+          "scan_num": 342,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0342.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        }
+      ],
+      "focus_scan": 342,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0342.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-24",
+      "production_session": "session-3185-num-137",
+      "production_label": "num-137",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        }
+      ],
+      "focus_scan": 310,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0310.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-25",
+      "production_session": "session-3185-num-138",
+      "production_label": "num-138",
+      "physical_session": "session-3185-num-146",
+      "physical_label": "num-146",
+      "literal_scans": [
+        {
+          "scan_num": 344,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [
+        {
+          "scan_num": 344,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg",
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147"
+        }
+      ],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        }
+      ],
+      "focus_scan": 344,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical",
+        "review_claim"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-26",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-27",
+      "production_session": "session-3185-num-139",
+      "production_label": "num-139",
+      "physical_session": "session-3185-num-147",
+      "physical_label": "num-147",
+      "literal_scans": [
+        {
+          "scan_num": 347,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0347.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": 347,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0347.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-28",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-29",
+      "production_session": "session-3185-num-139",
+      "production_label": "num-139",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": 316,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0316.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-30",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-149",
+      "physical_label": "num-149",
+      "literal_scans": [
+        {
+          "scan_num": 356,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0356.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": 356,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0356.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-31",
+      "production_session": "session-3185-num-141",
+      "production_label": "num-141",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": 326,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0326.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-01",
+      "production_session": "session-3185-num-142",
+      "production_label": "num-142",
+      "physical_session": "session-3185-num-150",
+      "physical_label": "num-150",
+      "literal_scans": [
+        {
+          "scan_num": 357,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0357.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 357,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0357.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-09-02",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-03",
+      "production_session": "session-3185-num-143",
+      "production_label": "num-143",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 340,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-04",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-151",
+      "physical_label": "num-151",
+      "literal_scans": [
+        {
+          "scan_num": 361,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0361.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 361,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0361.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-05",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-06",
+      "production_session": "session-3185-num-144",
+      "production_label": "num-144",
+      "physical_session": "session-3185-num-152",
+      "physical_label": "num-152",
+      "literal_scans": [
+        {
+          "scan_num": 365,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0365.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 365,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0365.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-09-07",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-08",
+      "production_session": "session-3185-num-145",
+      "production_label": "num-145",
+      "physical_session": "session-3185-num-153",
+      "physical_label": "num-153",
+      "literal_scans": [
+        {
+          "scan_num": 366,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0366.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 366,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0366.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-09-09",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-10",
+      "production_session": "session-3185-num-146",
+      "production_label": "num-146",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [
+        {
+          "scan_num": 368,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0368.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 368,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0368.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-11",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-12",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-155",
+      "physical_label": "num-155",
+      "literal_scans": [
+        {
+          "scan_num": 370,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0370.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 370,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0370.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-13",
+      "production_session": "session-3185-num-147",
+      "production_label": "num-147",
+      "physical_session": "session-3185-num-156",
+      "physical_label": "num-156",
+      "literal_scans": [
+        {
+          "scan_num": 373,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0373.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 373,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0373.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-14",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-15",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-16",
+      "production_session": "session-3185-num-147",
+      "production_label": "num-147",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 347,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0347.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-17",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-18",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-19",
+      "production_session": "session-3185-num-156",
+      "production_label": "num-156",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 373,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0373.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-20",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": null,
+      "iiif_url": null,
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-21",
+      "production_session": "session-3185-num-148",
+      "production_label": "num-148",
+      "physical_session": "session-3185-num-157",
+      "physical_label": "num-157",
+      "literal_scans": [
+        {
+          "scan_num": 384,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0384.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 384,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0384.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-22",
+      "production_session": "session-3185-num-149",
+      "production_label": "num-149",
+      "physical_session": null,
+      "physical_label": null,
+      "literal_scans": [],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 356,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0356.jpg/full/full/0/default.jpg",
+      "is_conflict": false,
+      "reasons": [
+        "in_annotated_stretch"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-23",
+      "production_session": "session-3185-num-150",
+      "production_label": "num-150",
+      "physical_session": "session-3185-num-159",
+      "physical_label": "num-159",
+      "literal_scans": [
+        {
+          "scan_num": 386,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0386.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 386,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0386.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-24",
+      "production_session": "session-3185-num-151",
+      "production_label": "num-151",
+      "physical_session": "session-3185-num-160",
+      "physical_label": "num-160",
+      "literal_scans": [
+        {
+          "scan_num": 387,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0387.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 387,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0387.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-25",
+      "production_session": "session-3185-num-152",
+      "production_label": "num-152",
+      "physical_session": "session-3185-num-161",
+      "physical_label": "num-161",
+      "literal_scans": [
+        {
+          "scan_num": 388,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0388.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 388,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0388.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-26",
+      "production_session": "session-3185-num-153",
+      "production_label": "num-153",
+      "physical_session": "session-3185-num-162",
+      "physical_label": "num-162",
+      "literal_scans": [
+        {
+          "scan_num": 389,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0389.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 389,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0389.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-27",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-164",
+      "physical_label": "num-164",
+      "literal_scans": [
+        {
+          "scan_num": 391,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0391.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 391,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0391.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    }
+  ],
+  "conflicts": [
+    {
+      "date": "1626-08-20",
+      "production_session": "session-3185-num-133",
+      "production_label": "num-133",
+      "physical_session": "session-3185-num-141",
+      "physical_label": "num-141",
+      "literal_scans": [
+        {
+          "scan_num": 326,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0326.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 326,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0326.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-21",
+      "production_session": "session-3185-num-134",
+      "production_label": "num-134",
+      "physical_session": "session-3185-num-142",
+      "physical_label": "num-142",
+      "literal_scans": [
+        {
+          "scan_num": 327,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [
+        {
+          "scan_num": 327,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg",
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143"
+        }
+      ],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        }
+      ],
+      "focus_scan": 327,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical",
+        "review_claim"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-22",
+      "production_session": "session-3185-num-135",
+      "production_label": "num-135",
+      "physical_session": "session-3185-num-143",
+      "physical_label": "num-143",
+      "literal_scans": [
+        {
+          "scan_num": 340,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [
+        {
+          "scan_num": 340,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg",
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144"
+        }
+      ],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        }
+      ],
+      "focus_scan": 340,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical",
+        "review_claim"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-23",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-145",
+      "physical_label": "num-145",
+      "literal_scans": [
+        {
+          "scan_num": 342,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0342.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        }
+      ],
+      "focus_scan": 342,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0342.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-08-25",
+      "production_session": "session-3185-num-138",
+      "production_label": "num-138",
+      "physical_session": "session-3185-num-146",
+      "physical_label": "num-146",
+      "literal_scans": [
+        {
+          "scan_num": 344,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [
+        {
+          "scan_num": 344,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg",
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147"
+        }
+      ],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        }
+      ],
+      "focus_scan": 344,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical",
+        "review_claim"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-27",
+      "production_session": "session-3185-num-139",
+      "production_label": "num-139",
+      "physical_session": "session-3185-num-147",
+      "physical_label": "num-147",
+      "literal_scans": [
+        {
+          "scan_num": 347,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0347.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": 347,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0347.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-08-30",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-149",
+      "physical_label": "num-149",
+      "literal_scans": [
+        {
+          "scan_num": 356,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0356.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        }
+      ],
+      "focus_scan": 356,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0356.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-01",
+      "production_session": "session-3185-num-142",
+      "production_label": "num-142",
+      "physical_session": "session-3185-num-150",
+      "physical_label": "num-150",
+      "literal_scans": [
+        {
+          "scan_num": 357,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0357.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 357,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0357.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-09-04",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-151",
+      "physical_label": "num-151",
+      "literal_scans": [
+        {
+          "scan_num": 361,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0361.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 361,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0361.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-06",
+      "production_session": "session-3185-num-144",
+      "production_label": "num-144",
+      "physical_session": "session-3185-num-152",
+      "physical_label": "num-152",
+      "literal_scans": [
+        {
+          "scan_num": 365,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0365.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 365,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0365.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-09-08",
+      "production_session": "session-3185-num-145",
+      "production_label": "num-145",
+      "physical_session": "session-3185-num-153",
+      "physical_label": "num-153",
+      "literal_scans": [
+        {
+          "scan_num": 366,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0366.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 366,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0366.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 8
+    },
+    {
+      "date": "1626-09-12",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-155",
+      "physical_label": "num-155",
+      "literal_scans": [
+        {
+          "scan_num": 370,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0370.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 370,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0370.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    },
+    {
+      "date": "1626-09-13",
+      "production_session": "session-3185-num-147",
+      "production_label": "num-147",
+      "physical_session": "session-3185-num-156",
+      "physical_label": "num-156",
+      "literal_scans": [
+        {
+          "scan_num": 373,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0373.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+          "flag": "seen",
+          "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+        },
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 373,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0373.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-21",
+      "production_session": "session-3185-num-148",
+      "production_label": "num-148",
+      "physical_session": "session-3185-num-157",
+      "physical_label": "num-157",
+      "literal_scans": [
+        {
+          "scan_num": 384,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0384.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+          "flag": "seen",
+          "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)"
+        },
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 384,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0384.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-23",
+      "production_session": "session-3185-num-150",
+      "production_label": "num-150",
+      "physical_session": "session-3185-num-159",
+      "physical_label": "num-159",
+      "literal_scans": [
+        {
+          "scan_num": 386,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0386.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 386,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0386.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-24",
+      "production_session": "session-3185-num-151",
+      "production_label": "num-151",
+      "physical_session": "session-3185-num-160",
+      "physical_label": "num-160",
+      "literal_scans": [
+        {
+          "scan_num": 387,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0387.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [
+        {
+          "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+          "flag": "seen",
+          "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "focus_scan": 387,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0387.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-25",
+      "production_session": "session-3185-num-152",
+      "production_label": "num-152",
+      "physical_session": "session-3185-num-161",
+      "physical_label": "num-161",
+      "literal_scans": [
+        {
+          "scan_num": 388,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0388.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 388,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0388.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-26",
+      "production_session": "session-3185-num-153",
+      "production_label": "num-153",
+      "physical_session": "session-3185-num-162",
+      "physical_label": "num-162",
+      "literal_scans": [
+        {
+          "scan_num": 389,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0389.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 389,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0389.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "production_ne_physical"
+      ],
+      "pin_delta": 9
+    },
+    {
+      "date": "1626-09-27",
+      "production_session": null,
+      "production_label": null,
+      "physical_session": "session-3185-num-164",
+      "physical_label": "num-164",
+      "literal_scans": [
+        {
+          "scan_num": 391,
+          "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0391.jpg/full/full/0/default.jpg"
+        }
+      ],
+      "review_claims": [],
+      "notes": [],
+      "focus_scan": 391,
+      "iiif_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0391.jpg/full/full/0/default.jpg",
+      "is_conflict": true,
+      "reasons": [
+        "physical_without_production"
+      ],
+      "pin_delta": null
+    }
+  ],
+  "review_claims": [
+    {
+      "claim_kind": "dated_as_review",
+      "edge": "DATED_AS:review",
+      "inventory": "3185",
+      "scan_num": 327,
+      "date": "1626-08-21",
+      "evidence_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg",
+      "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+      "flag": "seen",
+      "decided_at": "2026-10-11T08:58:21.561125+00:00",
+      "source_note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21"
+    },
+    {
+      "claim_kind": "dated_as_review",
+      "edge": "DATED_AS:review",
+      "inventory": "3185",
+      "scan_num": 340,
+      "date": "1626-08-22",
+      "evidence_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg",
+      "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+      "flag": "seen",
+      "decided_at": "2026-10-11T08:55:05.961158+00:00",
+      "source_note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22"
+    },
+    {
+      "claim_kind": "dated_as_review",
+      "edge": "DATED_AS:review",
+      "inventory": "3185",
+      "scan_num": 344,
+      "date": "1626-08-25",
+      "evidence_url": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg",
+      "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+      "flag": "seen",
+      "decided_at": "2026-10-11T08:54:29.175368+00:00",
+      "source_note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25"
+    }
+  ],
+  "notes": [
+    {
+      "review_id": "stretch:3185:1626-08-21:1626-09-03:142:143",
+      "flag": "seen",
+      "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0327.jpg/full/full/0/default.jpg contains date 1626-08-21",
+      "calendar_lo": "1626-08-21",
+      "calendar_hi": "1626-09-03",
+      "anchor_lo_session": "session-3185-num-142",
+      "anchor_hi_session": "session-3185-num-143"
+    },
+    {
+      "review_id": "stretch:3185:1626-08-22:1626-09-06:143:144",
+      "flag": "seen",
+      "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0340.jpg/full/full/0/default.jpg contains date 1626-08-22",
+      "calendar_lo": "1626-08-22",
+      "calendar_hi": "1626-09-06",
+      "anchor_lo_session": "session-3185-num-143",
+      "anchor_hi_session": "session-3185-num-144"
+    },
+    {
+      "review_id": "stretch:3185:1626-08-25:1626-09-16:146:147",
+      "flag": "seen",
+      "note": "https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0344.jpg/full/full/0/default.jpg contains date 1626-08-25",
+      "calendar_lo": "1626-08-25",
+      "calendar_hi": "1626-09-16",
+      "anchor_lo_session": "session-3185-num-146",
+      "anchor_hi_session": "session-3185-num-147"
+    },
+    {
+      "review_id": "stretch:3185:1626-08-27:1626-09-21:147:148",
+      "flag": "seen",
+      "note": "Diagnosis: 1626-08-29 was missed, so the resolutions are added tot 1626-08-28. The last resolution 1626-08-10 seems to coincide with the last resolution of 1626-08-29. \\n Dominica 1626-08-30 is indeed Nihil Actum. 1626-08-31 is erroronously marked as 1626-08-01 by the clerk (Luna den eersten Augusti 1626)",
+      "calendar_lo": "1626-08-27",
+      "calendar_hi": "1626-09-21",
+      "anchor_lo_session": "session-3185-num-147",
+      "anchor_hi_session": "session-3185-num-148"
+    },
+    {
+      "review_id": "stretch:3185:1626-09-01:1626-09-24:150:151",
+      "flag": "seen",
+      "note": "diagnosis: cannot compare the summary resolutions and the scan, as the scan contains the beginning of 1626-09-01. \\n 1626-09-02_5 coincides with resolution on https://images.diginfra.net/iiif/NL-HaNA_1.01.02/3185/NL-HaNA_1.01.02_3185_0360.jpg/full/full/0/default.jpg",
+      "calendar_lo": "1626-09-01",
+      "calendar_hi": "1626-09-24",
+      "anchor_lo_session": "session-3185-num-150",
+      "anchor_hi_session": "session-3185-num-151"
+    }
+  ]
+}
