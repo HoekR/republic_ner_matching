@@ -1010,8 +1010,15 @@ parent = "session_anchor_shift_date_trust"
 tier = "hot"
 path = "republic_ner_matching/output/hard_recalibrate_proof.jsonl"
 phase = "semi"
-description = "Hard-evidence recalibration a→b→c: lag window from production≠physical; lids = unique OBSERVED_ON∘DATED_AS only; literal_opening seeds; soft-window DP1 entity + DP2 short/opening; optional held-out compare to review notes. No production PINNED_TO wire. From sequence_graph.hard_recalibrate."
+description = "Hard-evidence recalibration a→b→c: lag window from production≠physical; lids = unique OBSERVED_ON∘DATED_AS only; literal_opening seeds; DP1 entity + TF-IDF fingerprint (fit on tier1 excluding lag window, scale=15 into CostModel units); DP2 short/opening; optional held-out compare to review notes. No production PINNED_TO wire. From sequence_graph.hard_recalibrate."
 parent = "sequence_graph_edges"
+
+[datasets.resolution_fingerprint_train_test]
+tier = "hot"
+path = "republic_ner_matching/output/resolution_fingerprint_train_test.jsonl"
+phase = "semi"
+description = "Isolated corpus-wide train/test resolution fingerprint on alignment_1626_1630 tier1_anchor pairs (main series only). Calendar-day split stratified by inventory; TF-IDF fingerprint fitted on train-day texts only; test top-1/AUC vs within-day derangements; entity_overlap on the same split. Not scoped to hard-recalibrate windows. No production ALIGNED_TO/PINNED_TO wire. From sequence_graph.resolution_fingerprint_eval."
+parent = "alignment_1626_1630"
 
 [datasets.displaced_sitting_proposals]
 tier = "hot"

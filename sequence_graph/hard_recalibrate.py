@@ -5,7 +5,8 @@ When production PINNED_TO disagrees with the physical composite
 Rebuild the session↔date map from that hard path only, then:
 
   (a) literal HTR session-opening → enriched resolution seeds
-  (b) DP₁ entity align_bracket on soft windows with hard lids
+  (b) DP₁ entity + train-fitted TF-IDF fingerprint (fit on tier1 excluding the
+      lag window) on soft windows with hard lids
   (c) DP₂ short/opening extend on residue
 
 Hand review notes are held out from lids/seeds; ``--compare-notes`` scores afterward.
@@ -35,9 +36,13 @@ from sequence_graph.persist import load_graph
 from sequence_graph.physical_extents import dated_day_to_sessions
 from sequence_graph.physical_pin_shift import production_date_to_session
 from sequence_graph.problem_sequence_review import dated_as_review_claims_from_notes
+from sequence_graph.resolution_fingerprint_eval import (
+    FINGERPRINT_OVERLAP_SCALE,
+    TrainFittedTfidfFingerprint,
+    fit_fingerprint_on_tier1,
+)
 from sequence_graph.short_signal import opening_strength
 from sequence_graph.sync_gap_align import (
-    CHANNEL_ENTITY,
     CHANNEL_SHORT_OPENING,
     MAX_READ_PROJ,
     MAX_REF_PROJ,
@@ -52,6 +57,33 @@ from sequence_graph.sync_gap_align import (
     flats_with_aligned_to,
     taken_read_flats,
 )
+
+CHANNEL_ENTITY_FINGERPRINT = "entity_fingerprint_dp"
+
+
+def _chunk_entity_fingerprint_scorer(
+    volgnrs: list[str],
+    flats: list[str],
+    *,
+    entity_scorer: Any,
+    fingerprint: TrainFittedTfidfFingerprint,
+    enr_text: dict[str, str],
+    flat_text: dict[str, str],
+    scale: float = FINGERPRINT_OVERLAP_SCALE,
+) -> Any:
+    """One TF-IDF matrix for the chunk + entity lookup (avoids per-cell refit)."""
+    fp_mat = scale * fingerprint.similarity_matrix(
+        [enr_text.get(v) or "" for v in volgnrs],
+        [flat_text.get(f) or "" for f in flats],
+    )
+    v_index = {v: i for i, v in enumerate(volgnrs)}
+    f_index = {f: j for j, f in enumerate(flats)}
+
+    def scorer(volgnr: str, flat_id: str) -> float:
+        i, j = v_index[volgnr], f_index[flat_id]
+        return float(entity_scorer(volgnr, flat_id)) + float(fp_mat[i, j])
+
+    return scorer
 from running_axis.stream import parse_flat_id
 
 OUTPUT_DATASET = "hard_recalibrate_proof"
@@ -374,6 +406,8 @@ def _dp_one_chunk(
     flat_text: dict[str, str],
     enriched_by_vid: dict[str, dict[str, Any]],
     entity_scorer: Any,
+    fingerprint: TrainFittedTfidfFingerprint,
+    enr_text: dict[str, str],
     principles: DpPrinciples,
 ) -> list[dict[str, Any]]:
     # Editorial stream = hard-mapped dates in this chunk only (±1d), not every
@@ -428,19 +462,27 @@ def _dp_one_chunk(
             "status": "dp1_oversize_abstain",
             "dp1_ran": False,
             "dp2_ran": False,
-            "claim": "entity_dp_abstain_oversize_no_reseal",
+            "claim": "entity_fingerprint_dp_abstain_oversize_no_reseal",
         })
         return rows
 
-    dp1, cache1 = align_streams(volgnrs, flats, entity_scorer)
+    dp1_scorer = _chunk_entity_fingerprint_scorer(
+        volgnrs,
+        flats,
+        entity_scorer=entity_scorer,
+        fingerprint=fingerprint,
+        enr_text=enr_text,
+        flat_text=flat_text,
+    )
+    dp1, cache1 = align_streams(volgnrs, flats, dp1_scorer)
     frozen = frozen | taken_read_flats(dp1, flats)
     summary1 = _path_summary(dp1, cache1)
     rows.append({
         **base,
         "status": "dp1_ok",
         "dp1_ran": True,
-        "aligner": "dp1_entity",
-        "evidence_channel": CHANNEL_ENTITY,
+        "aligner": "dp1_entity_fingerprint",
+        "evidence_channel": CHANNEL_ENTITY_FINGERPRINT,
         "n_frozen_reads": len(frozen),
         **summary1,
     })
@@ -530,7 +572,14 @@ def run_dp_bc(
     enr_by_date = _enriched_by_date()
     axis_index = _axis_by_inv_sess()
     flat_text = _flat_text_by_id()
+    enr_text = _enriched_text_by_volgnr()
     principles = DpPrinciples()
+    # Hold out lag-window dates from fingerprint fit so DP1 does not train on the
+    # calibration stretch's own tier1 pairs.
+    exclude_dates = {
+        r["date"] for r in hard_rows if calendar_lo <= r["date"] <= calendar_hi
+    }
+    fingerprint, fp_meta = fit_fingerprint_on_tier1(exclude_dates=exclude_dates)
     entity_scorer = build_entity_overlap_scorer()
     enriched_by_vid: dict[str, dict[str, Any]] = {}
     for er in load("enriched_resolutions_1626_1630"):
@@ -538,7 +587,14 @@ def run_dp_bc(
         if vid:
             enriched_by_vid[vid] = er
 
-    rows: list[dict[str, Any]] = []
+    rows: list[dict[str, Any]] = [
+        {
+            "record_type": "fingerprint_fit",
+            "exclude_calendar_lo": calendar_lo,
+            "exclude_calendar_hi": calendar_hi,
+            **fp_meta,
+        }
+    ]
     for i in range(0, len(sess_order), SESSION_CHUNK):
         chunk_nums = sess_order[i : i + SESSION_CHUNK]
         beads = [b for n in chunk_nums for b in by_sess[n]]
@@ -563,6 +619,8 @@ def run_dp_bc(
             flat_text=flat_text,
             enriched_by_vid=enriched_by_vid,
             entity_scorer=entity_scorer,
+            fingerprint=fingerprint,
+            enr_text=enr_text,
             principles=principles,
         )
         for r in chunk_rows:
@@ -687,11 +745,14 @@ def run(
             "n_hard_vs_production_shift": n_shift,
             "n_literal_matched": n_lit,
             "n_literal_tried": len(literal_rows),
+            "dp1_channel": CHANNEL_ENTITY_FINGERPRINT,
+            "fingerprint_overlap_scale": FINGERPRINT_OVERLAP_SCALE,
             "notes_as_input": False,
             "policy": (
                 "Hard recalibration a→b→c. Production PINNED_TO ignored as lids. "
-                "Active map = unique OBSERVED_ON∘DATED_AS. Hand notes held out "
-                "unless compare_notes. No production wire."
+                "Active map = unique OBSERVED_ON∘DATED_AS. DP1 = entity + TF-IDF "
+                "fingerprint fitted on tier1 excluding lag window. Hand notes held "
+                "out unless compare_notes. No production wire."
             ),
             **scope_meta(),
         }
@@ -757,9 +818,14 @@ def main() -> None:
             description=(
                 "Hard-evidence recalibration proof: lag window from pin split; "
                 "active lids = unique OBSERVED_ON∘DATED_AS; literal_opening seeds; "
-                "soft-window DP1/DP2; optional held-out note compare. No production wire."
+                "DP1 entity+fingerprint (fit excluding window); DP2 short/opening; "
+                "optional held-out note compare. No production wire."
             ),
-            parent_sources=["sequence_graph_edges", "paragraph_axis_1626_1630"],
+            parent_sources=[
+                "sequence_graph_edges",
+                "paragraph_axis_1626_1630",
+                "alignment_1626_1630",
+            ],
         )
         print(f"wrote {OUTPUT_DATASET}")
 

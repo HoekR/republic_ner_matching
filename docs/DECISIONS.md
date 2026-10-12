@@ -1222,6 +1222,14 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Built:** `sequence_graph.sync_gap_align --trusted-brackets` rewritten; `short_signal.py` stays the import-safe classifier/opening source. Dataset description updated.
 - **Measure:** `uv run python -m sequence_graph.sync_gap_align --trusted-brackets --write` — compare `match_opening` to prior 2.
 
+## 2026-10-12: resolution fingerprint train/test (isolated bridge)
+
+- **User:** build a resolution fingerprint from known ALIGNED_TO-style pairs with a proper train/test split — isolated task, not the late-Aug hard-recalibrate dates.
+- **Decision:** Corpus-wide main-series `tier1_anchor` pairs; calendar-day split stratified by inventory (70/30); TF-IDF word+char fingerprint **fitted on train-day texts only**; evaluate held-out days with within-day derangement negatives (top-1 + AUC). Entity-overlap scored on the same split for compare. No production wire. Distinct from per-day-fit `tfidf_similarity_pair_discrimination_eval`.
+- **Built:** `sequence_graph/resolution_fingerprint_eval.py`; dataset `resolution_fingerprint_train_test`.
+- **Run:** `uv run python -m sequence_graph.resolution_fingerprint_eval --write`
+- **Wired into hard recalibrate (same day):** DP₁ overlap = entity + `FINGERPRINT_OVERLAP_SCALE`×cosine; fingerprint fit excludes the lag-window dates. Channel `entity_fingerprint_dp`. Scale=15 fixed from train/test means (pos≈0.17→~2.5; neg≈0.04→~0.6) so CostModel prefers MATCH on fingerprint positives.
+
 ## 2026-10-12: hard-evidence recalibration (a→b→c)
 
 - **User:** When the scan `DATED_AS` reprojection / production pins are proven wrong, recalibrate on hardest evidence (`OBSERVED_ON` + `DATED_AS`), then (a) literal session-opening → enriched, (b) known DP to baseline XML, (c) extend with the same mechanism. Apply to the known 3185 late-Aug lag **without** hand notes as input — notes only for comparison.
