@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hard recalibration — before → after</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="remediate">
+    <header class="bar">
+      <div>
+        <h1>Hard recalibration — pin morph</h1>
+        <p id="meta" class="meta">loading…</p>
+        <nav class="nav">
+          <a href="/">conflicts</a>
+          <a href="/remediate.html" aria-current="page">remediation</a>
+        </nav>
+      </div>
+      <div class="controls">
+        <label class="morph-label">
+          before
+          <input type="range" id="morph" min="0" max="1000" value="0" />
+          after
+        </label>
+        <button type="button" id="play" class="play">play</button>
+        <label class="toggle">
+          <input type="checkbox" id="showScans" checked />
+          hard path (scans)
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="showEvidence" checked />
+          evidence badges
+        </label>
+      </div>
+    </header>
+
+    <section class="morph-wrap">
+      <svg id="morphSvg" role="img" aria-label="before after pin morph"></svg>
+      <p class="timeline-hint">
+        drag the slider · play morphs production pins → hard OBSERVED_ON∘DATED_AS ·
+        click a date for detail
+      </p>
+      <div id="legend" class="legend"></div>
+    </section>
+
+    <div class="split remediate-split">
+      <section class="table-wrap">
+        <h2>Dates in focus</h2>
+        <table id="dayTable">
+          <thead>
+            <tr>
+              <th>date</th>
+              <th>production</th>
+              <th>hard</th>
+              <th>Δ</th>
+              <th>bridge scan</th>
+              <th>evidence</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+      <section class="detail" id="detail">
+        <h2>Day</h2>
+        <p class="muted">Select a date on the morph or in the table.</p>
+      </section>
+    </div>
+
+    <script type="module" src="/src/remediate.js"></script>
+  </body>
+</html>

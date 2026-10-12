@@ -161,9 +161,10 @@ def detect_lag_window(
 ) -> dict[str, Any]:
     """Lag window from near-contiguous disagree runs (graph-derived, not notes).
 
-    Builds tight clusters (default gap ≤7d), then unions every cluster that
-    intersects August–September (known late-summer regime). Falls back to the
-    largest cluster if none touch Aug/Sep.
+    Builds tight clusters (default gap ≤7d), then picks the **largest** cluster
+    that intersects August–September (not a union of all such clusters — that
+    spanned Jul–Oct across a mid-September break). Falls back to the largest
+    cluster if none touch Aug/Sep.
     """
     delta_set = delta_set or {7, 8, 9}
     lag = [
@@ -186,7 +187,7 @@ def detect_lag_window(
 
     focus = [c for c in clusters if _touches_aug_sep(c)]
     if focus:
-        pick_dates = [d for c in focus for d in c]
+        pick_dates = max(focus, key=len)
     else:
         pick_dates = max(clusters, key=len)
     pick_dates = sorted(pick_dates)
@@ -388,7 +389,26 @@ def literal_opening_matches(
     return out
 
 
-SESSION_CHUNK = 3  # hard-map session band per DP chunk (keeps k under MAX_*)
+SESSION_CHUNK = 1  # one hard-map session per DP chunk (was 3 → chronic oversize)
+
+
+def _volgnrs_for_dates(
+    dates: list[str], enr_by_date: dict[str, list[str]]
+) -> list[str]:
+    out: list[str] = []
+    for d in dates:
+        out.extend(enr_by_date.get(d, []))
+    return out
+
+
+def _expand_dates_pm1(hard_dates: list[str]) -> list[str]:
+    date_set: set[str] = set()
+    for d in hard_dates:
+        for off in range(-1, 2):
+            cd = _shift(d, off)
+            if in_scope(cd):
+                date_set.add(cd)
+    return sorted(date_set)
 
 
 def _dp_one_chunk(
@@ -410,8 +430,8 @@ def _dp_one_chunk(
     enr_text: dict[str, str],
     principles: DpPrinciples,
 ) -> list[dict[str, Any]]:
-    # Editorial stream = hard-mapped dates in this chunk only (±1d), not every
-    # intervening calendar day (that explodes k_e under production-style density).
+    # Editorial stream = exact hard-mapped dates for this session band.
+    # ±1 calendar expand only when exact k_e < MIN_SIDE (singleton sitting days).
     hard_dates = sorted({
         r["date"]
         for r in hard_rows
@@ -419,20 +439,18 @@ def _dp_one_chunk(
         and r.get("session_num") is not None
         and sess_lo <= int(r["session_num"]) <= sess_hi
     })
-    date_set: set[str] = set()
-    for d in hard_dates:
-        for off in range(-1, 2):
-            cd = _shift(d, off)
-            if in_scope(cd):
-                date_set.add(cd)
-    volgnrs = []
-    for d in sorted(date_set):
-        volgnrs.extend(enr_by_date.get(d, []))
+    date_list = list(hard_dates)
+    calendar_expand = "exact_hard_dates"
+    volgnrs = _volgnrs_for_dates(date_list, enr_by_date)
+    if len(volgnrs) < MIN_SIDE and hard_dates:
+        date_list = _expand_dates_pm1(hard_dates)
+        volgnrs = _volgnrs_for_dates(date_list, enr_by_date)
+        calendar_expand = "pm1_because_exact_too_small"
     # Exact hard session band (no ± soft margin — HTR density otherwise exceeds MAX_READ).
     soft_sess_lo, soft_sess_hi = sess_lo, sess_hi
     flats = _sorted_flats_for_sessions(inventory, soft_sess_lo, soft_sess_hi, axis_index)
-    soft_lo = hard_dates[0] if hard_dates else seed_lo
-    soft_hi = hard_dates[-1] if hard_dates else seed_hi
+    soft_lo = date_list[0] if date_list else seed_lo
+    soft_hi = date_list[-1] if date_list else seed_hi
     frozen = set(flats_with_aligned_to(graph))
     for lit in literal_rows:
         if lit.get("matched") and lit.get("opening_flat"):
@@ -449,6 +467,7 @@ def _dp_one_chunk(
         "soft_sess_hi": soft_sess_hi,
         "k_e": len(volgnrs),
         "k_f": len(flats),
+        "calendar_expand": calendar_expand,
         "n_literal_frozen": sum(1 for lit in literal_rows if lit.get("matched")),
         "lids": "hard_map_only",
     }

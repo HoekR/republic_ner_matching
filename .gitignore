@@ -18,5 +18,7 @@ data/LOC-annotations.json
 data/PER-annotations.json
 .aider*
 
-# npm cache from local tooling
+# npm / pnpm local tooling caches (pnpm falls back to .pnpm-store when
+# hard-linking from the global store fails)
 .npm-cache/
+.pnpm-store/

@@ -1229,6 +1229,7 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Built:** `sequence_graph/resolution_fingerprint_eval.py`; dataset `resolution_fingerprint_train_test`.
 - **Run:** `uv run python -m sequence_graph.resolution_fingerprint_eval --write`
 - **Wired into hard recalibrate (same day):** DP₁ overlap = entity + `FINGERPRINT_OVERLAP_SCALE`×cosine; fingerprint fit excludes the lag-window dates. Channel `entity_fingerprint_dp`. Scale=15 fixed from train/test means (pos≈0.17→~2.5; neg≈0.04→~0.6) so CostModel prefers MATCH on fingerprint positives.
+- **Oversize clear (same day):** Union of all Aug/Sep lag clusters had spanned Jul–Oct; pick **largest** Aug/Sep cluster only. DP chunks = one hard-map session; enriched stream = exact hard dates (±1 only when exact k_e < MIN_SIDE).
 
 ## 2026-10-12: hard-evidence recalibration (a→b→c)
 
@@ -1236,12 +1237,25 @@ User's worked example (three hard-anchored sessions, a known session k_e giving 
 - **Decision:** Implement `sequence_graph.hard_recalibrate`: detect pin-channel split window from graph (not notes); active lids = unique hard map; literal_opening seeds; soft-window DP₁/DP₂ with hard lids; `--compare-notes` held-out score. No production wire; no `DATED_AS:review` graph write.
 - **Run:** `uv run python -m sequence_graph.hard_recalibrate --inventory 3185 --write --compare-notes`
 
+## 2026-10-12: fingerprint session-shift — gold first; preceding-scan parked
+
+- **User:** use fingerprinting for resolution session-shift; ask whether that is a separate track or needs full dating recalibration first; try gold first; also float preceding-scan text to decide which resolution ends a session (raw HTR harder).
+- **Decision:** Dating lids (`PINNED_TO*` / hard map) and resolution match (`ALIGNED_TO` / fingerprint) stay **separate tracks** — no corpus-wide dating rewrite before asking whether fingerprint recovers the correct session under lag. **Gold first:** synthetic Δ competitor on held-out tier1 (fit on train days only); gate = gold-session recovery. Lag-window rematch deferred until that gate. **Preceding-scan / session-tail channel deferred** (not part of gold gate): on ambiguous cuts, fingerprint HTR on scans before the next session’s first `OBSERVED_ON` folio to name the closing resolution of the prior sitting — tiers A `paragraph_axis` trail → B archival `scan_ids` (~72%) → C raw HTR.
+- **Next build:** `sequence_graph.fingerprint_session_shift --on-gold --write`.
+
+## 2026-10-12: remediation morph viz (D3) + gitignore generated payloads
+
+- **User:** visual overview of remediated Aug–Sep graph, preferably before/after; three.js also acceptable — agent to judge. Then gitignore viz results and sync docs.
+- **Decision:** D3 bipartite morph (not three.js): production `PINNED_TO` → hard `OBSERVED_ON∘DATED_AS` with scan mid-rail + literal/review badges. Depth would recreate the rejected lane spaghetti; the remapping is 2D. Generated `viz/sequence_stretch/public/{stretch,remediation}.json` are **gitignored** — regenerate via exporters after clone / window change. Next candidate stretch: 3185 `1626-09-21`..`1626-10-25` (second lag7–9 cluster).
+- **Built:** `sequence_graph.remediation_viz_export`; `/remediate.html` in `viz/sequence_stretch`.
+- **Run:** `uv run python -m sequence_graph.stretch_viz_export` && `uv run python -m sequence_graph.remediation_viz_export` then `cd viz/sequence_stretch && pnpm install && pnpm dev` → http://localhost:5173/remediate.html
+
 ## 2026-10-11: stretch claim SVG viewer (not three.js)
 
 - **User:** wanted a visualisation of the annotated problem area; agreed 2D SVG lanes + claim channels beat three.js.
 - **First build:** lane spaghetti — user: “nice but useless.”
 - **Decision (revised):** Conflict **timeline** + table: per day production vs physical (Δ session), review scan, reasons; click → IIIF + note. Export still `sequence_graph.stretch_viz_export`. Review claims from notes only — not graph-written.
-- **Run:** `uv run python -m sequence_graph.stretch_viz_export` then `cd viz/sequence_stretch && pnpm install && pnpm dev`.
+- **Run:** `uv run python -m sequence_graph.stretch_viz_export` then `cd viz/sequence_stretch && pnpm install && pnpm dev`. (Payloads gitignored as of 2026-10-12 — see entry above.)
 
 ## 2026-10-11: anchors are relational claims (doctrine)
 

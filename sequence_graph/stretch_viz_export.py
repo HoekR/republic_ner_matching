@@ -4,6 +4,9 @@ Primary payload: per-day claim summary (production / physical / review / literal
 scans) and conflict rows. Full lane edges kept only for the selected-day detail
 panel. Review claims from notes — not written to the graph.
 
+Writes ``viz/sequence_stretch/public/stretch.json`` (gitignored — regenerate
+after clone).
+
 Usage:
     uv run python -m sequence_graph.stretch_viz_export
 """

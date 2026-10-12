@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .DS_Store
+
+# Regenerated exporters — not source
+public/stretch.json
+public/remediation.json

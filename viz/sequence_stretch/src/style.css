@@ -57,6 +57,79 @@ body {
   white-space: nowrap;
 }
 
+.nav {
+  display: flex;
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+  font: 0.78rem var(--mono);
+}
+
+.nav a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.nav a:hover {
+  color: var(--ink);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 28rem;
+}
+
+.morph-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font: 0.78rem var(--mono);
+  color: var(--muted);
+}
+
+.morph-label input[type="range"] {
+  width: 9rem;
+  accent-color: var(--ink);
+}
+
+.play {
+  font: 0.8rem var(--mono);
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #f6f3ee;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.morph-wrap {
+  padding: 0.6rem 1rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+#morphSvg {
+  width: 100%;
+  min-height: 420px;
+  display: block;
+  background: linear-gradient(180deg, #fffdf7, #f7f0e4);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.remediate-split {
+  min-height: calc(100vh - 520px);
+}
+
 .timeline-wrap {
   padding: 0.6rem 1rem 0.2rem;
   border-bottom: 1px solid var(--line);

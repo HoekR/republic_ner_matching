@@ -120,7 +120,9 @@ Every measurement must say whether it uses **literal**, **physical**, **producti
 2. **(b)** Existing `align_bracket` DP₁ entity on soft windows whose lids are the hard map only.
 3. **(c)** DP₂ short/opening extend on residue (same mechanism as trusted-bracket hand-off).
 
-Hand review notes / `DATED_AS:review` are **held out** from lids and seeds on the first apply; they score the machine path afterward. No production `PINNED_TO` wire. Module: `sequence_graph.hard_recalibrate`.
+Hand review notes / `DATED_AS:review` are **held out** from lids and seeds on the first apply; they score the machine path afterward. No production `PINNED_TO` wire. Module: `sequence_graph.hard_recalibrate`. Before→after morph: `sequence_graph.remediation_viz_export` → gitignored `viz/sequence_stretch/public/remediation.json` (`/remediate.html`).
+
+**Fingerprint session-shift (ALIGNED_TO track, not dating):** gold-first synthetic-Δ gate before lag rematch (`fingerprint_session_shift --on-gold`). **Parked hard-case:** preceding-scan / session-tail evidence (trailing flats → archival scan_ids → raw HTR) to name which resolution closes the prior sitting — not part of the gold gate.
 
 ## Current status
 
