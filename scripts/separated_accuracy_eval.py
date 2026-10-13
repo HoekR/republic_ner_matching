@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 5c.1 of plans/COLLISION_AVOIDANCE_TRACK.md — is the `separated` set *accurate*?
+"""Step 5c.1 of plans/archive/COLLISION_AVOIDANCE_TRACK.md — is the `separated` set *accurate*?
 
 PLAN.md's Global-primary criterion is MET at 8,015 separated resolutions (68.8% of the 11,644
 ceiling), and Step 5 proposes freezing that as a **scaffold** to fill gaps around. Step 5c

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 5 (plans/STAGED_ANCHOR_CONSOLIDATION.md, user follow-up 2026-10-02): does a Group C
+"""Step 5 (plans/archive/STAGED_ANCHOR_CONSOLIDATION.md, user follow-up 2026-10-02): does a Group C
 phrase hit's mere *presence* inside an already-forced-abstention gap (`pigeonhole_floor > 1`)
 predict that gold actually places a real boundary at that paragraph -- independent of which
 specific resolution it belongs to?

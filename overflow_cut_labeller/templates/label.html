@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ row.flat_id }}{% endblock %}
+{% block content %}
+<nav class="pager">
+  {% if prev_id %}
+  <a class="btn secondary" href="{{ url_for('label_record', example_id=prev_id) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">Flat {{ index + 1 }} of {{ stats.total }}</span>
+  {% if next_id %}
+  <a class="btn secondary" href="{{ url_for('label_record', example_id=next_id) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Flat</span><code>{{ row.flat_id }}</code></div>
+    <div><span class="label">Session</span><code>{{ row.session_id }}</code></div>
+    <div><span class="label">Claimants</span>{{ row.n_claimants }} (expect {{ expected_cuts }} cuts)</div>
+    <div><span class="label">Align</span>
+      match={{ row.size_matched }} · insert={{ row.size_insertion_split }} ·
+      del={{ row.size_deletion }} · order={{ row.order_match_rate }}
+    </div>
+    <div><span class="label">Machine cuts</span><code>{{ row.machine_cuts }}</code></div>
+    <div><span class="label">State file</span><code class="path">{{ state_file }}</code></div>
+  </div>
+  <p class="notes-hint">
+    Content only — place or revise <code>{{ marker }}</code> so each segment maps one
+    enriched claimant in editorial order. <b>approve</b> marks offsets promote-ready
+    (<code>is_gold</code>); no production <code>ALIGNED_TO</code> / <code>PINNED_TO</code> wire.
+  </p>
+</section>
+
+<section class="card claimants">
+  <h2>Claimant summaries (editorial order)</h2>
+  <ol class="claimant-list">
+    {% for c in row.claimants or [] %}
+    <li>
+      <div class="claimant-head">
+        <code>{{ c.volgnr }}</code>
+        <span class="muted">{{ c.char_len }} chars</span>
+      </div>
+      <pre class="claimant-text">{{ c.text }}</pre>
+    </li>
+    {% else %}
+    <li class="muted">No claimant_volgnrs on flat_apply row.</li>
+    {% endfor %}
+  </ol>
+</section>
+
+<form id="label-form" class="card" data-example-id="{{ row.example_id }}" data-next-id="{{ next_id or '' }}" data-marker="{{ marker }}" data-expected-cuts="{{ expected_cuts }}">
+  <div class="form-header">
+    <h2>HTR flat (editable)</h2>
+    <div class="actions-inline">
+      <button type="button" class="btn secondary" id="btn-insert-cut">Insert cut marker</button>
+      <button type="button" class="btn secondary" id="btn-reset-machine">Reset to machine cuts</button>
+      <span id="cut-count" class="status-pill {{ 'done' if cuts_ok else 'pending' }}">{{ n_cuts }} cuts (expect {{ expected_cuts }})</span>
+      <span class="status-pill {{ 'done' if row.labelled else 'pending' }}">{{ 'Saved' if row.labelled else 'Unsaved' }}</span>
+    </div>
+  </div>
+
+  <fieldset class="verdict-box">
+    <legend>Treatment</legend>
+    <label class="check"><input type="radio" name="verdict" value="approve" {{ 'checked' if verdict == 'approve' else '' }}>
+      <b>approve</b> — cuts as shown are the treatment (promote-ready; <code>is_gold</code>)</label>
+    <label class="check"><input type="radio" name="verdict" value="defer" {{ 'checked' if verdict == 'defer' else '' }}>
+      <b>defer</b> — come back later (default)</label>
+    <label class="check"><input type="radio" name="verdict" value="skip" {{ 'checked' if verdict == 'skip' else '' }}>
+      <b>skip</b> — not annotatable / wrong population for this window</label>
+  </fieldset>
+
+  <label>Marked HTR
+    <textarea name="text" id="editor" rows="16" spellcheck="false">{{ row.text }}</textarea>
+  </label>
+  <textarea id="seeded-text" hidden>{{ row.seeded_text }}</textarea>
+
+  <div class="row checks">
+    <label class="check"><input type="checkbox" name="uncertain" id="uncertain" {{ 'checked' if row.uncertain else '' }}> uncertain</label>
+  </div>
+
+  <label>Note
+    <textarea name="note" id="note" rows="2" placeholder="Why these cuts, or why skip…">{{ row.note }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Save &amp; next</button>
+    <button type="button" class="btn secondary" id="btn-save-stay">Save</button>
+    <span id="save-status" class="save-status"></span>
+  </div>
+</form>
+
+<script src="{{ url_for('static', filename='label.js') }}"></script>
+{% endblock %}

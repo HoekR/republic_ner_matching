@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 3 of `plans/SCAN_SEQUENCE_TRACK.md`: type every bracket on the scan axis.
+"""Step 3 of `plans/archive/SCAN_SEQUENCE_TRACK.md`: type every bracket on the scan axis.
 
 **What this is.** One row per bracket between consecutive scan->date anchors, each carrying a
 type, a quantity and the images to check it on — ordered along the axis, so the dataset reads as
@@ -509,7 +509,7 @@ def main() -> None:
         "record_type": "meta",
         "track": OUTPUT_DATASET,
         "description": (
-            "Step 3 of plans/SCAN_SEQUENCE_TRACK.md: every bracket on the scan axis typed against "
+            "Step 3 of plans/archive/SCAN_SEQUENCE_TRACK.md: every bracket on the scan axis typed against "
             "an empirical null, ordered along the axis so the dataset is a status of the timeline. "
             "No count of determined placements -- the forcing frame was struck 2026-10-08. Both "
             "anchor sets are written, keyed by `anchor_set`, because they disagree 3x on "

@@ -112,7 +112,7 @@ evidence, no disagreements. `1627-10-06` (5 res / 8 para) — only paragraph 0 i
 1. **Low-specificity entities generate the ties.** `'s Hertogenbosch` fires identically (3.688)
    across idx 7, 8, 9 and 10 of `1630-02-22`, and is the *entire* anchor for idx 7/8. Every
    row-local/global disagreement found at Step 1 traces to a tie of this kind. This bears directly
-   on `plans/COLLISION_AVOIDANCE_TRACK.md`'s working-hypothesis point 5 ("entity order is
+   on `plans/archive/COLLISION_AVOIDANCE_TRACK.md`'s working-hypothesis point 5 ("entity order is
    informative for all entities, not just rare ones… current scoring weights by IDF… and throws
    away order") and on the known weakness in `docs/writeup_mechanism_anchors.md`
    (`nw_matches_gt_rate` 0.957 correct vs 0.962 false-positive — the entity bag barely
@@ -147,7 +147,7 @@ structurally cannot distinguish *no evidence exists* from *evidence exists in a 
 see* — and that misreading was actually made during this session, calling 18 zero-score rows "zero
 evidence". Cause: `align_session`'s `anchor_only_diagonal` gate makes groups B/C/D **structurally
 invisible**, not merely down-weighted (`semantic_weight` defaults to 0.0). Deferred to
-`plans/STAGED_ANCHOR_CONSOLIDATION.md` Step 2, which must verify the char→paragraph join first.
+`plans/archive/STAGED_ANCHOR_CONSOLIDATION.md` Step 2, which must verify the char→paragraph join first.
 
 **3. Step 2 restructured — forced vs chosen collapse first.** Per the abstention criterion (user,
 2026-09-30), a span holding *k* resolutions in fewer than *k* paragraphs is provably unseparable at
@@ -200,7 +200,7 @@ path disagreement in `data_manifest.toml:271` — resolved in the NW path's favo
    size may mislead: a 2-resolution gap can be cheap and unlock nothing, while a large one can
    unblock a whole session because a hand-resolved gap becomes a top-confidence anchor that may close
    adjacent gaps on the next pass. Rank by expected unlocked mass; measure it rather than assert it.
-   Recorded in `plans/STAGED_ANCHOR_CONSOLIDATION.md` as a to-define item.
+   Recorded in `plans/archive/STAGED_ANCHOR_CONSOLIDATION.md` as a to-define item.
 
 ---
 
@@ -369,7 +369,7 @@ decisions belong there, not here; do that before closing the track.
 ### Correction (2026-10-01): "0/85 chosen" is a group-A-only result, not a verdict on placement quality
 
 The anchor backbone `span_verdict_for_day` re-derives comes from `align_session` at production
-defaults — which, per `plans/STAGED_ANCHOR_CONSOLIDATION.md` ("Groups B/C/D are structurally
+defaults — which, per `plans/archive/STAGED_ANCHOR_CONSOLIDATION.md` ("Groups B/C/D are structurally
 invisible, not merely down-weighted"), only ever sees **group A** (tagger-entity overlap,
 `tier1_entity_nw`), measured at ~4-7% of all harvested anchor evidence. So "every gap is forced"
 means *forced given group-A-only evidence*, not "forced, period." Said plainly to the user when

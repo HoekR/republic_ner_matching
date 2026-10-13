@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 3 of plans/SHORT_RESOLUTION_SIDE_PLAN.md — add experiment-only structured summarizer.
+"""Step 3 of plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md — add experiment-only structured summarizer.
 
 Generates inspectable semantic evidence for each HTR candidate using a local LLM.
 Reuses local model availability and JSON extraction from alignment_llm_judge.py,

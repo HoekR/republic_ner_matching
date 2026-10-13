@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Brackets on the PHYSICAL scan axis: room available against business the calendar requires.
 
-Track: `plans/SCAN_SEQUENCE_TRACK.md` (opened 2026-10-08).
+Track: `plans/archive/SCAN_SEQUENCE_TRACK.md` (opened 2026-10-08).
 
 **The structural principle this rests on** (user, 2026-10-08): *sessions never explicitly end —
 they implicitly end when another session begins, and the same is true of resolutions.* So an end
@@ -94,7 +94,7 @@ def scan_date_anchors() -> dict[str, dict[int, pd.Period]]:
         except ValueError:
             continue
         # Internal consistency: the heading's own weekday must match its own numeral. A property
-        # of the page, independent of any label (plans/SEQUENCE_ALIGNMENT_TRACK.md 2026-10-06).
+        # of the page, independent of any label (plans/archive/SEQUENCE_ALIGNMENT_TRACK.md 2026-10-06).
         if reading["weekday"] is not None and date.dayofweek != reading["weekday"]:
             continue
         # Scope bar, at the source: nothing after the XML baseline's last date (user, 2026-09-25,

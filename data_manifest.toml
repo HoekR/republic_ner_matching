@@ -369,6 +369,48 @@ phase = "semi"
 description = "Correctness scoring of the `weak_separation`-GATED per-rank TF-IDF condition (plans/TFIDF_EMBEDDINGS_TRACK.md open question 1), the follow-up s6c_similarity_rank_scores_eval's +315 gated separated_count demanded: `separated` is a coverage criterion, so a condition can raise it by pushing placements apart while getting them wrong. Baseline vs. gated placements over the boundary_gold_sample days, scored with separated_accuracy_eval's own accuracy()/gold_start_paragraphs() -- exact start-paragraph agreement and absolute paragraph displacement, never a tolerance-family metric (docs/METRICS.md:187) -- with separated_count reported on the SAME rows so coverage and correctness can be read against each other. Power is bounded by the gate: only 12 of the 50 gold days (3 of the 21 review_code == S days) are weak_separation days, and the gate leaves every other day bit-identical to baseline, so the headline is the weak-day cohort plus a PAIRED movement analysis over the rows the gate actually relocated (moved toward gold vs away, net displacement change), not the diluted all-gold-days figure. Also carries an ungated facet (the condition applied to non-weak gold days too), which is track open question 3 -- why the signal hurts solid days -- answered from the same predictions. Gold-subset counts, not comparable to the corpus-wide 8,315 / 8,630. Diagnostic only, no placement change."
 parent = "s4_corpus_paragraph_predictions"
 
+[datasets.s6c_p3_offset_carry_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6c_p3_offset_carry_eval.jsonl"
+phase = "semi"
+description = "Track P P3 diagnostic: carry mid-paragraph char offsets through re-paragraph (versioned successor axis) then build_anchor_backbone/segment_day. Scored on synthetic_boundary_folds (proven consecutive-separated pairs). Reports separated on the successor vs plain paragraph-only and uniform_start_paragraphs on the pre-split axis; exact start agreement only; no production axis write."
+parent = "synthetic_boundary_folds"
+
+[datasets.s6c_p4_predicted_offset_eval]
+tier = "hot"
+path = "republic_ner_matching/output/s6c_p4_predicted_offset_eval.jsonl"
+phase = "semi"
+description = "Track P predicted Group-C (typed) interior cuts on main-series colliding paragraphs → segment_day_with_offsets on a versioned successor. Separated vs plain collisions and uniform_start_paragraphs on the successor; exact counts only; no production axis write."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.paragraph_axis_p5_predicted_v1]
+tier = "hot"
+path = "republic_ner_matching/output/paragraph_axis_p5_predicted_v1.jsonl"
+phase = "semi"
+description = "Track P P5 versioned paragraph-axis successor of paragraph_axis_1626_1630: gated typed Group-C interior cuts on colliding hosts (host enough_cuts + day beats_plain and no extent regression). Provenance parent_para_index / parent_char_start/end / axis_version; main series + scope bar; parent never mutated in place."
+parent = "paragraph_axis_1626_1630"
+
+[datasets.s6c_p5_axis_successor_ledger]
+tier = "hot"
+path = "republic_ner_matching/output/s6c_p5_axis_successor_ledger.jsonl"
+phase = "semi"
+description = "Track P P5 ledger of host/day gate outcomes for paragraph_axis_p5_predicted_v1. Per colliding day: cut fill after gate, separated vs plain, extent>3, day_accepted."
+parent = "paragraph_axis_p5_predicted_v1"
+
+[datasets.p5_axis_viewer_notes]
+tier = "hot"
+path = "republic_ner_matching/output/p5_axis_viewer_notes.json"
+phase = "semi"
+description = "Human review notes from p5-axis-viewer: per enriched_date day_notes plus per-host (axis_id) notes. Not a production placement write."
+parent = "s6c_p5_axis_successor_ledger"
+
+[datasets.p5_day_sync_report]
+tier = "hot"
+path = "republic_ner_matching/output/p5_day_sync_report.jsonl"
+phase = "semi"
+description = "Same-day sync flags from p5_axis_viewer.report: content_run (pin vs calendar, k consecutive) and pin≠trusted/exact. Complements hard_pin monotone; not a production gate. Summary + one row per enriched_date in the requested window."
+parent = "resolution_concordance_1626_1630"
+
 [datasets.s6c_similarity_rank_scores_eval]
 tier = "hot"
 path = "republic_ner_matching/output/s6c_similarity_rank_scores_eval.jsonl"
@@ -908,6 +950,20 @@ phase = "semi"
 description = "Secret status flags for 1626-1630 enriched resolutions recovered from source XML: secreet_resolutie (bool), secreet_deel_count (int), register_citations (list). Rows keyed by (date, resolution_index) for joining to enriched_resolutions_1626_1630. Contains only the 381 resolutions with at least one marker."
 parent = "enriched_resolutions_1626_1630"
 
+[datasets.secret_session_hijack_proposals]
+tier = "hot"
+path = "republic_ner_matching/output/secret_session_hijack_proposals.jsonl"
+phase = "semi"
+description = "Secret-session hijack proposals + apply log (scripts/secret_session_hijack.py): dates resolved only to inventory 4562; withdraw non-flagged force-fits; re-attach XML-flagged secrets (secreet_resolutie|secreet_deel_count>0); duplicate-claim losers cleared. Gate: corpus separated loss ≤ 6. Optional --wire updates resolution_concordance_1626_1630."
+parent = "enriched_resolution_secret_flags"
+
+[datasets.secret_session_hijack_wire_report]
+tier = "hot"
+path = "republic_ner_matching/output/secret_session_hijack_wire_report.jsonl"
+phase = "semi"
+description = "Production wire report for secret_session_hijack --wire: per-date apply log + separated before/after on applied dates and corpus-wide."
+parent = "secret_session_hijack_proposals"
+
 [datasets.resolution_archival_provenance]
 tier = "hot"
 path = "republic_ner_matching/output/resolution_archival_provenance.jsonl"
@@ -942,6 +998,48 @@ path = "republic_ner_matching/output/sequence_graph_aligned_to_coverage_log.json
 phase = "semi"
 description = "Before/after ALIGNED_TO coverage (sequence_graph.consolidate.aligned_to_status) across each sequence_graph.persist.save_graph run -- one row per run per bucket (gold_verified/legacy_concordance_only/solver_derived_only/unaligned), so a graph rebuild's actual effect is a logged number, never an unverified claim (user, 2026-10-09: 'measure improvement... save the results to a log')."
 parent = "sequence_graph_edges"
+
+[datasets.sequence_graph_snapshot_log]
+tier = "hot"
+path = "republic_ner_matching/output/sequence_graph_snapshot_log.jsonl"
+phase = "semi"
+description = "Append-only log of named sequence_graph snapshots (label, timestamp, coverage, logical names). Canonical nodes/edges stay the live graph; each snapshot is a frozen copy for before/after compare (user 2026-10-12). From sequence_graph.persist --snapshot."
+parent = "sequence_graph_edges"
+
+[datasets.remediation_window_run_log]
+tier = "hot"
+path = "republic_ner_matching/output/remediation_window_run_log.jsonl"
+phase = "semi"
+description = "Append-only log of remediation-window tool runs (hard_recalibrate / bake / overflow apply / wire / snapshots). Proof datasets overwrite; this keeps calendar pin, hard_active, stages, overflow counts, and gates visible across attempts (user 2026-10-12). From sequence_graph.remediation_run_log."
+parent = "hard_recalibrate_proof"
+
+[datasets.sequence_graph_nodes_snapshot_seed_overflow_wire]
+tier = "hot"
+path = "republic_ner_matching/output/snapshots/seed_overflow_wire/sequence_graph_nodes.jsonl"
+phase = "semi"
+description = "Frozen nodes copy of canonical sequence_graph after Step 8 scoped ALIGNED_TO:overflow wire (8 edges; gold_verified=395). For widen/compare; does not replace the live graph. From sequence_graph.persist --snapshot seed_overflow_wire."
+parent = "sequence_graph_nodes"
+
+[datasets.sequence_graph_edges_snapshot_seed_overflow_wire]
+tier = "hot"
+path = "republic_ner_matching/output/snapshots/seed_overflow_wire/sequence_graph_edges.jsonl"
+phase = "semi"
+description = "Frozen edges copy paired with sequence_graph_nodes_snapshot_seed_overflow_wire. Includes ALIGNED_TO:overflow from Step 8. Load via sequence_graph.persist.load_graph_snapshot('seed_overflow_wire')."
+parent = "sequence_graph_nodes_snapshot_seed_overflow_wire"
+
+[datasets.sequence_graph_nodes_snapshot_after_hard_pin_promote]
+tier = "hot"
+path = "republic_ner_matching/output/snapshots/after_hard_pin_promote/sequence_graph_nodes.jsonl"
+phase = "semi"
+description = "Frozen nodes after scoped hard_pin_promote wire (17 production PINNED_TO from hard beads; concordance resolved_session_id rewritten). Pre-promote freeze was missed (label not registered); compare production pins to seed_overflow_wire. From sequence_graph.persist --snapshot after_hard_pin_promote."
+parent = "sequence_graph_nodes"
+
+[datasets.sequence_graph_edges_snapshot_after_hard_pin_promote]
+tier = "hot"
+path = "republic_ner_matching/output/snapshots/after_hard_pin_promote/sequence_graph_edges.jsonl"
+phase = "semi"
+description = "Frozen edges paired with sequence_graph_nodes_snapshot_after_hard_pin_promote. Load via load_graph_snapshot('after_hard_pin_promote')."
+parent = "sequence_graph_nodes_snapshot_after_hard_pin_promote"
 
 [datasets.sequence_graph_sync_gaps]
 tier = "hot"
@@ -1075,6 +1173,83 @@ path = "republic_ner_matching/output/remediation_track_gold.jsonl"
 phase = "semi"
 description = "Full remediation track gold (gap→rearrange→diagnostic→recal→realign→split) with residual-gap ledger. Imperfect closure OK. No production wire. From sequence_graph.bake_remediation_track_gold."
 parent = "hard_recalibrate_proof"
+
+[datasets.overflow_align_apply]
+tier = "hot"
+path = "republic_ner_matching/output/overflow_align_apply.jsonl"
+phase = "semi"
+description = "Stage 6 apply: fingerprint-gated multi-claim flats expanded by cut_proposal offsets, then align_bracket (entity+fingerprint) on hard-window content sessions. Encoder vs even-split; cuts is_gold=false. No PINNED_TO / production ALIGNED_TO wire. From sequence_graph.overflow_align_apply."
+parent = "fingerprint_overflow_split_proof"
+
+[datasets.overflow_cut_reviews]
+tier = "hot"
+path = "republic_ner_matching/output/overflow_cut_reviews.json"
+phase = "explore"
+description = "Human cut/treatment review on overflow_align_apply needs_human_cuts flats. Disk JSON from overflow-cut-review-ui: verdict approve|defer|skip, marked HTR with |||CUT|||, gold_offsets. approve ⇒ is_gold promote-ready; no production ALIGNED_TO / PINNED_TO wire."
+parent = "overflow_align_apply"
+
+[datasets.boundary_windowed_eval]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_windowed_eval.jsonl"
+phase = "semi"
+description = "Sliding-window boundary inference vs 512 truncation: trunc_512 / win_512_s256 / s128 / s256_gap / even_split on overflow_cut_gold + short overflow controls. From scripts/eval_boundary_windowed.py."
+parent = "overflow_cut_gold"
+
+[datasets.boundary_hard_gold_train_report]
+tier = "hot"
+path = "republic_ner_matching/output/boundary_hard_gold_train_report.jsonl"
+phase = "semi"
+description = "Continue-finetune report: synthetic GloBERTise final → hard gold (lumped_paragraph_boundary_gold + overflow_cut_gold). Checkpoint tag hardgold. From scripts/train_boundary_hard_gold.py."
+parent = "overflow_cut_gold"
+
+[datasets.overflow_cut_gold]
+tier = "hot"
+path = "republic_ner_matching/output/overflow_cut_gold.jsonl"
+phase = "semi"
+description = "Promoted human cut gold: approve rows from overflow_cut_reviews as cut_proposal is_gold=true with gold_offsets. Machine aligned_to_overflow_track_gold cut_proposal left unchanged. No production ALIGNED_TO / PINNED_TO wire. From sequence_graph.overflow_cut_promote."
+parent = "overflow_cut_reviews"
+
+[datasets.overflow_align_wire]
+tier = "hot"
+path = "republic_ner_matching/output/overflow_align_wire.jsonl"
+phase = "semi"
+description = "Step 8 scoped production ALIGNED_TO:overflow plan: clean_split encoder MATCH (observed=False) + certain cut gold 1:1 editorial (observed=True). Parent flat + char span detail. Optional --push-graph. No PINNED_TO. From sequence_graph.overflow_align_wire."
+parent = "overflow_cut_gold"
+
+[datasets.hard_pin_repin]
+tier = "hot"
+path = "republic_ner_matching/output/hard_pin_repin.jsonl"
+phase = "semi"
+description = "Gated PINNED_TO:hard repin from hard_recalibrate unique OBSERVED_ON∘DATED_AS beads. Parallel claim channel only — no production PINNED_TO key overwrite, no concordance/ALIGNED_TO rewrite. Monotone + separated-vs-uniform standing-guard report. Optional --push-graph. From sequence_graph.hard_pin_repin."
+parent = "hard_recalibrate_proof"
+
+[datasets.hard_pin_promote]
+tier = "hot"
+path = "republic_ner_matching/output/hard_pin_promote.jsonl"
+phase = "semi"
+description = "Scoped production PINNED_TO promote from PINNED_TO:hard on seed window: plan + concordance date_wire preview + inherit-date composition (ALIGNED_TO∘session∘hard). Gate = hard + monotone + separated non-decrease. --wire rewrites concordance resolved_session_id; --push-graph overwrites production PINNED_TO key. Paragraph placements unchanged. From sequence_graph.hard_pin_promote."
+parent = "hard_pin_repin"
+
+[datasets.hard_pin_placement_lift]
+tier = "hot"
+path = "republic_ner_matching/output/hard_pin_placement_lift.jsonl"
+phase = "semi"
+description = "Remediation stages 8–9: place under promoted PINNED_TO on session paragraph streams; separated before/after vs uniform; ALIGNED_TO:hard_place wire candidates. Gate = slice separated↑ and corpus non-decrease. Abstains on nihil_actum (Tier V). --wire/--push-graph on PASS. From sequence_graph.hard_pin_place."
+parent = "hard_pin_promote"
+
+[datasets.hard_pin_place_nihil_strip]
+tier = "hot"
+path = "republic_ner_matching/output/hard_pin_place_nihil_strip.jsonl"
+phase = "semi"
+description = "Tier V remediation report: dates/rows where hard_pin_place attributions on nihil_actum days were cleared (resolved_session_id + paragraph spans). From sequence_graph.hard_pin_place --strip-nihil --write."
+parent = "resolution_concordance_1626_1630"
+
+[datasets.project_overview]
+tier = "hot"
+path = "republic_ner_matching/output/project_overview.jsonl"
+phase = "semi"
+description = "PLAN.md acceptance overview snapshot: Global primary/stretch/spans + Local, Tier V, solid days, Active Focus / PLAN NEXT. From scripts/project_overview.py --write."
+parent = "metrics_separation_span_table"
 
 [datasets.fingerprint_boundary_gold_check]
 tier = "hot"

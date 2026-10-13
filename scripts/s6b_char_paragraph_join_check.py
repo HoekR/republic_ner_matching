@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 2 of plans/STAGED_ANCHOR_CONSOLIDATION.md: verify the char-to-paragraph join.
+"""Step 2 of plans/archive/STAGED_ANCHOR_CONSOLIDATION.md: verify the char-to-paragraph join.
 
 `scripts/s6b_anchor_harvest.py` records every anchor (groups A/B/C/D) as a `char_position`
 into the concatenation of one day's `axis_for_date(...)` paragraphs, with no separator

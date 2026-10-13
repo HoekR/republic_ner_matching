@@ -470,7 +470,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Resolved per axis_for_date (plans/STAGED_ANCHOR_CONSOLIDATION.md Step 2), not the raw
+    # Resolved per axis_for_date (plans/archive/STAGED_ANCHOR_CONSOLIDATION.md Step 2), not the raw
     # same-calendar-day grouping: 137/1,119 dates disagree between the two, and in 93% of
     # those the resolved session is the one carrying the real content (e.g. a raw same-day
     # axis that is empty, or that pulls in a second, unrelated inventory's paragraphs sharing

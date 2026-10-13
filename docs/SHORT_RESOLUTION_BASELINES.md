@@ -3,7 +3,7 @@
 
 ## Overview
 
-Step 2 of `plans/SHORT_RESOLUTION_SIDE_PLAN.md` establishes deterministic baselines for the frozen 80-candidate sample from Step 1.
+Step 2 of `plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md` establishes deterministic baselines for the frozen 80-candidate sample from Step 1.
 
 The baselines measure what the LLM must beat on the held-out test set. All scoring is deterministic and reproducible: the gate is that baseline inputs remain identical across comparison runs.
 
@@ -107,7 +107,7 @@ Step 3 output will be scored against these baselines to measure whether LLM summ
 
 ## References
 
-- `plans/SHORT_RESOLUTION_SIDE_PLAN.md` — full side-track plan
+- `plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md` — full side-track plan
 - `align_short_resolutions.py` — formula searcher configuration and phrase inventory
 - `build_short_resolution_llm_sample.py` — Step 1: frozen sample builder
 - `build_short_resolution_baselines.py` — Step 2: baseline builder (this step)

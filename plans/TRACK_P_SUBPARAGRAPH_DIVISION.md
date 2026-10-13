@@ -5,7 +5,7 @@
 Part of the **main line** (user, 2026-10-05): the two remaining problems are both anchor
 operations — (1) we do not know how to divide or join paragraphs → **place anchors** (this
 track); (2) the distribution of resolutions/paragraphs over sessions is unresolved → shift
-anchors ([plans/TRACK_S_ANCHOR_SHIFTING.md](TRACK_S_ANCHOR_SHIFTING.md)). They are coupled —
+anchors ([plans/archive/TRACK_S_ANCHOR_SHIFTING.md](TRACK_S_ANCHOR_SHIFTING.md)). They are coupled —
 several shared-session splits are themselves sub-paragraph, so **P before S**. See `PLAN.md`'s
 canonical goal; this file is where new Track P steps get added, `PLAN.md` keeps only the
 headline.
@@ -26,16 +26,18 @@ is all the DP really consumes, is 5,375 of those — about 2%.
   P's cuts create. So the char axis is an **intermediate** representation; the final address stays
   paragraph-based, which preserves the canonical goal's verified archival address and every downstream
   consumer.
-- **P0 — GATE, still a canonical-goal decision, but a smaller one than first drafted.** Because a char
-  cut **materialises as a new paragraph boundary**, `separated` does **not** need rekeying to
-  `(paragraph, char_offset)` — `label_separation`'s definition is untouched and simply runs over a finer,
-  corrected paragraph stream. (An earlier draft of this step proposed rekeying the metric; the user's
-  re-paragraphing architecture is better and supersedes it, because it leaves the criterion the
-  `separated` ruling adjudicates on exactly as it is.) What still needs explicit sign-off:
+- **P0 — GATE — SIGNED OFF 2026-10-13** (`docs/DECISIONS.md`: "Track P P0: Phase-2 ceiling may
+  rise under re-paragraph"). Because a char cut **materialises as a new paragraph boundary**,
+  `separated` does **not** need rekeying to `(paragraph, char_offset)` — `label_separation`'s
+  definition is untouched and simply runs over a finer, corrected paragraph stream. (An earlier
+  draft of this step proposed rekeying the metric; the user's re-paragraphing architecture is
+  better and supersedes it, because it leaves the criterion the `separated` ruling adjudicates on
+  exactly as it is.) Sign-off contents (chosen, not discovered):
   - **The ceiling rises.** The **11,644 paragraph-level ceiling** is a pigeonhole over today's
     paragraphs; more paragraphs means more capacity, so today's 8,084 = 68.8% "MET" becomes a smaller
-    fraction of a larger denominator. Real coverage rises while the headline number falls. That is the
-    right trade but it must be chosen, not discovered.
+    fraction of a larger denominator. Real coverage rises while the headline number falls. **Accepted:**
+    dual-ceiling reporting (historical 11,644 + post-re-paragraph stream); a falling headline % on a
+    larger denominator is not regression. P3 licensed.
   - **Re-paragraphing scale (measured):** 1,597 paragraphs split into 4,516 pieces — **+2,919
     paragraphs, +13.6% of the 21,519-paragraph axis**, touching 7.4% of it. Median 2 pieces per split
     paragraph, p90 5.
@@ -280,11 +282,38 @@ is all the DP really consumes, is 5,375 of those — about 2%.
     relative to a genuinely lumped HTR paragraph (shared seam vocabulary, no hard break). Proven and
     plentiful, but not a free proxy for the harder real phenomenon; P2's thin human sample is still the
     only *in-distribution* check available, just not worth extending further by hand.
-  - **Next, not yet done:** redirect P3's offset-carrying test to score against `synthetic_boundary_*`
-    corpus-wide (2,041 rows, proven) as the primary gold, keeping the 12-row lumped `no_cut`/`cuts`
-    set as the in-distribution diagnostic check rather than the target to extend. P2 is closed at
-    12 gold / 80, not continued to 80.
-- **P3 — carry the offset through** `build_anchor_backbone`/`segment_gap` so one paragraph can host
-  several resolution starts at distinct offsets. Scored on the rekeyed `separated` corpus-wide against
-  the uniform null per the ruling; gold correctness as diagnostic only.
+  - **Redirect done (with P3, 2026-10-13):** P3's offset-carrying test scores against
+    `synthetic_boundary_folds` (2,040 examples). P2 stays closed at 12 gold / 80.
+- **P3 — DONE (2026-10-13) — mechanism PASS on synthetic primary gold.** Char cuts materialise as
+  a versioned successor axis (`scripts/s6c_reparagraph.py`: `reparagraph_axis` /
+  `segment_day_with_offsets`); existing `build_anchor_backbone` / `segment_day` then run on the
+  remapped paragraph-only alignments. Parent stream is never mutated in place
+  (`axis_version = paragraph_axis_p3_reparagraph_v1`, `parent_para_index` /
+  `parent_char_start`/`end` provenance on every piece).
+  - **Synthetic score** (`scripts/s6c_p3_offset_carry_eval.py` → `s6c_p3_offset_carry_eval`):
+    **2,040** fold examples; **exact start agreement 1.0**; **separated offset / plain /
+    uniform = 4,886 / 0 / 0** of `k_e=4,886`. Offset-carry unlocks every start on the successor;
+    paragraph-only and `uniform_start_paragraphs` on the pre-split 1-paragraph axis stay fully
+    collided. Exact agreement only; no tolerance bands. This is the gold-*offset* diagnostic
+    (cuts known by construction) — it proves the carry path, not that a predicted cut placer
+    is ready.
+  - **P4 — DONE (2026-10-13) — predicted offsets on live collisions (diagnostic).**
+    `scripts/s6c_p4_predicted_offset_eval.py` → `s6c_p4_predicted_offset_eval`: typed Group C
+    cuts on main-series colliding hosts → `segment_day_with_offsets`. **590 days / 1,212 hosts;
+    cut fill 893/2,053 = 0.435; separated pred/plain/uniform = 6,324 / 4,592 / 6,194
+    (Δ vs plain +1,732; 501/590 days beat plain; 190/590 beat uniform on successor);
+    extent>3 = 231.** Beats the collision baseline clearly; uniform on the successor is close
+    (standing guard still binds). Still a resolver with thin cut supply (~43% of needed cuts).
+  - **P5 — DONE (2026-10-13) — gated successor written.**
+    `scripts/s6c_p5_persist_axis_successor.py` → `paragraph_axis_p5_predicted_v1` +
+    `s6c_p5_axis_successor_ledger`. Host `enough_cuts`; day
+    `beats_plain_and_no_extent_regression`. **590** colliding days scored; **376
+    accepted / 214 rejected**; **661** cuts on **582** hosts; axis
+    **18,946 → 19,607** (+661); separated on accepted days **4,454 vs plain 3,099
+    (Δ+1,355)**; extent>3 accepted **155 ≤ plain 158**; gated fill **0.339**
+    (696/2,053 — thinner than P4’s ungated 0.435 because `enough_cuts` drops
+    partials). Parent never mutated; scope bar + main series at entry.
+  - **Still open:** (1) dual-ceiling Tier O on the successor stream; (2) residual
+    typology under session-resolved horizons; (3) whether `MAX_EXTENT=3` needs
+    recalibration on the accepted re-paragraphed mass.
 

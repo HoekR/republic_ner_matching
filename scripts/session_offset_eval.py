@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 6 gate of plans/COLLISION_AVOIDANCE_TRACK.md -- the enriched<->HTR session offset.
+"""Step 6 gate of plans/archive/COLLISION_AVOIDANCE_TRACK.md -- the enriched<->HTR session offset.
 
 Step 6 proposes aligning the *enriched sitting sequence* against the *HTR session
 sequence* as sequences, replacing the current correspondence, which is a
@@ -504,7 +504,7 @@ def main() -> None:
 
     meta = {
         "record_type": "meta",
-        "step": "Step 6 gate (plans/COLLISION_AVOIDANCE_TRACK.md)",
+        "step": "Step 6 gate (plans/archive/COLLISION_AVOIDANCE_TRACK.md)",
         "enriched_dates_total": int(concordance["enriched_date"].nunique()),
         "nihil_dates_excluded": int(
             concordance.loc[concordance["status"] == NIHIL_STATUS, "enriched_date"].nunique()
@@ -569,7 +569,7 @@ def main() -> None:
         logical_name=OUTPUT_DATASET,
         parent_sources=[CONCORDANCE_DATASET, AXIS_DATASET],
         description=(
-            "Step 6 gate of plans/COLLISION_AVOIDANCE_TRACK.md: the enriched<->HTR session "
+            "Step 6 gate of plans/archive/COLLISION_AVOIDANCE_TRACK.md: the enriched<->HTR session "
             "offset distribution, measured across the streams rather than argued by analogy "
             "from s6b_session_fingerprint_match's flat<->raw offsets. Per inventory, enriched "
             "sittings (nihil_actum excluded as the hard skip constraint) are ranked by date and "

@@ -122,7 +122,7 @@ def align_entity_mentions(
 
     Three moves from cell `(i, j)`, all at unit cost so the experiment stays parameter-free:
     match `(i+1, j+1)`, flat/HTR skip `(i+1, j)`, and enriched run `(i, j+1)`. The third is what
-    plans/COLLISION_AVOIDANCE_TRACK.md Step 3 means by many-to-one *in both directions* -- "a run
+    plans/archive/COLLISION_AVOIDANCE_TRACK.md Step 3 means by many-to-one *in both directions* -- "a run
     of consecutive enriched resolutions attaching to one HTR unit" -- and it is the corpus's
     dominant shape, since HTR under-segments 81.1% of session-days (S1-D1).
 

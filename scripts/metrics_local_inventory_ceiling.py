@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Tier O — per-inventory pigeonhole ceiling and PLAN.md's Local criterion.
 
-Reproduces, for the first time as a scripted computation, the corpus-wide
-pigeonhole ceiling PLAN.md and docs/DECISIONS.md (2026-09-22) cite as a fixed
-constant (11,644 / 19,120 = 60.9%; docs/METRICS.md's "Known gaps" flags this as
-unreproduced): for each date with any enriched resolutions, the ceiling
-contribution is ``min(k_e, paragraph_count)`` where ``paragraph_count`` is that
-calendar date's own HTR paragraph count from ``paragraph_axis_1626_1630``
-(pigeonhole — a day with ``n`` paragraphs can hold at most ``n`` distinct start
-paragraphs) and ``k_e`` is enriched resolution count that date. A date with no
-same-day HTR contributes 0 (535 such dates, matching PLAN.md's cited figure).
+Reproduces the *historical* Phase-1 same-day pigeonhole ceiling (11,644) that
+PLAN.md MET targets were scored against: for each date,
+``min(k_e, same-calendar-day paragraph_count)`` from ``paragraph_axis_1626_1630``.
+Dates with no same-day paragraphs contribute 0 (535 dates under that definition).
+
+**2026-10-13:** that zero is *not* “no HTR exists” — main-series ``missing_htr``
+is 0 and the mass was displaced/mis-dated HTR (user 2026-10-09). Live capacity
+and theoretical max live in ``scripts/project_overview.main_series_htr_account``
+(session-resolved ceiling 12,048; theoretical max 14,113; nihil floor 127).
+This script remains the regression lock on the historical 11,644 constant.
 
 Then answers PLAN.md's **Local** acceptance criterion, never previously
 computed: does any inventory reach >=50% of its own ceiling? Separated counts

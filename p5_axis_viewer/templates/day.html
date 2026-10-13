@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}P5 {{ day.enriched_date }}{% endblock %}
+{% block content %}
+
+<nav class="pager">
+  {% if prev_date %}
+  <a class="btn secondary" href="{{ url_for('day_view', date=prev_date, filter=mode, **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">{{ index + 1 }} / {{ stats.showing }} · filter={{ mode }}{% if range_from and range_to %} · window {{ range_from }}→{{ range_to }}{% endif %}</span>
+  {% if next_date %}
+  <a class="btn secondary" href="{{ url_for('day_view', date=next_date, filter=mode, **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<nav class="filters">
+  {% for f in filters %}
+  <a class="btn {{ 'primary' if f == mode else 'secondary' }}"
+     href="{{ url_for('day_view', date=day.enriched_date, filter=f, **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">{{ f }}</a>
+  {% endfor %}
+  <a class="btn secondary" href="#explore-unsplit">unsplit</a>
+  <a class="btn secondary" href="#explore-shifted">day shifts</a>
+  <a class="btn secondary" href="{{ url_for('tier_day', date=day.enriched_date, **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">tier view</a>
+  {% if range_from and range_to %}
+  <a class="btn secondary" href="{{ url_for('range_index', **{'from': range_from, 'to': range_to, 'filter': mode}) }}">range index</a>
+  <a class="btn primary" href="{{ url_for('review_day', date=day.enriched_date, **{'from': range_from, 'to': range_to}) }}">← back to review</a>
+  {% endif %}
+</nav>
+
+<form class="jump-form card" method="get" action="{{ url_for('review_start') }}">
+  <label>Gold review from
+    <input type="text" name="from" value="{{ range_from or day.enriched_date }}" size="12">
+  </label>
+  <label>to
+    <input type="text" name="to" value="{{ range_to or day.enriched_date }}" size="12">
+  </label>
+  <button type="submit" class="btn primary">Start review</button>
+  <a class="btn secondary"
+     href="{{ url_for('range_index', **{'from': range_from or day.enriched_date, 'to': range_to or day.enriched_date, 'filter': 'corpus'}) }}">range index</a>
+</form>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Date</span><code>{{ day.enriched_date }}</code></div>
+    <div><span class="label">P5 ledger</span>
+      {% if day.in_ledger %}
+      <span class="status-pill done">in ledger</span>
+      <span class="status-pill {{ 'done' if day.day_accepted else 'pending' }}">
+        gate {{ 'yes' if day.day_accepted else 'no' }}
+      </span>
+      {% else %}
+      <span class="status-pill pending">explore only</span>
+      {% endif %}
+      {% if context.day_suspect %}
+      <span class="status-pill suspect">accepted but suspect</span>
+      {% endif %}
+    </div>
+    <div><span class="label">Content gate</span>
+      {{ context.n_content_suspect_hosts }} suspect host{{ 's' if context.n_content_suspect_hosts != 1 else '' }}
+      (summary ↛ parent HTR)
+      {% if context.content_run %}
+      · run <code>{{ context.content_run.day_verdict }}</code>
+      {% endif %}
+      {% if context.pin_trusted and context.pin_trusted.mismatch %}
+      <span class="status-pill suspect">pin≠trusted</span>
+      {% endif %}
+    </div>
+    <div><span class="label">Δ sep vs plain</span>{{ day.delta_vs_plain if day.in_ledger else '—' }}</div>
+    <div><span class="label">Separated</span>
+      {% if day.in_ledger %}
+      pred {{ day.separated_predicted }} / plain {{ day.separated_plain }} / uni {{ day.separated_uniform_successor }}
+      {% else %}—{% endif %}
+    </div>
+    <div><span class="label">Cuts</span>
+      {% if day.in_ledger %}
+      gated {{ day.n_cuts_gated }} / needed {{ day.n_cuts_needed }}
+      (hosts {{ day.n_hosts_accepted }}/{{ day.n_colliding_hosts }})
+      {% else %}— (no P5 gate row){% endif %}
+    </div>
+    <div><span class="label">Paragraphs</span>
+      {% if day.in_ledger %}{{ day.n_paragraphs_before }} → {{ day.n_paragraphs_after }}{% else %}—{% endif %}
+    </div>
+    <div><span class="label">Extent &gt;3</span>
+      {% if day.in_ledger %}
+      pred {{ day.n_extent_gt_max_predicted }} / plain {{ day.n_extent_gt_max_plain }}
+      {% else %}—{% endif %}
+    </div>
+    <div><span class="label">k<sub>e</sub></span>{{ day.k_e if day.k_e is not none else '—' }}</div>
+    <div><span class="label">Session</span>
+      {% if context.resolved_session_ids %}
+        {% for sid in context.resolved_session_ids %}<code>{{ sid }}</code>{% if not loop.last %} · {% endif %}{% endfor %}
+      {% else %}<span class="muted">—</span>{% endif %}
+    </div>
+    <div><span class="label">Session date</span>
+      {% if context.resolved_session_dates %}
+        {% for sd in context.resolved_session_dates %}
+          <code>{{ sd }}</code>{% if sd != day.enriched_date %} <span class="status-pill pending">shift</span>{% endif %}
+          {% if not loop.last %} · {% endif %}
+        {% endfor %}
+      {% else %}<span class="muted">—</span>{% endif %}
+    </div>
+    <div><span class="label">Explore</span>
+      unsplit {{ context.n_unsplit }} · colliding {{ context.n_colliding }} ·
+      day-shift {{ context.day_shifted_count }} · unplaced {{ context.n_unplaced }}
+    </div>
+    <div><span class="label">Notes file</span><code class="path">{{ notes_file }}</code></div>
+  </div>
+  <form id="day-notes-form" class="notes-form" data-date="{{ day.enriched_date }}">
+    <label>Day notes
+      <textarea name="day_notes" id="day_notes" rows="3"
+        placeholder="e.g. false-accept — summaries misbound to HTR; keep as pathology">{{ day_notes_text }}</textarea>
+    </label>
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Save notes</button>
+      <span id="notes-status" class="save-status"></span>
+    </div>
+  </form>
+</section>
+
+{% for host in hosts %}
+<section class="card host {{ 'accepted' if host.host_accepted else 'rejected' }} {% if host.content_suspect %}suspect{% endif %}">
+  <div class="form-header">
+    <h2>Host p{{ host.paragraph_start_index }}
+      {% if host.host_accepted %}
+      <span class="status-pill done">accepted</span>
+      {% else %}
+      <span class="status-pill pending">gated out</span>
+      {% endif %}
+      {% if host.content_suspect %}
+      <span class="status-pill suspect">suspect</span>
+      {% endif %}
+    </h2>
+    <div class="notes-hint">
+      n_share={{ host.n_share }} · needed={{ host.n_needed }} ·
+      raw={{ host.n_cuts_raw }} · gated={{ host.n_cuts_gated }}
+      · content hits {{ host.content_hits }}/{{ host.content_n_tokens }}
+      ({{ '%.0f'|format((host.content_hit_rate or 0) * 100) }}%)
+    </div>
+  </div>
+  <p class="notes-hint"><code class="path">{{ host.axis_id }}</code>
+    {% if host.parent_flat_id %} · {{ host.parent_flat_id }}{% endif %}
+  </p>
+  <label class="host-notes-label">Host notes
+    <textarea class="host-notes" name="host_notes" rows="2"
+      data-axis-id="{{ host.axis_id }}"
+      placeholder="cut ok / wrong binding / formula false positive …">{{ host.review_notes }}</textarea>
+  </label>
+
+  {% if host.parent_missing %}
+  <p class="warn">Parent axis row missing for this axis_id.</p>
+  {% else %}
+  <div class="split three">
+    <div class="pane">
+      <h3>Summaries ({{ host.summaries|length }})</h3>
+      {% if host.summaries %}
+        {% for res in host.summaries %}
+        <div class="piece res-attach {{ 'colliding' if res.colliding else '' }} {% if res.day_shifted %}shifted{% endif %}">
+          <div class="piece-meta">
+            #{{ res.resolution_index }}
+            {% if res.paragraph_end_index is not none and res.paragraph_end_index != res.paragraph_start_index %}
+            · p{{ res.paragraph_start_index }}–{{ res.paragraph_end_index }}
+            {% endif %}
+            {% if res.colliding %}<span class="status-pill pending">share {{ res.n_share }}</span>{% endif %}
+            {% if res.day_shifted %}
+            <span class="status-pill shift">→ {{ res.resolved_session_date }}</span>
+            {% endif %}
+          </div>
+          <pre class="text summary">{{ res.text }}</pre>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="notes-hint">No concordance resolutions on this start.</p>
+      {% endif %}
+    </div>
+    <div class="pane">
+      <h3>Parent HTR</h3>
+      <pre class="text">{{ host.parent_text }}</pre>
+    </div>
+    <div class="pane">
+      <h3>Successor pieces ({{ host.pieces|length }})</h3>
+      {% if host.pieces %}
+        {% for piece in host.pieces %}
+        <div class="piece">
+          <div class="piece-meta">
+            chars {{ piece.parent_char_start }}–{{ piece.parent_char_end }}
+            · para {{ piece.para_index }}
+          </div>
+          <pre class="text">{{ piece.text }}</pre>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="notes-hint">No pieces (host not accepted, or cuts not applied).</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% else %}
+<p class="notes-hint">No colliding hosts on this day.</p>
+{% endfor %}
+
+<section class="card explore" id="explore-unsplit">
+  <div class="form-header">
+    <h2>Unsplit resolutions</h2>
+    <div class="notes-hint">{{ unsplit|length }} placed with unique start — summary ‖ parent HTR</div>
+  </div>
+  {% if unsplit %}
+    {% for res in unsplit %}
+    <div class="split explore-row {% if res.day_shifted %}shifted-row{% endif %}">
+      <div class="pane">
+        <div class="piece-meta">
+          #{{ res.resolution_index }} · p{{ res.paragraph_start_index }}{% if res.paragraph_end_index is not none and res.paragraph_end_index != res.paragraph_start_index %}–{{ res.paragraph_end_index }}{% endif %}
+          <span class="status-pill done">unsplit</span>
+          {% if res.day_shifted %}
+          <span class="status-pill shift">day → {{ res.resolved_session_date }}</span>
+          {% endif %}
+        </div>
+        <pre class="text summary">{{ res.text }}</pre>
+      </div>
+      <div class="pane">
+        <div class="piece-meta">parent HTR{% if res.parent_flat_id %} · {{ res.parent_flat_id }}{% endif %}</div>
+        {% if res.parent_text %}
+        <pre class="text">{{ res.parent_text }}</pre>
+        {% else %}
+        <p class="notes-hint">No parent paragraph at this index.</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="notes-hint">None on this day.</p>
+  {% endif %}
+</section>
+
+<section class="card explore" id="explore-shifted">
+  <div class="form-header">
+    <h2>Day shifts</h2>
+    <div class="notes-hint">
+      {{ shifted|length }} where resolved session date ≠ enriched date
+      (PINNED_TO / session mapping — inferred)
+    </div>
+  </div>
+  {% if shifted %}
+  <div class="orphan-grid">
+    {% for res in shifted %}
+    <div class="res-item shifted">
+      <div class="res-meta">
+        <span class="res-idx">#{{ res.resolution_index }}</span>
+        <span class="status-pill shift">{{ day.enriched_date }} → {{ res.resolved_session_date }}</span>
+        {% if res.colliding %}<span class="status-pill pending">share {{ res.n_share }}</span>
+        {% elif res.unsplit %}<span class="status-pill done">unsplit</span>
+        {% elif res.unplaced %}<span class="status-pill pending">unplaced</span>{% endif %}
+      </div>
+      <p class="notes-hint">
+        {% if res.resolved_session_id %}<code>{{ res.resolved_session_id }}</code>{% endif %}
+        {% if res.day_status %} · {{ res.day_status }}{% endif %}
+      </p>
+      <pre class="text summary">{{ res.text }}</pre>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="notes-hint">No day shifts on this sitting (session date matches enriched date).</p>
+  {% endif %}
+</section>
+
+{% if unplaced %}
+<section class="card explore" id="explore-unplaced">
+  <div class="form-header">
+    <h2>Unplaced</h2>
+    <div class="notes-hint">{{ unplaced|length }} — no paragraph_start_index</div>
+  </div>
+  <div class="orphan-grid">
+    {% for res in unplaced %}
+    <div class="res-item">
+      <div class="res-meta">
+        <span class="res-idx">#{{ res.resolution_index }}</span>
+        <span class="res-para muted">unplaced</span>
+        {% if res.day_shifted %}
+        <span class="status-pill shift">→ {{ res.resolved_session_date }}</span>
+        {% endif %}
+      </div>
+      <pre class="text summary">{{ res.text }}</pre>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='notes.js') }}"></script>
+{% endblock %}

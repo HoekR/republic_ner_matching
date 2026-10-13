@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 4 redirect, control test (plans/STAGED_ANCHOR_CONSOLIDATION.md): is the TF-IDF
+"""Step 4 redirect, control test (plans/archive/STAGED_ANCHOR_CONSOLIDATION.md): is the TF-IDF
 diagonal-relaxation gain measured by `s6c_semantic_anchor_isolation_check.py` real content
 signal, or just whichever direction an entity-score tie happens to break in?
 

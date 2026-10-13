@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 3's gate (plans/COLLISION_AVOIDANCE_TRACK.md) -- is entity *order* consistent for COMMON
+"""Step 3's gate (plans/archive/COLLISION_AVOIDANCE_TRACK.md) -- is entity *order* consistent for COMMON
 entities, or only for rare ones?
 
 Step 3 proposes moving the alignment's unit from the resolution to the entity mention and dropping
@@ -375,7 +375,7 @@ def main() -> None:
 
     summary = {
         "record_type": "summary",
-        "gate": "Step 3 (plans/COLLISION_AVOIDANCE_TRACK.md) -- hypothesis 5, order over all entities",
+        "gate": "Step 3 (plans/archive/COLLISION_AVOIDANCE_TRACK.md) -- hypothesis 5, order over all entities",
         "verdict": verdict,
         "verdict_reason": reason,
         "thresholds": {

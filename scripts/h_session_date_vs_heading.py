@@ -122,7 +122,7 @@ REGION_DATASET = "session_region_text_1626_1630"
 AXIS_DATASET = "paragraph_axis_1626_1630"
 
 # The five annual `ordinaris` registers each hold exactly one calendar year's sessions
-# (plans/SEQUENCE_ALIGNMENT_TRACK.md 2026-10-06/07: "volumes are annual", the constraint flagged
+# (plans/archive/SEQUENCE_ALIGNMENT_TRACK.md 2026-10-06/07: "volumes are annual", the constraint flagged
 # as not-yet-applied). 4562/4861 are the secret series and span many years, so they get no
 # nominal-year check at all. A parsed year outside [nominal-1, nominal+1] -- the +/-1 tolerance
 # covers a genuine year-boundary session carrying the adjacent year -- is OCR/HTR digit noise,
@@ -224,7 +224,7 @@ def read_heading(text: str, inventory: str | None = None) -> dict[str, Any]:
     A parsed year that falls outside its inventory's nominal year +/- 1 (e.g. "1636" or "1619"
     in an inventory 3188/3189 session nominally 1629/1630) is OCR/HTR digit noise on the year
     token specifically, not a real decade-scale date -- fixing the bug `PLAN.md` and
-    `plans/SEQUENCE_ALIGNMENT_TRACK.md` (2026-10-07) flagged: "a heading parsed into another
+    `plans/archive/SEQUENCE_ALIGNMENT_TRACK.md` (2026-10-07) flagged: "a heading parsed into another
     decade is wrong by construction". It is replaced with the volume's own nominal year, NOT
     with the recorded date's year (`ours`) -- substituting `ours` is the other bug this script
     already rejects elsewhere ("a year forced to the recorded date's year whenever they

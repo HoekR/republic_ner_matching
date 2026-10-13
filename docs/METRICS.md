@@ -14,10 +14,21 @@ so tiering by channel keeps the metric next to the thing that would move it.
 
 ## Tier definitions
 
-- **Tier O — Outcome.** The acceptance-criteria table itself: `PLAN.md:17-35`'s canonical-goal
-  block (separated definition, 60.9% paragraph ceiling, Global primary/stretch/spans, Local).
-  Not duplicated here in prose — read it there. Also holds the consecutive-day separation span
-  table (`scripts/metrics_separation_span_table.py`).
+- **Tier O — Outcome.** The acceptance-criteria table itself (`PLAN.md` canonical-goal block;
+  `separated` definition; Global primary/stretch/spans; Local). Also holds the consecutive-day
+  separation span table (`scripts/metrics_separation_span_table.py`) and
+  `scripts/project_overview.py`.
+  - **Phase 1 (CLOSED MET, 2026-10-12):** historical same-day ceiling **11,644**; primary ≥50% /
+    stretch ≥75% / spans gap=2 / Local — MET against that figure; stretch % vs 11,644 is not a
+    live steering target.
+  - **Phase 2 ceilings (recalculated 2026-10-13, main series 3185–3189):** the ~5,590 “no HTR”
+    hard-structural label is **retired** (was displaced HTR; main-series `missing_htr=0`).
+    Live: `hard_structural_nihil=127`, `session_resolved_ceiling=12048`,
+    `theoretical_max_separated=14113` (= main k_e 14240 − nihil),
+    `split_unlock_pigeonhole=2065` (387 crowded days), collision diagnostic among placed
+    ≈3482. Historical `phase1_ceiling=11644` kept for dual reporting only. Computed by
+    `scripts/project_overview.py` → `main_series_htr_account`. See `docs/DECISIONS.md`
+    2026-10-13 (no-HTR retirement).
 - **Tier P — Placement/model.** Cross-channel metrics measuring how well the placement algorithm
   (`interpolate_positions` / `segment_day` DP in `scripts/s4_paragraph_axis_baseline.py` and
   `scripts/s4_corpus_paragraph_predictions.py`) uses anchors *together*, independent of any one
@@ -40,11 +51,11 @@ so tiering by channel keeps the metric next to the thing that would move it.
   (`scripts/metrics_ke_drift_diagnostic.py`, parented on Tier V's day series).
 - **Tier E — Group E: short-resolution anchors.** `align_short_resolutions.py`'s formulaic
   open/close phrase anchors on short "no decision" resolutions. **Retired 2026-09-22** with the
-  LLM side-plan close (`plans/SHORT_RESOLUTION_SIDE_PLAN.md` Step 7; `docs/DECISIONS.md`): built
+  LLM side-plan close (`plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md` Step 7; `docs/DECISIONS.md`): built
   once, never measured, never wired into `scripts/s6b_anchor_harvest.py`. Not an active channel;
   do not re-open without a fresh measured case against current A–D baselines.
   **Reopen condition met 2026-09-25, not yet acted on.** Step 1 of
-  `plans/COLLISION_AVOIDANCE_TRACK.md` reused this channel's `OPENING_PHRASES` unchanged as its
+  `plans/archive/COLLISION_AVOIDANCE_TRACK.md` reused this channel's `OPENING_PHRASES` unchanged as its
   `formulaic_opening` landmark class and measured it against the current stream: openings detected
   in 500 / 1,316 flat sessions (38.0%), of which **115 are reached by no other channel** (neither
   the content-verified fingerprint channel nor the in-axis president/present stems). That is the
@@ -115,7 +126,7 @@ Why it is worth computing here:
   progress)"; a margin score turns that sentence into a per-placement number with a threshold,
   instead of the current post-hoc demotion when `n_share > 1`.
 - It targets the dominant loss channel. Collisions cost 4,722 of 14,472 slots (32.6%) against
-  extent's 9.9% (`plans/COLLISION_AVOIDANCE_TRACK.md` finding A), and a collision *is* a
+  extent's 9.9% (`plans/archive/COLLISION_AVOIDANCE_TRACK.md` finding A), and a collision *is* a
   multi-mapping event — a flat score surface across candidates.
 - It is orthogonal to what has already measured flat. `nw_matches_gt_rate` is 0.957 for correct
   pairs and 0.962 for false positives: evidence-*kind* demonstrably does not separate them.

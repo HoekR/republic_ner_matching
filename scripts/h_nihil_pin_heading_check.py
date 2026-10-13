@@ -15,7 +15,7 @@ from `session_region_text_1626_1630` (already-ingested ES text, no live query) a
 directly -- weekday, day, month, year -- using the same vocabulary and exact-lookup day parser
 `s6_duplicate_session_date_headings.parse_day_token` already uses, plus the same `qui heri`
 back-reference shift and weekday-internal-consistency check already established as non-circular
-(`plans/SEQUENCE_ALIGNMENT_TRACK.md` 2026-10-06, "A non-circular rate does exist").
+(`plans/archive/SEQUENCE_ALIGNMENT_TRACK.md` 2026-10-06, "A non-circular rate does exist").
 
 Verdict per session:
   confirms_pin     heading's own date == the exact-date pin (edition likely omitted real

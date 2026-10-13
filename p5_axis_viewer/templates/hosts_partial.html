@@ -1,0 +1,82 @@
+{# Shared host cards: summaries ‖ parent ‖ pieces #}
+{% for host in hosts %}
+<section class="card host {{ 'accepted' if host.host_accepted else 'rejected' }} {% if host.content_suspect %}suspect{% endif %}">
+  <div class="form-header">
+    <h2>Host p{{ host.paragraph_start_index }}
+      {% if host.host_accepted %}
+      <span class="status-pill done">accepted</span>
+      {% else %}
+      <span class="status-pill pending">gated out</span>
+      {% endif %}
+      {% if host.content_suspect %}
+      <span class="status-pill suspect">suspect</span>
+      {% endif %}
+    </h2>
+    <div class="notes-hint">
+      n_share={{ host.n_share }} · needed={{ host.n_needed }} ·
+      raw={{ host.n_cuts_raw }} · gated={{ host.n_cuts_gated }}
+      · content hits {{ host.content_hits }}/{{ host.content_n_tokens }}
+      ({{ '%.0f'|format((host.content_hit_rate or 0) * 100) }}%)
+    </div>
+  </div>
+  <p class="notes-hint"><code class="path">{{ host.axis_id }}</code>
+    {% if host.parent_flat_id %} · {{ host.parent_flat_id }}{% endif %}
+  </p>
+  <label class="host-notes-label">Host notes
+    <textarea class="host-notes" name="host_notes" rows="2"
+      data-axis-id="{{ host.axis_id }}"
+      placeholder="cut ok / wrong binding / formula false positive …">{{ host.review_notes }}</textarea>
+  </label>
+
+  {% if host.parent_missing %}
+  <p class="warn">Parent axis row missing for this axis_id.</p>
+  {% else %}
+  <div class="split three">
+    <div class="pane">
+      <h3>Summaries ({{ host.summaries|length }})</h3>
+      {% if host.summaries %}
+        {% for res in host.summaries %}
+        <div class="piece res-attach {{ 'colliding' if res.colliding else '' }} {% if res.day_shifted %}shifted{% endif %}">
+          <div class="piece-meta">
+            #{{ res.resolution_index }}
+            {% if res.paragraph_end_index is not none and res.paragraph_end_index != res.paragraph_start_index %}
+            · p{{ res.paragraph_start_index }}–{{ res.paragraph_end_index }}
+            {% endif %}
+            {% if res.colliding %}<span class="status-pill pending">share {{ res.n_share }}</span>{% endif %}
+            {% if res.day_shifted %}
+            <span class="status-pill shift">→ {{ res.resolved_session_date }}</span>
+            {% endif %}
+          </div>
+          <pre class="text summary">{{ res.text }}</pre>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="notes-hint">No concordance resolutions on this start.</p>
+      {% endif %}
+    </div>
+    <div class="pane">
+      <h3>Parent HTR</h3>
+      <pre class="text">{{ host.parent_text }}</pre>
+    </div>
+    <div class="pane">
+      <h3>Successor pieces ({{ host.pieces|length }})</h3>
+      {% if host.pieces %}
+        {% for piece in host.pieces %}
+        <div class="piece">
+          <div class="piece-meta">
+            chars {{ piece.parent_char_start }}–{{ piece.parent_char_end }}
+            · para {{ piece.para_index }}
+          </div>
+          <pre class="text">{{ piece.text }}</pre>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="notes-hint">No pieces (host not accepted, or cuts not applied).</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% else %}
+<p class="notes-hint">No colliding hosts on this day.</p>
+{% endfor %}

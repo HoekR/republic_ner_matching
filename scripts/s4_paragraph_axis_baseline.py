@@ -229,7 +229,7 @@ def load_enriched_texts_by_date() -> dict[str, list[str]]:
     `162915okt.xml#0`) and this dataset's `volgnr`/`resolution_index` fields don't share a
     common string form, so the ID-keyed lookup this replaced always missed and silently fed
     `compute_similarity_matrix` a placeholder string instead of real text (found via
-    plans/STAGED_ANCHOR_CONSOLIDATION.md's Step 4 redirect, 2026-10-02). `resolution_index`
+    plans/archive/STAGED_ANCHOR_CONSOLIDATION.md's Step 4 redirect, 2026-10-02). `resolution_index`
     is the one field both sides agree on positionally. Mirrors
     `scripts/s4_corpus_paragraph_predictions.py`'s `load_enriched_texts_by_date`, which
     already used this shape.

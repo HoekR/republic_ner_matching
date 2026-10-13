@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Is the `weak_separation`-gated per-rank similarity gain *correct*, or only spread?
 
-plans/TFIDF_EMBEDDINGS_TRACK.md open question 1. `s6c_similarity_rank_scores_eval` measured the
+plans/archive/TFIDF_EMBEDDINGS_TRACK.md open question 1. `s6c_similarity_rank_scores_eval` measured the
 per-rank TF-IDF bonus corpus-wide on `separated_count`: NEGATIVE applied everywhere (best -25),
 POSITIVE gated to `weak_separation` days (+315, 8,315 -> 8,630 at zscore/scale 3). `separated` is
 a **coverage** criterion -- unique start paragraph on the date, extent <= 3 -- so a condition can
@@ -367,7 +367,7 @@ def main() -> None:
         "record_type": "report",
         "unit": "paragraph_stream",
         "question": (
-            "plans/TFIDF_EMBEDDINGS_TRACK.md open question 1 -- is the weak_separation-gated "
+            "plans/archive/TFIDF_EMBEDDINGS_TRACK.md open question 1 -- is the weak_separation-gated "
             "+315 separated a correctness gain or only spread?"
         ),
         "metric": (

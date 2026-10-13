@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """AUDIT: does the XML-native nihil-actum extraction already cover feast days?
 
-NEXT STEP from plans/SEQUENCE_ALIGNMENT_TRACK.md (user, 2026-10-07): before computing a
+NEXT STEP from plans/archive/SEQUENCE_ALIGNMENT_TRACK.md (user, 2026-10-07): before computing a
 feast-day calendar as a new anchor source for the weekly-walk window count, check the XML
 *directly* for its own ``nihil actum`` markers, because the day-status pipeline already
 claims a nihil count (``resolution_concordance_1626_1630``'s ``status`` column, consumed by
@@ -213,7 +213,7 @@ def main() -> None:
         "track": OUTPUT_DATASET,
         "description": (
             "XML-native nihil-actum audit against the production status column, plus a "
-            "feast-day calendar cross-check, per plans/SEQUENCE_ALIGNMENT_TRACK.md's "
+            "feast-day calendar cross-check, per plans/archive/SEQUENCE_ALIGNMENT_TRACK.md's "
             "2026-10-07 NEXT step."
         ),
         "parent_datasets": [

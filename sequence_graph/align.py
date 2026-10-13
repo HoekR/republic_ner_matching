@@ -40,7 +40,7 @@ repo -- rebuilt from the plan's specification, not patched from existing code):
    with the ref item just placed (`ref[i-1]`, the one `i` is currently sitting next to); contamination
    shares none. Both costs are computed and the cheaper one wins, with its type recorded -- this is
    the project's first representation of margin/praesentes contamination, named but never built
-   before (`plans/ARCHIVAL_PROVENANCE_TRACK.md`'s secret-session hijack is a different, session-level
+   before (`plans/archive/ARCHIVAL_PROVENANCE_TRACK.md`'s secret-session hijack is a different, session-level
    version of the same "stray content gets force-fit" family).
 3. **Semi-global, with free end gaps and abstention.** Leading read-only moves are free
    (`dp[0][j] = 0`): HTR material before the bracket's first matched item never did belong to it.

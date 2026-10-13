@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 2 of plans/COLLISION_AVOIDANCE_TRACK.md — does enriched text length predict HTR extent?
+"""Step 2 of plans/archive/COLLISION_AVOIDANCE_TRACK.md — does enriched text length predict HTR extent?
 
 `segment_gap` (scripts/s6c_gap_segmentation.py:76) places its slots at *uniform* spacing::
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 4 pre-check (plans/STAGED_ANCHOR_CONSOLIDATION.md): does Group B carry a usable,
+"""Step 4 pre-check (plans/archive/STAGED_ANCHOR_CONSOLIDATION.md): does Group B carry a usable,
 new signal, or mostly confusion?
 
 Group B (`entity_surface_matches`, `fuzzy_surface_scan`) anchors are dictionary/fuzzy entity

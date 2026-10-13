@@ -737,5 +737,5 @@ falls — it needs `lumped_paragraph_boundary_gold`; and the gates omit the stan
 `separated` is reported against `uniform_start_paragraphs`, never absolute, with exact agreement
 only and no tolerance bands at any granularity.
 
-See `docs/DECISIONS.md` 2026-10-08 (two entries) and `plans/SCAN_SEQUENCE_TRACK.md`'s
+See `docs/DECISIONS.md` 2026-10-08 (two entries) and `plans/archive/SCAN_SEQUENCE_TRACK.md`'s
 `bracket_business_ledger` section.

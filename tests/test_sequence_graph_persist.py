@@ -8,7 +8,10 @@ the whole graph -- `sequence_graph/persist.py`'s own module docstring.
 from __future__ import annotations
 
 from sequence_graph.correspondence import ALIGNED_TO, add_aligned_to_gold, add_aligned_to_solver
+import pytest
+
 from sequence_graph.persist import (
+    _snapshot_logical_names,
     build_full_graph,
     edge_records,
     graph_from_records,
@@ -110,3 +113,11 @@ def test_graph_from_records_is_idempotent_on_its_own_output():
 
     assert sorted(nodes_1, key=lambda r: r["node_id"]) == sorted(nodes_2, key=lambda r: r["node_id"])
     assert len(edges_1) == len(edges_2)
+
+
+def test_snapshot_logical_names_reject_bad_labels():
+    nodes, edges = _snapshot_logical_names("seed_overflow_wire")
+    assert nodes == "sequence_graph_nodes_snapshot_seed_overflow_wire"
+    assert edges == "sequence_graph_edges_snapshot_seed_overflow_wire"
+    with pytest.raises(ValueError):
+        _snapshot_logical_names("bad/label")

@@ -1,0 +1,209 @@
+:root {
+  --bg: #eef2f7;
+  --card: #ffffff;
+  --ink: #1a202c;
+  --muted: #4a5568;
+  --accent: #2b6cb0;
+  --accent-soft: #ebf8ff;
+  --border: #cbd5e0;
+  --ok: #2f855a;
+  --danger: #c53030;
+  --warn: #b7791f;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: #1a365d;
+  color: #fff;
+}
+
+.brand { font-weight: 600; }
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.position { color: var(--muted); }
+.muted { color: var(--muted); font-size: 0.85rem; }
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+code.path { font-size: 0.78rem; word-break: break-all; }
+
+.notes-hint { color: var(--muted); font-size: 0.9rem; margin: 0.75rem 0 0; }
+
+.claimants h2 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+
+.claimant-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.claimant-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.claimant-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.9rem;
+  background: #f7fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  max-height: 9rem;
+  overflow: auto;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.form-header h2 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+
+.actions-inline { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+label {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+textarea, input[type="text"] {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+#editor {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  min-height: 20rem;
+}
+
+.row.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.verdict-box {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0 0;
+  background: var(--accent-soft);
+}
+
+.verdict-box legend {
+  font-weight: 600;
+  padding: 0 0.35rem;
+}
+
+.verdict-box .check {
+  margin-top: 0.35rem;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  color: #fff;
+  background: var(--accent);
+}
+
+.btn.secondary { background: #4a5568; }
+.btn.disabled, .btn:disabled { opacity: 0.45; pointer-events: none; }
+
+.status-pill {
+  font-size: 0.8rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #edf2f7;
+  color: var(--muted);
+}
+
+.status-pill.done { background: #c6f6d5; color: var(--ok); }
+.status-pill.pending { background: #feebc8; color: var(--warn); }
+
+.save-status { font-size: 0.88rem; color: var(--muted); }
+.save-status.ok { color: var(--ok); }
+.save-status.err { color: var(--danger); }

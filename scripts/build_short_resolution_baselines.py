@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 2 of plans/SHORT_RESOLUTION_SIDE_PLAN.md — establish deterministic baselines.
+"""Step 2 of plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md — establish deterministic baselines.
 
 Builds a baseline report for the frozen dev/test candidates from the sample
 manifest (created in Step 1). Baselines measure what the LLM must beat:

@@ -25,10 +25,15 @@ was previously saved, if anything) and after (on the new build), and appends bot
 an unverified claim, before the new graph becomes canonical (overwriting the saved one, not
 living alongside it as a permanent fork).
 
+**Named snapshots (user, 2026-10-12):** before widen / further plow, copy the canonical nodes+edges
+to registered `sequence_graph_{nodes,edges}_snapshot_<label>` datasets and append a row to
+`sequence_graph_snapshot_log`. Canonical is unchanged. Compare later via `load_graph_snapshot`.
+
 Usage:
     uv run python -m sequence_graph.persist --build          # rebuild, log the comparison, save
     uv run python -m sequence_graph.persist --build --solver-dates 1629-03-02 1626-11-16
     uv run python -m sequence_graph.persist --summary         # load the saved graph, print counts
+    uv run python -m sequence_graph.persist --snapshot seed_overflow_wire
 """
 
 from __future__ import annotations
@@ -132,6 +137,24 @@ def load_graph() -> nx.MultiDiGraph:
     return graph_from_records(nodes, edges)
 
 
+def _snapshot_logical_names(label: str) -> tuple[str, str]:
+    """Map a snapshot label to registered nodes/edges logical names."""
+    if not label or not all(c.isalnum() or c == "_" for c in label):
+        raise ValueError(
+            f"snapshot label must be [A-Za-z0-9_]+, got {label!r}"
+        )
+    return (
+        f"sequence_graph_nodes_snapshot_{label}",
+        f"sequence_graph_edges_snapshot_{label}",
+    )
+
+
+def load_graph_snapshot(label: str) -> nx.MultiDiGraph:
+    """Load a named snapshot (does not touch the canonical saved graph)."""
+    nodes_name, edges_name = _snapshot_logical_names(label)
+    return graph_from_records(load(nodes_name), load(edges_name))
+
+
 def _coverage_counts(graph: nx.MultiDiGraph) -> dict[str, int]:
     from sequence_graph.consolidate import aligned_to_status
     return {name: tally.value for name, tally in aligned_to_status(graph).items()}
@@ -197,13 +220,148 @@ def _dataset_exists(logical_name: str) -> bool:
     return resolve(logical_name).exists()
 
 
+def _dataset_registered(logical_name: str) -> bool:
+    from data_io.manifest import DataManager
+
+    return logical_name in DataManager().datasets
+
+
+def _reset_manifest_cache() -> None:
+    import data_io.manifest as manifest_mod
+
+    manifest_mod._default_manager = None
+
+
+def ensure_snapshot_manifest(label: str) -> list[str]:
+    """Append missing snapshot dataset rows to data_manifest.toml (default).
+
+    Returns logical names that were newly registered. Idempotent if already present.
+    """
+    from data_io.manifest import find_manifest_path
+
+    nodes_name, edges_name = _snapshot_logical_names(label)
+    missing = [n for n in (nodes_name, edges_name) if not _dataset_registered(n)]
+    if not missing:
+        return []
+
+    manifest_path = find_manifest_path()
+    block = f"""
+[datasets.{nodes_name}]
+tier = "hot"
+path = "republic_ner_matching/output/snapshots/{label}/sequence_graph_nodes.jsonl"
+phase = "semi"
+description = "Auto-registered frozen nodes snapshot '{label}' of canonical sequence_graph. From sequence_graph.persist --snapshot {label}."
+parent = "sequence_graph_nodes"
+
+[datasets.{edges_name}]
+tier = "hot"
+path = "republic_ner_matching/output/snapshots/{label}/sequence_graph_edges.jsonl"
+phase = "semi"
+description = "Auto-registered frozen edges snapshot '{label}'. Load via load_graph_snapshot('{label}')."
+parent = "{nodes_name}"
+"""
+    text = manifest_path.read_text(encoding="utf-8")
+    if f"[datasets.{nodes_name}]" not in text:
+        with manifest_path.open("a", encoding="utf-8") as handle:
+            handle.write(block if text.endswith("\n") else "\n" + block)
+    _reset_manifest_cache()
+    return missing
+
+
+def snapshot_graph(label: str, *, note: str = "", register: bool = True) -> dict:
+    """Copy the canonical saved graph to snapshot datasets; leave canonical unchanged.
+
+    By default auto-registers missing ``sequence_graph_*_snapshot_<label>`` manifest
+    entries. Pass ``register=False`` to require a prior manual manifest edit.
+    Appends one row to ``sequence_graph_snapshot_log``.
+    """
+    nodes_name, edges_name = _snapshot_logical_names(label)
+    if not _dataset_exists("sequence_graph_nodes") or not _dataset_exists(
+        "sequence_graph_edges"
+    ):
+        raise FileNotFoundError("canonical sequence_graph_nodes/edges missing — save first")
+    registered: list[str] = []
+    if register:
+        registered = ensure_snapshot_manifest(label)
+    for name in (nodes_name, edges_name):
+        if not _dataset_registered(name):
+            raise SystemExit(
+                f"register {name} in data_manifest.toml before --snapshot {label}"
+            )
+
+    graph = load_graph()
+    coverage = _coverage_counts(graph)
+    n_overflow = sum(
+        1
+        for _u, _v, key, data in graph.edges(keys=True, data=True)
+        if data.get("kind") == "ALIGNED_TO" and "overflow" in str(key)
+    )
+    timestamp = datetime.now(timezone.utc).isoformat()
+    save_semi_structured(
+        node_records(graph),
+        logical_name=nodes_name,
+        script="sequence_graph.persist",
+    )
+    save_semi_structured(
+        edge_records(graph),
+        logical_name=edges_name,
+        script="sequence_graph.persist",
+    )
+    log_row = {
+        "record_type": "snapshot",
+        "label": label,
+        "timestamp": timestamp,
+        "nodes_logical": nodes_name,
+        "edges_logical": edges_name,
+        "n_nodes": graph.number_of_nodes(),
+        "n_edges": graph.number_of_edges(),
+        "n_aligned_to_overflow": n_overflow,
+        "coverage": coverage,
+        "auto_registered": registered,
+        "note": note
+        or (
+            "Frozen copy of canonical sequence_graph for before/after compare; "
+            "canonical unchanged."
+        ),
+    }
+    prior = (
+        list(load("sequence_graph_snapshot_log"))
+        if _dataset_exists("sequence_graph_snapshot_log")
+        else []
+    )
+    save_semi_structured(
+        prior + [log_row],
+        logical_name="sequence_graph_snapshot_log",
+        script="sequence_graph.persist",
+    )
+    return log_row
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--build", action="store_true")
     group.add_argument("--summary", action="store_true")
+    group.add_argument(
+        "--snapshot",
+        metavar="LABEL",
+        help=(
+            "Copy canonical nodes/edges to sequence_graph_*_snapshot_<LABEL> "
+            "(canonical unchanged). Auto-registers missing manifest entries by default."
+        ),
+    )
     parser.add_argument("--strict-only", action="store_true")
     parser.add_argument("--solver-dates", nargs="*", default=())
+    parser.add_argument(
+        "--note",
+        default="",
+        help="Optional note stored on --snapshot log row",
+    )
+    parser.add_argument(
+        "--no-register",
+        action="store_true",
+        help="Require snapshot datasets already in data_manifest.toml",
+    )
     args = parser.parse_args()
 
     if args.build:
@@ -214,6 +372,22 @@ def main() -> None:
             print(f"  {name:<25}{str(before_value):>8} -> {after_value}")
         print("\nsaved sequence_graph_nodes, sequence_graph_edges, "
               "sequence_graph_aligned_to_coverage_log")
+    elif args.snapshot:
+        row = snapshot_graph(
+            args.snapshot, note=args.note, register=not args.no_register
+        )
+        if row.get("auto_registered"):
+            print(f"auto-registered: {row['auto_registered']}")
+        print(
+            f"snapshot {row['label']}: nodes={row['n_nodes']} edges={row['n_edges']} "
+            f"overflow_ALIGNED_TO={row['n_aligned_to_overflow']}"
+        )
+        for name, value in row["coverage"].items():
+            print(f"  {name:<25}{value}")
+        print(
+            f"wrote {row['nodes_logical']}, {row['edges_logical']}, "
+            "sequence_graph_snapshot_log (canonical unchanged)"
+        )
     else:
         graph = load_graph()
         kinds: dict[str, int] = {}

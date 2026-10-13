@@ -6,7 +6,7 @@
 account. Not as a population, not as a denominator, not as a diagnostic, not as a side finding.
 
 This module exists because the rule was already written down and I broke it anyway. It was
-recorded in `plans/COLLISION_AVOIDANCE_TRACK.md` (line 28) and enforced by
+recorded in `plans/archive/COLLISION_AVOIDANCE_TRACK.md` (line 28) and enforced by
 `session_offset_eval.restrict_to_enriched_span` -- but that helper takes a DataFrame with
 `session_date`/`inventory_id`/`flat_num` columns, so work on any other shape (the scan-sequence
 track keys `(inventory, scan, date)` tuples) silently bypassed it and 47 days of

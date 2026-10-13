@@ -1319,36 +1319,39 @@ def _encoder_cuts_for_flat(
     *,
     encoder: dict[str, Any] | None,
     model_name: str = "globalise/GloBERTise",
+    setup: str = "win_512_s256",
 ) -> dict[str, Any]:
-    """Propose char cuts with the fine-tuned boundary encoder (+ even-split baseline)."""
-    from scripts.eval_synthetic_boundary_encoder import predict_even_split, predict_model
-    from scripts.train_synthetic_boundary_encoder import DEFAULT_MAX_LENGTH
+    """Propose char cuts with the fine-tuned boundary encoder (+ even-split baseline).
 
-    example = {
-        "concat_text": text,
-        "concat_char_len": len(text),
-        "n_cuts": n_cuts,
-    }
-    even = predict_even_split(example)
+    Default ``setup=win_512_s256`` (sliding windows) — trunc_512 loses cuts past the
+    first 512 tokens on long overflow flats (docs/DECISIONS.md 2026-10-13).
+    """
+    from scripts.boundary_windowed_infer import predict_cuts
+    from scripts.synthetic_boundary_common import even_split_boundaries
+
+    even = even_split_boundaries(len(text), n_cuts)
     if encoder is None:
         return {
             "encoder_available": False,
             "model_name": model_name,
+            "encoder_setup": setup,
             "even_split_cuts": even,
             "encoder_cuts": None,
         }
-    enc_cuts = predict_model(
-        example,
+    enc_cuts = predict_cuts(
+        text,
+        n_cuts,
         model=encoder["model"],
         tokenizer=encoder["tokenizer"],
         device=encoder["device"],
-        max_length=DEFAULT_MAX_LENGTH,
+        setup=setup,
     )
     return {
         "encoder_available": True,
         "model_name": encoder["model_name"],
         "checkpoint": encoder["checkpoint"],
         "device": encoder["device"],
+        "encoder_setup": setup,
         "even_split_cuts": even,
         "encoder_cuts": enc_cuts,
     }

@@ -74,7 +74,7 @@ fingerprint, independent of the drifted session label: 1,059/1,511 (70.1%). Its 
 "Building the channel itself is deferred to a follow-up session." That follow-up never happened.
 
 > **2026-09-30 — the execution design for this track's working hypothesis now exists:**
-> [`plans/STAGED_ANCHOR_CONSOLIDATION.md`](STAGED_ANCHOR_CONSOLIDATION.md). It specifies the
+> [`plans/archive/STAGED_ANCHOR_CONSOLIDATION.md`](STAGED_ANCHOR_CONSOLIDATION.md). It specifies the
 > procedure (objective anchors first → reconcile → subdivide gaps → reconcile → repeat), promotes
 > `s6b_known_point_ledger`'s gap-size distribution to the objective, and identifies **partial
 > abstention in `segment_day`** as the one code change with real reach. Two measurements made while

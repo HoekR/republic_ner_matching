@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Scans per sitting day as a function of `k_e` -- the measurement Step 1 of
-`plans/SCAN_SEQUENCE_TRACK.md` left as an assumption.
+`plans/archive/SCAN_SEQUENCE_TRACK.md` left as an assumption.
 
 `bootstrap_scan_anchors.py` charges one scan to every day that is not nihil and has
 `k_e >= MIN_KE_FOR_OWN_SCAN` (3), then calls a bracket **forced** when `room == len(required days)`.
@@ -23,7 +23,7 @@ zero-scan days -- the observations that decide whether the `>= 1 scan` rule hold
 keeps every `(scan, date)` observation and keeps `room == 0`. Dropping them would have guaranteed
 the answer "every day gets at least one scan" by construction.
 
-Scans are two-page spreads (`plans/SCAN_SEQUENCE_TRACK.md` step 1), so a day at 0.5 scans is a day
+Scans are two-page spreads (`plans/archive/SCAN_SEQUENCE_TRACK.md` step 1), so a day at 0.5 scans is a day
 on one page, not half a page. The forcing rule counts scans, so scans stay the unit here.
 
 Diagnostic only: writes one dataset, changes no placement.

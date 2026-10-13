@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Both layers' business on one bracket: what the edition requires vs what the paper carries.
 
-Track: `plans/SCAN_SEQUENCE_TRACK.md`. Answers the question put by the user (2026-10-08) in the
+Track: `plans/archive/SCAN_SEQUENCE_TRACK.md`. Answers the question put by the user (2026-10-08) in the
 order it was put: per bracket, start and end date, the resolutions on it, and how that compares
 with `k_e`; then the biggest gaps by dates/sessions, by cumulative resolutions and by resolutions
 per date; then where a separation would have to be proposed, expressed in paragraphs.

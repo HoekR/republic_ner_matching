@@ -173,7 +173,7 @@ def detect_lag_window(
         if r["disagree"] and r.get("pin_delta") in delta_set
     ]
     if not lag:
-        raise SystemExit("no production≠physical lag days with Δ in {7,8,9}")
+        raise ValueError("no production≠physical lag days with Δ in {7,8,9}")
     dates = [r["date"] for r in lag]
     clusters: list[list[str]] = [[dates[0]]]
     for d in dates[1:]:
@@ -713,7 +713,25 @@ def run(
 ) -> list[dict[str, Any]]:
     graph = load_graph()
     status = pin_status_rows(graph, inventory)
-    window = detect_lag_window(status)
+    # Classic auto-detect only sees Δ∈{7,8,9}. Later inventories often sit at
+    # Δ=10–13; a pinned calendar must still run (detect becomes diagnostic).
+    pinned = calendar_lo is not None and calendar_hi is not None
+    try:
+        window = detect_lag_window(status)
+    except ValueError:
+        if not pinned:
+            raise
+        window = {
+            "calendar_lo": calendar_lo,
+            "calendar_hi": calendar_hi,
+            "n_lag_days": 0,
+            "median_delta": None,
+            "pin_delta_hist": {},
+            "n_lag_clusters": 0,
+            "n_aug_sep_clusters": 0,
+            "claim_set_dropped": "production_PINNED_TO_as_lid",
+            "claim_set_active": "hard_OBSERVED_ON_compose_DATED_AS",
+        }
     lo = calendar_lo or window["calendar_lo"]
     hi = calendar_hi or window["calendar_hi"]
 
@@ -846,6 +864,9 @@ def main() -> None:
                 "alignment_1626_1630",
             ],
         )
+        from sequence_graph.remediation_run_log import log_hard_recalibrate
+
+        log_hard_recalibrate(rows)
         print(f"wrote {OUTPUT_DATASET}")
 
 

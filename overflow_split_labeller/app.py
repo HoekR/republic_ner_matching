@@ -1,6 +1,6 @@
-"""PARKED: human review of overflow-split cut proposals.
+"""Superseded by ``overflow-cut-review-ui`` (Step 7).
 
-Blocked until track gold is baked and inspected. See package docstring.
+Was PARKED pending track gold; that gate is closed. Use the live UI.
 """
 
 from __future__ import annotations
@@ -10,11 +10,10 @@ import sys
 
 def main() -> None:
     raise SystemExit(
-        "overflow-split-review-ui is PARKED until aligned_to_overflow_track_gold "
-        "is baked and inspected.\n"
-        "  uv run python -m sequence_graph.fingerprint_session_shift "
-        "--bake-track-gold --write\n"
-        "See docs/steps/STEP_NEIGHBOURHOOD_SESSION_SHIFT.md (Step 5 → Step 6)."
+        "overflow_split_labeller is superseded.\n"
+        "  uv run overflow-cut-review-ui\n"
+        "  # http://127.0.0.1:5058  →  overflow_cut_reviews\n"
+        "See docs/steps/STEP_NEIGHBOURHOOD_SESSION_SHIFT.md (Step 7)."
     )
 
 

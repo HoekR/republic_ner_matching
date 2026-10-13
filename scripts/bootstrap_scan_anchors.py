@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 1 of `plans/SCAN_SEQUENCE_TRACK.md`: add anchors by parsing loosely INSIDE a bracket.
+"""Step 1 of `plans/archive/SCAN_SEQUENCE_TRACK.md`: add anchors by parsing loosely INSIDE a bracket.
 
 The strict parser (`h_session_date_vs_heading.DATE_PHRASE`, requiring weekday + `den` + day +
 month + year in order) fires on only 708 of 1,794 scans carrying a `date` region. The failures are
@@ -15,7 +15,7 @@ an anchor; zero or several is a decline.
 That makes the step self-limiting and it compounds: new anchors narrow the brackets, which
 shrinks the candidate sets, which makes the next pass safer still.
 
-Gates, fixed here before the run (`plans/SCAN_SEQUENCE_TRACK.md`):
+Gates, fixed here before the run (`plans/archive/SCAN_SEQUENCE_TRACK.md`):
   * monotonicity violations must stay <= 1% (0.4% at 708 anchors)
   * hard contradictions (brackets with fewer scans than scan-requiring days) must not grow
     proportionally

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 4 redirect (plans/STAGED_ANCHOR_CONSOLIDATION.md): isolate what the already-shipped
+"""Step 4 redirect (plans/archive/STAGED_ANCHOR_CONSOLIDATION.md): isolate what the already-shipped
 TF-IDF diagonal relaxation actually contributes as a *hard anchor* channel.
 
 `align_session`'s `anchor_only_diagonal` gate (`build_alignment_new.py:938`) already accepts a

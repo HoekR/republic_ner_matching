@@ -5,7 +5,7 @@
 ## Relation to existing tracks — read this first
 
 **This is not a new framing.** It is the execution design for
-[`plans/COLLISION_AVOIDANCE_TRACK.md`](COLLISION_AVOIDANCE_TRACK.md)'s working hypothesis (user,
+[`plans/archive/COLLISION_AVOIDANCE_TRACK.md`](COLLISION_AVOIDANCE_TRACK.md)'s working hypothesis (user,
 2026-09-25), points 1–3: apply `k_e` sequentially along an inventory; treat day separation as a
 **local calibration anchor** rather than a partition; correct misplaced day anchors using the
 resolutions that *do* align confidently. That track established the framing and measured the free
@@ -185,7 +185,7 @@ expected unlocked mass, not by size alone, and measure that claim rather than as
    oscillate. Fix the rule before running, per `docs/ITERATION_POLICY.md`.
 5. **Metric guardrail.** A gap metric is a coverage metric and can be gamed exactly as `separated`
    was (a uniform spread beat gold on `separated`; coverage and gold correctness disagree in sign on
-   solid days — `plans/TFIDF_EMBEDDINGS_TRACK.md`, 2026-09-30). **Any step proposing a placement
+   solid days — `plans/archive/TFIDF_EMBEDDINGS_TRACK.md`, 2026-09-30). **Any step proposing a placement
    change reports gap-mass *and* gold correctness**, never gap-mass alone.
 6. **Granularity.** `s6b_anchor_harvest` is keyed on `char_position`; the DP and the paragraph axis
    are keyed on paragraph index. The char→paragraph join is unverified, and the harvest summary

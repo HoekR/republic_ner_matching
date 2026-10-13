@@ -847,6 +847,9 @@ def main() -> None:
             ),
             parent_sources=list(REQUIRED),
         )
+        from sequence_graph.remediation_run_log import log_bake
+
+        log_bake(rows)
         print(f"wrote {OUTPUT_DATASET}")
 
 

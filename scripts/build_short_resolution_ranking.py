@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 4 of plans/SHORT_RESOLUTION_SIDE_PLAN.md — test semantic candidate ranking.
+"""Step 4 of plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md — test semantic candidate ranking.
 
 For each enriched resolution, present the LLM with 2-3 deterministic, chronology-valid
 candidate HTR spans. Include the enriched summary and generated candidate summaries,

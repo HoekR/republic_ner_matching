@@ -40,7 +40,7 @@ This module implements two mechanisms for gap-filling:
 `position_scores: dict[int, float]` is per-paragraph bonus (roughly [0, 1]); for
 evidence specific to one resolution rather than a paragraph, use `rank_scores` /
 `segment_day`'s `resolution_scores` -- see `similarity_rank_scores` and
-plans/TFIDF_EMBEDDINGS_TRACK.md for what each form can and cannot express.
+plans/archive/TFIDF_EMBEDDINGS_TRACK.md for what each form can and cannot express.
 
 Group B (`entity_surface_matches_1626_1630`, `s4_fuzzy_surface_form_scan`) is not wired
 into `position_scores` yet -- deliberately deferred, not overlooked. `s4_paragraph_axis_baseline.py`
@@ -285,7 +285,7 @@ def segment_day(
     resolutions cannot fit without forced repeats by arithmetic alone. These gaps return
     None for all slots instead of calling segment_gap, honestly abstaining rather than
     fabricating precision. This partial abstention follows the "defensible abstention"
-    principle documented in plans/STAGED_ANCHOR_CONSOLIDATION.md.
+    principle documented in plans/archive/STAGED_ANCHOR_CONSOLIDATION.md.
 
     `resolution_scores` maps *enriched resolution index* -> {paragraph -> bonus} and is
     sliced per gap into `segment_gap`'s rank-ordered `rank_scores`: slot `rank` of the gap

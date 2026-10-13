@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}P5 range {{ start }}–{{ end }}{% endblock %}
+{% block content %}
+
+<section class="card">
+  <div class="form-header">
+    <h2>Hand review · {{ start }} → {{ end }}</h2>
+    <div class="notes-hint">{{ days|length }} day(s) · filter={{ mode }}</div>
+  </div>
+  <p class="form-actions" style="margin:0.5rem 0 0.75rem">
+    <a class="btn primary" href="{{ url_for('review_start', **{'from': start, 'to': end}) }}">Start gold review</a>
+  </p>
+  <form class="jump-form" method="get" action="{{ url_for('range_index') }}">
+    <label>From <input type="text" name="from" value="{{ start }}" placeholder="1629-02-05"></label>
+    <label>To <input type="text" name="to" value="{{ end }}" placeholder="1629-02-10"></label>
+    <input type="hidden" name="filter" value="{{ mode }}">
+    <button type="submit" class="btn secondary">Reload range</button>
+  </form>
+  <nav class="filters" style="margin-top:0.75rem">
+    {% for f in filters %}
+    <a class="btn {{ 'primary' if f == mode else 'secondary' }}"
+       href="{{ url_for('range_index', **{'from': start, 'to': end, 'filter': f}) }}">{{ f }}</a>
+    {% endfor %}
+  </nav>
+</section>
+
+{% if days %}
+<ol class="range-list">
+  {% for day in days %}
+  <li class="card range-item {% if day.day_accepted %}accepted{% endif %}">
+    <a class="range-link"
+       href="{{ url_for('review_day', date=day.enriched_date, **{'from': start, 'to': end}) }}">
+      <strong>{{ day.enriched_date }}</strong>
+    </a>
+    <div class="range-meta">
+      {% if day.in_ledger %}
+      <span class="status-pill done">ledger</span>
+      <span class="status-pill {{ 'done' if day.day_accepted else 'pending' }}">
+        gate {{ 'yes' if day.day_accepted else 'no' }}
+      </span>
+      {% if day.delta_vs_plain is not none %}
+      <span class="notes-hint">Δ {{ day.delta_vs_plain }}</span>
+      {% endif %}
+      {% else %}
+      <span class="status-pill pending">explore only</span>
+      {% endif %}
+      <a class="btn secondary" href="{{ url_for('day_view', date=day.enriched_date, filter=mode, **{'from': start, 'to': end, 'via': 'review'}) }}">full day</a>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+<p class="notes-hint">
+  Open a day for gold review (verdict + Save &amp; next).
+  Use <em>full day</em> when bindings/cuts look wrong (unsplit · shifts · unplaced), then return to record a verdict.
+</p>
+{% else %}
+<p class="notes-hint">No days in this window for filter={{ mode }}.</p>
+{% endif %}
+
+{% endblock %}

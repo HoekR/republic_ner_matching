@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Tiers {{ payload.enriched_date }}{% endblock %}
+{% block content %}
+
+<nav class="pager">
+  {% if prev_date %}
+  <a class="btn secondary" href="{{ url_for('tier_day', date=prev_date, **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">Tier view · {{ payload.enriched_date }}
+    {% if range_from and range_to %} · {{ range_from }}→{{ range_to }}{% endif %}
+  </span>
+  {% if next_date %}
+  <a class="btn secondary" href="{{ url_for('tier_day', date=next_date, **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<nav class="filters">
+  <a class="btn secondary" href="{{ url_for('day_view', date=payload.enriched_date, filter='corpus', **({'from': range_from, 'to': range_to} if range_from and range_to else {})) }}">explore</a>
+  {% if range_from and range_to %}
+  <a class="btn secondary" href="{{ url_for('review_day', date=payload.enriched_date, **{'from': range_from, 'to': range_to}) }}">review</a>
+  <a class="btn secondary" href="{{ url_for('range_index', **{'from': range_from, 'to': range_to, 'filter': 'corpus'}) }}">range</a>
+  {% endif %}
+</nav>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Date</span><code>{{ payload.enriched_date }}</code></div>
+    <div><span class="label">Content run (pin)</span>
+      <span class="status-pill {{ 'done' if payload.content_run.day_verdict == 'content_ok' else ('suspect' if payload.content_run.day_verdict == 'content_fail' else 'pending') }}">
+        {{ payload.content_run.day_verdict }}
+      </span>
+      · fail_run {{ payload.content_run.pin.fail_run }} / match_run {{ payload.content_run.pin.match_run }}
+      (k={{ payload.content_run.k }})
+    </div>
+    <div><span class="label">Content run (calendar)</span>
+      <code>{{ payload.content_run.calendar.verdict }}</code>
+      · {{ payload.content_run.calendar.n_paragraphs }} para(s)
+    </div>
+    <div><span class="label">Pin ≠ trusted</span>
+      {% if payload.pin_trusted.mismatch %}
+      <span class="status-pill suspect">mismatch</span>
+      {% else %}
+      <span class="status-pill done">ok / n/a</span>
+      {% endif %}
+      pin {{ payload.pin_trusted.pin_sessions|join(', ') or '—' }}
+      · trusted {{ (payload.pin_trusted.exact_sessions or payload.pin_trusted.trusted_sessions)|join(', ') or '—' }}
+      · code {{ payload.pin_trusted.status_code or '—' }}
+    </div>
+    {% if payload.content_run.calendar_ok_pin_fail %}
+    <div><span class="label">Pattern</span>
+      <span class="status-pill suspect">calendar ok + pin fail</span>
+      (wrong PINNED_TO, sitting text present same day)
+    </div>
+    {% endif %}
+  </div>
+  <p class="notes-hint">
+    Three same-day evidence tiers (collapse a lane via its header). Hover a node for text;
+    lines are cross-tier claims. Monotone is not shown here.
+  </p>
+</section>
+
+<div class="tier-board" id="tier-board"
+     data-edges='{{ payload.edges | tojson }}'>
+  <svg class="tier-edges" id="tier-edges" aria-hidden="true"></svg>
+
+  <details class="tier-lane" data-lane="editorial" open>
+    <summary>Editorial <span class="notes-hint">enriched · {{ payload.lanes.editorial|length }}</span></summary>
+    <div class="tier-lane-body">
+      {% for node in payload.lanes.editorial %}
+      <div class="tier-node {{ 'unplaced' if node.unplaced else '' }}"
+           id="node-{{ node.id }}"
+           data-lane="editorial"
+           data-id="{{ node.id }}"
+           title="{{ node.hover }}">
+        <div class="tier-node-label">{{ node.label }}
+          {% if node.para_start is not none %}· p{{ node.para_start }}{% if node.para_end is not none and node.para_end != node.para_start %}–{{ node.para_end }}{% endif %}{% endif %}
+        </div>
+        <div class="tier-node-snip">{{ node.hover }}</div>
+      </div>
+      {% else %}
+      <p class="notes-hint">No enriched rows.</p>
+      {% endfor %}
+    </div>
+  </details>
+
+  <details class="tier-lane" data-lane="pin_htr" open>
+    <summary>Pin HTR <span class="notes-hint">PINNED_TO · {{ payload.lanes.pin_htr|length }}</span></summary>
+    <div class="tier-lane-body">
+      {% for node in payload.lanes.pin_htr %}
+      <div class="tier-node {{ 'trusted' if node.is_trusted else '' }} {{ 'pin' if node.is_pin else '' }}"
+           id="node-{{ node.id }}"
+           data-lane="pin_htr"
+           data-id="{{ node.id }}"
+           title="{{ node.hover }}">
+        <div class="tier-node-label">{{ node.flat_id or node.label }}
+          {% if node.axis_date %}<span class="notes-hint">· axis {{ node.axis_date }}</span>{% endif %}
+        </div>
+        <div class="tier-node-snip">{{ node.hover }}</div>
+      </div>
+      {% else %}
+      <p class="notes-hint">Empty pin axis (no resolved session paras).</p>
+      {% endfor %}
+    </div>
+  </details>
+
+  <details class="tier-lane" data-lane="calendar_htr" open>
+    <summary>Calendar HTR <span class="notes-hint">same-day · {{ payload.lanes.calendar_htr|length }}</span></summary>
+    <div class="tier-lane-body">
+      {% for node in payload.lanes.calendar_htr %}
+      <div class="tier-node {{ 'trusted' if node.is_trusted else '' }}"
+           id="node-{{ node.id }}"
+           data-lane="calendar_htr"
+           data-id="{{ node.id }}"
+           title="{{ node.hover }}">
+        <div class="tier-node-label">{{ node.flat_id or node.label }}
+          {% if node.is_trusted %}<span class="status-pill done">trusted</span>{% endif %}
+        </div>
+        <div class="tier-node-snip">{{ node.hover }}</div>
+      </div>
+      {% else %}
+      <p class="notes-hint">No main-series paragraphs on this calendar date.</p>
+      {% endfor %}
+    </div>
+  </details>
+</div>
+
+<details class="card edge-legend">
+  <summary>Edges ({{ payload.edges|length }})</summary>
+  <ul class="edge-list">
+    {% for e in payload.edges %}
+    <li title="{{ e.hover }}">
+      <code>{{ e.kind }}</code>
+      {{ e.from_lane }}:{{ e.from_id }} → {{ e.to_lane }}:{{ e.to_id }}
+      {% if e.hits is defined %}· hits {{ e.hits }}{% endif %}
+      {% if e.suspect %}<span class="status-pill suspect">suspect</span>{% endif %}
+      {% if e.inferred %}<span class="notes-hint">inferred</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='tier.js') }}"></script>
+{% endblock %}

@@ -1,10 +1,4 @@
-"""PARKED — overflow-split treatment UI.
+"""Superseded stub — use ``overflow_cut_labeller`` / ``overflow-cut-review-ui``.
 
-Do not use until ``aligned_to_overflow_track_gold`` exists and has been
-inspected (as-is → proposed_end). Cut char offsets are machine proposals
-only; bake track gold first:
-
-    uv run python -m sequence_graph.fingerprint_session_shift --bake-track-gold --write
-
-See ``docs/steps/STEP_NEIGHBOURHOOD_SESSION_SHIFT.md`` Step 5–6.
+Track gold (Steps 5–6b) is baked; human cut review is Step 7.
 """

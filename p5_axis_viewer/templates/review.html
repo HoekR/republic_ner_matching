@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Review {{ day.enriched_date }}{% endblock %}
+{% block content %}
+
+<nav class="pager">
+  {% if prev_date %}
+  <a class="btn secondary" href="{{ url_for('review_day', date=prev_date, **{'from': range_from, 'to': range_to}) }}">← Previous</a>
+  {% else %}
+  <span class="btn secondary disabled">← Previous</span>
+  {% endif %}
+  <span class="position">Day {{ index + 1 }} of {{ review_stats.total }}
+    · {{ range_from }}→{{ range_to }}
+    · {{ review_stats.labelled }} labelled</span>
+  {% if next_date %}
+  <a class="btn secondary" href="{{ url_for('review_day', date=next_date, **{'from': range_from, 'to': range_to}) }}">Next →</a>
+  {% else %}
+  <span class="btn secondary disabled">Next →</span>
+  {% endif %}
+</nav>
+
+<nav class="filters">
+  <a class="btn secondary" href="{{ url_for('range_index', **{'from': range_from, 'to': range_to, 'filter': 'corpus'}) }}">range index</a>
+  <a class="btn secondary" href="{{ url_for('review_start', **{'from': range_from, 'to': range_to}) }}">first unlabelled</a>
+  <a class="btn secondary" href="{{ url_for('tier_day', date=day.enriched_date, **{'from': range_from, 'to': range_to}) }}">tier view</a>
+  <a class="btn primary" href="{{ url_for('day_view', date=day.enriched_date, filter='corpus', **{'from': range_from, 'to': range_to, 'via': 'review'}) }}">Something wrong? → full day</a>
+</nav>
+
+<section class="meta card">
+  <div class="meta-grid">
+    <div><span class="label">Date</span><code>{{ day.enriched_date }}</code></div>
+    <div><span class="label">P5 ledger</span>
+      {% if day.in_ledger %}
+      <span class="status-pill done">in ledger</span>
+      <span class="status-pill {{ 'done' if day.day_accepted else 'pending' }}">
+        gate {{ 'yes' if day.day_accepted else 'no' }}
+      </span>
+      {% else %}
+      <span class="status-pill pending">explore only</span>
+      {% endif %}
+      {% if context.day_suspect %}
+      <span class="status-pill suspect">accepted but suspect</span>
+      {% endif %}
+    </div>
+    <div><span class="label">Content gate</span>
+      {{ context.n_content_suspect_hosts }} suspect host(s)
+      {% if context.content_run %}
+      · run <code>{{ context.content_run.day_verdict }}</code>
+      {% if context.content_run.calendar_ok_pin_fail %}
+      <span class="status-pill suspect">cal ok / pin fail</span>
+      {% endif %}
+      {% endif %}
+      {% if context.pin_trusted and context.pin_trusted.mismatch %}
+      <span class="status-pill suspect">pin≠trusted</span>
+      {% endif %}
+    </div>
+    <div><span class="label">Δ sep</span>{{ day.delta_vs_plain if day.in_ledger else '—' }}</div>
+    <div><span class="label">State file</span><code class="path">{{ notes_file }}</code></div>
+    <div><span class="label">Status</span>
+      <span class="status-pill {{ 'done' if review.labelled else 'pending' }}">
+        {{ 'Saved' if review.labelled else 'Unsaved' }}
+      </span>
+      {% if review.verdict %}<code>{{ review.verdict }}</code>{% endif %}
+    </div>
+  </div>
+</section>
+
+<form id="review-form" class="card"
+      data-date="{{ day.enriched_date }}"
+      data-next-id="{{ next_unlabelled or next_date or '' }}"
+      data-from="{{ range_from }}"
+      data-to="{{ range_to }}">
+  <div class="form-header">
+    <h2>Day verdict</h2>
+    <div class="actions-inline">
+      <span class="status-pill {{ 'done' if review.labelled else 'pending' }}" id="labelled-pill">
+        {{ 'Saved' if review.labelled else 'Unsaved' }}
+      </span>
+    </div>
+  </div>
+
+  <fieldset class="verdict-box">
+    <legend>Verdict (required to count as labelled)</legend>
+    {% for key in verdicts %}
+    <label class="check">
+      <input type="radio" name="verdict" value="{{ key }}"
+        {{ 'checked' if review.verdict == key else '' }}>
+      <b>{{ key }}</b> — {{ verdict_labels[key].split('—', 1)[-1].strip() }}
+    </label>
+    {% endfor %}
+  </fieldset>
+
+  <label>Day notes
+    <textarea name="day_notes" id="day_notes" rows="3"
+      placeholder="e.g. false-accept — Carlisle summaries on Zeeland missive HTR">{{ review.day_notes }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary" id="btn-save-next">Save &amp; next</button>
+    <button type="button" class="btn secondary" id="btn-save-stay">Save</button>
+    <a class="btn secondary escape"
+       href="{{ url_for('day_view', date=day.enriched_date, filter='corpus', **{'from': range_from, 'to': range_to, 'via': 'review'}) }}">
+      Something wrong? Open full day (unsplit · shifts · unplaced)
+    </a>
+    <span id="save-status" class="save-status"></span>
+  </div>
+  <p class="notes-hint escape-hint">
+    Use the full-day view when bindings or cuts look off — then return here to record a verdict.
+  </p>
+</form>
+
+{% include "hosts_partial.html" %}
+
+{% if unsplit %}
+<section class="card explore" id="explore-unsplit">
+  <div class="form-header">
+    <h2>Unsplit resolutions</h2>
+    <div class="notes-hint">{{ unsplit|length }}</div>
+  </div>
+  {% for res in unsplit %}
+  <div class="split explore-row">
+    <div class="pane">
+      <div class="piece-meta">#{{ res.resolution_index }} · p{{ res.paragraph_start_index }}</div>
+      <pre class="text summary">{{ res.text }}</pre>
+    </div>
+    <div class="pane">
+      <div class="piece-meta">parent HTR</div>
+      <pre class="text">{{ res.parent_text }}</pre>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='review.js') }}"></script>
+{% endblock %}

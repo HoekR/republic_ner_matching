@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 4 pre-check (plans/STAGED_ANCHOR_CONSOLIDATION.md): would promoting Group C
+"""Step 4 pre-check (plans/archive/STAGED_ANCHOR_CONSOLIDATION.md): would promoting Group C
 (`s2_anchor_phrases`, `s4_opening_phrase_candidates`) to a *hard* backbone anchor be worth
 the attribution risk, or does it repeat Group B's trap?
 

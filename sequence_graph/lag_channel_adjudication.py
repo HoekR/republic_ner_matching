@@ -26,6 +26,7 @@ from build_alignment_new import enriched_volgnr
 from data_io import load, save_semi_structured
 from scripts.corpus_scope import in_scope, scope_meta
 from sequence_graph.correspondence import OBSERVED_ON
+from sequence_graph.fingerprint_session_shift import _flat_text_by_id
 from sequence_graph.persist import load_graph
 from sequence_graph.physical_pin_review import iiif_for_scan
 from sequence_graph.sync_gap_align import _axis_by_inv_sess, _enriched_by_date
@@ -45,25 +46,6 @@ def _session_opening_text(session_id: str, flat_text: dict[str, str], axis: dict
     if not flats:
         return ""
     return (flat_text.get(flats[0]) or "")[:SNIPPET]
-
-
-def _flat_text_by_id() -> dict[str, str]:
-    from collections import defaultdict
-
-    parts: dict[str, list[tuple[int, str]]] = defaultdict(list)
-    for row in load("paragraph_axis_1626_1630"):
-        flat = str(row.get("flat_id") or "")
-        if not flat:
-            continue
-        try:
-            pi = int(row.get("para_index") or 0)
-        except (TypeError, ValueError):
-            pi = 0
-        parts[flat].append((pi, str(row.get("text") or "")))
-    return {
-        fid: " ".join(t for _pi, t in sorted(chunks))
-        for fid, chunks in parts.items()
-    }
 
 
 def _observed_scans(graph: Any, session_id: str, inventory: str) -> list[int]:

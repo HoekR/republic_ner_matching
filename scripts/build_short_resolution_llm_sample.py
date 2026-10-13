@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 1 of plans/SHORT_RESOLUTION_SIDE_PLAN.md — freeze the experiment split.
+"""Step 1 of plans/archive/SHORT_RESOLUTION_SIDE_PLAN.md — freeze the experiment split.
 
 Builds a leakage-safe sample manifest of HTR candidate units for the
 short-resolution LLM alignment side track. Split unit is the session-day

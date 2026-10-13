@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 1 of plans/COLLISION_AVOIDANCE_TRACK.md -- landmark density in the HTR stream.
+"""Step 1 of plans/archive/COLLISION_AVOIDANCE_TRACK.md -- landmark density in the HTR stream.
 
 The stream reframing trades a tight-but-wrong local constraint (``k_e`` per
 calendar day) for a loose one (``k_e`` per inventory). Session landmarks have to
@@ -618,7 +618,7 @@ def main() -> None:
 
     meta = {
         "record_type": "meta",
-        "track": "plans/COLLISION_AVOIDANCE_TRACK.md",
+        "track": "plans/archive/COLLISION_AVOIDANCE_TRACK.md",
         "step": 1,
         "parent": [REGION_SCAN_DATASET, FINGERPRINT_DATASET, AXIS_DATASET, CONCORDANCE_DATASET],
         "day_ceiling_computed": int(day_ceiling),
@@ -663,7 +663,7 @@ def main() -> None:
         logical_name=OUTPUT_DATASET,
         parent_sources=[REGION_SCAN_DATASET, FINGERPRINT_DATASET, AXIS_DATASET, CONCORDANCE_DATASET],
         description=(
-            "Step 1 of plans/COLLISION_AVOIDANCE_TRACK.md: session-landmark availability in the "
+            "Step 1 of plans/archive/COLLISION_AVOIDANCE_TRACK.md: session-landmark availability in the "
             "raw HTR (date/attendance/president regions per raw session), localizability on the "
             "paragraph_axis_1626_1630 stream (content-verified fingerprint, in-axis president/"
             "present stems, hypothesis-4 formulaic openings), order-preservation reliability, and "

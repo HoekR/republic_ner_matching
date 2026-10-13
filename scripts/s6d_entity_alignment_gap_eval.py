@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 3 of plans/COLLISION_AVOIDANCE_TRACK.md, "first experiment": run
+"""Step 3 of plans/archive/COLLISION_AVOIDANCE_TRACK.md, "first experiment": run
 `align_entity_mentions` (`scripts/s6b_known_point_ledger.py`) over the entity-mention streams of
 `s6b_known_point_ledger.py`'s **open** gaps, project the traceback onto paragraph cut points via
 `scripts/s6d_entity_mention_gap_placement.py`, and score the result against gold exactly the way
